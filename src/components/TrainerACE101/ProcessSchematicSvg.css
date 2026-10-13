@@ -1,0 +1,187 @@
+/* ============================================================
+   Process Schematic SCADA Vector SVG Styling & Animations
+   ============================================================ */
+
+.process-scada-svg-root {
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* ── Fluid Flow Stream Animations in Pipes ─────────────────── */
+.pipe-flow-path {
+  stroke-dasharray: 12 12;
+  animation: pipeFlowMove 1s linear infinite;
+}
+
+.pipe-flow-path.fast {
+  animation-duration: 0.5s;
+}
+
+.pipe-flow-path.medium {
+  animation-duration: 0.9s;
+}
+
+.pipe-flow-path.slow {
+  animation-duration: 1.6s;
+}
+
+@keyframes pipeFlowMove {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Pump Impeller Rotation Animation ──────────────────────── */
+.pump-impeller-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pumpSpin 0.7s linear infinite;
+}
+
+@keyframes pumpSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Water Meniscus Waves ──────────────────────────────────── */
+.tank-meniscus-wave {
+  animation: waveMotion 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes waveMotion {
+  0% {
+    transform: translateY(0px) scaleY(1);
+  }
+  50% {
+    transform: translateY(-1.5px) scaleY(1.05);
+  }
+  100% {
+    transform: translateY(1px) scaleY(0.96);
+  }
+}
+
+/* ── Inlet Pouring Fluid Jet & Splashes ────────────────────── */
+.inlet-stream-flow {
+  animation: inletPulsate 0.35s ease-in-out infinite alternate;
+}
+
+@keyframes inletPulsate {
+  0% {
+    opacity: 0.85;
+    stroke-width: 6.5px;
+  }
+  100% {
+    opacity: 0.98;
+    stroke-width: 8px;
+  }
+}
+
+.splash-droplet-1 {
+  animation: splashPop1 0.6s ease-out infinite;
+}
+
+.splash-droplet-2 {
+  animation: splashPop2 0.75s ease-out infinite 0.2s;
+}
+
+@keyframes splashPop1 {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0.9;
+  }
+  60% {
+    transform: translate(-6px, -10px) scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-10px, 2px) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes splashPop2 {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0.9;
+  }
+  60% {
+    transform: translate(7px, -11px) scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(11px, 3px) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* ── Delta DTB9696 7-Segment LED Displays ──────────────────── */
+.dtb-led-pv {
+  font-family: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+  font-weight: 900;
+  fill: #22c55e;
+  filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.9));
+}
+
+.dtb-led-sp {
+  font-family: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+  font-weight: 900;
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.9));
+}
+
+.dtb-led-op {
+  font-family: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+  font-weight: 900;
+  fill: #ef4444;
+  filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.9));
+}
+
+.dtb-led-dim {
+  fill: #1e293b;
+  opacity: 0.25;
+}
+
+/* ── Rotameter Float Smooth Transition ─────────────────────── */
+.rotameter-float {
+  transition: transform 0.4s ease-out;
+}
+
+/* ── Valve Stem Travel Smooth Transition ──────────────────── */
+.valve-stem-indicator {
+  transition: transform 0.3s ease-out;
+}
+
+/* ── Pressure Gauge Needle ─────────────────────────────────── */
+.gauge-needle {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  transition: transform 0.4s ease-out;
+}
+
+/* ── Industrial Labels (Figure 2 Matching White Labels) ──────── */
+.scada-label {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-weight: 700;
+  fill: #ffffff;
+  text-anchor: middle;
+  letter-spacing: 0.4px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+}
+
+.scada-label-sub {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  fill: #cbd5e1;
+  text-anchor: middle;
+}

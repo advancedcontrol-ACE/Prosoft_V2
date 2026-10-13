@@ -1,0 +1,461 @@
+/* ============================================================
+   Controller Parameters Panel Styling (Figure 2 - Slate Dark Background Mode)
+   ============================================================ */
+
+.controller-panel-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #425c77;
+  border: 1.5px solid #587490;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Top Tabs ──────────────────────────────────────────────── */
+.controller-tabs {
+  display: flex;
+  background: #364b60;
+  border-bottom: 1.5px solid #283747;
+  height: 38px;
+}
+
+.controller-tab {
+  flex: 1;
+  background: #3c536b;
+  color: #cbd5e1;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: none;
+  border-right: 1px solid #283747;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.controller-tab:hover {
+  background: #4a6684;
+  color: #ffffff;
+}
+
+.controller-tab.active {
+  background: #587490;
+  color: #ffffff;
+  font-weight: 700;
+  border-top: 3px solid #60a5fa;
+  border-bottom: none;
+}
+
+/* ── Main Content Area ─────────────────────────────────────── */
+.controller-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  padding: 6px 10px 8px 6px;
+  gap: 10px;
+  align-items: stretch;
+  background: #425c77;
+}
+
+/* ── Controller Setting Box matching Figure 2 ─────────────── */
+.controller-settings-card {
+  width: 215px;
+  height: 254px;
+  flex-shrink: 0;
+  background: #587490;
+  border: 1.5px solid #364b60;
+  border-radius: 3px;
+  padding: 5px 10px 5px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15), 0 1px 3px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.settings-card-title {
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: bold;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  padding-bottom: 2px;
+  margin-bottom: 0;
+  letter-spacing: 0.3px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-sizing: border-box;
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.setting-label {
+  font-size: 11px;
+  color: #ffffff;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* ── Uniform Control Box Sizing (105px Width, 22px Height, Right-Aligned) ── */
+.setting-btn {
+  width: 105px;
+  height: 22px;
+  background: #e2e8f0;
+  border: 1px solid #94a3b8;
+  border-radius: 2px;
+  font-size: 11px;
+  color: #0284c7;
+  font-weight: 700;
+  padding: 0 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: all 0.15s;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+}
+
+.setting-btn:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+.port-btn {
+  color: #0284c7;
+}
+
+.setting-status-val {
+  width: 105px;
+  height: 22px;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 0 8px;
+  border-radius: 2px;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border: 1px solid #cbd5e1;
+  box-sizing: border-box;
+}
+
+.setting-status-val.disconnected {
+  color: #dc2626;
+  background: #ffffff;
+}
+
+.setting-status-val.connected {
+  color: #15803d;
+  background: #ffffff;
+}
+
+.setting-readonly-val {
+  width: 105px;
+  height: 22px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #0f172a;
+  background: #ffffff;
+  padding: 0 8px;
+  border-radius: 2px;
+  border: 1px solid #94a3b8;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+}
+
+/* ── Figure 2 LabVIEW Device ID Digital Spinner Box ───────── */
+.device-id-spinner-box {
+  width: 105px;
+  max-width: 105px;
+  height: 22px;
+  background: #d5d8dc;
+  border: 1.5px solid #a8adb5;
+  border-radius: 3px;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #8c939d,
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  padding: 2px;
+  gap: 2px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.device-id-spinners {
+  width: 13px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.device-id-spin-btn {
+  flex: 1;
+  background: linear-gradient(180deg, #ffffff, #dcdfe3);
+  border: 1px solid #9aa0a6;
+  box-shadow: inset 1px 1px 0 #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 5px;
+  color: #1f2937;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.1s;
+}
+
+.device-id-spin-btn.spin-up {
+  border-radius: 1px 1px 0 0;
+  border-bottom: 0.5px solid #9aa0a6;
+}
+
+.device-id-spin-btn.spin-down {
+  border-radius: 0 0 1px 1px;
+  border-top: 0.5px solid #9aa0a6;
+}
+
+.device-id-spin-btn:hover {
+  background: #ffffff;
+}
+
+.device-id-spin-btn:active {
+  background: #c8cbd0;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.device-id-input {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid #7c838d;
+  border-radius: 1px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #000000;
+  text-align: right;
+  padding: 0 6px 0 2px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.device-id-input:focus {
+  border-color: #2563eb;
+}
+
+.setting-select-val {
+  width: 105px;
+  height: 22px;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #0f172a;
+  padding: 0 6px 0 4px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  outline: none;
+  text-align: right;
+  text-align-last: right;
+  box-sizing: border-box;
+}
+
+.setting-select-val:focus {
+  border-color: #2563eb;
+}
+
+.setting-exp-val {
+  width: 105px;
+  height: 22px;
+  font-size: 11px;
+  color: #ffffff;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+/* ── Save Settings Button Row ─────────────────────────────── */
+.setting-save-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2px;
+  box-sizing: border-box;
+}
+
+.save-settings-btn {
+  width: 100%;
+  height: 22px;
+  background: linear-gradient(180deg, #f8fafc 0%, #cbd5e1 100%);
+  border: 1.5px solid #475569;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.15s ease-in-out;
+  letter-spacing: 0.3px;
+  box-sizing: border-box;
+}
+
+.save-settings-btn:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+  border-color: #1e293b;
+  color: #0284c7;
+}
+
+.save-settings-btn:active {
+  background: #94a3b8;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.save-settings-btn.saved {
+  background: linear-gradient(180deg, #dcfce7 0%, #86efac 100%);
+  border-color: #16a34a;
+  color: #14532d;
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ── Sliders Grid matching Figure 2 & User Image (Tightly framed) ── */
+.sliders-grid {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: fit-content;
+  height: 254px;
+  gap: 6px;
+  justify-content: flex-start;
+  align-items: center;
+  background: #425c77;
+  border: 1.5px solid #5a7591;
+  border-radius: 3px;
+  padding: 6px 10px;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15), 0 1px 3px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.sliders-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 14px;
+  width: auto;
+  min-width: 0;
+}
+
+/* Log Table */
+/* ── Log Table matching Figure 2 ─────────────────────────── */
+.log-table-container {
+  display: flex;
+  flex-direction: column;
+  height: 254px;
+  margin: 6px 10px 8px 6px;
+  background: #ffffff;
+  border: 2px solid #8e99a8;
+  border-radius: 2px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.log-table-scroll {
+  flex: 1 1 auto;
+  overflow-y: scroll;
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11.5px;
+  table-layout: fixed;
+}
+
+.log-table th {
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 6px 4px;
+  text-align: center;
+  border-right: 1px solid #c8d0da;
+  border-bottom: 1.5px solid #94a3b8;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.log-table th:last-child {
+  border-right: none;
+}
+
+.log-table td {
+  padding: 5px 4px;
+  text-align: center;
+  color: #0f172a;
+  border-right: 1px solid #dbe2ea;
+  border-bottom: 1px solid #dbe2ea;
+  height: 22px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  background: #ffffff;
+}
+
+.log-table td:last-child {
+  border-right: none;
+}
+
+.log-table tr:hover td {
+  background-color: #f8fafc;
+}

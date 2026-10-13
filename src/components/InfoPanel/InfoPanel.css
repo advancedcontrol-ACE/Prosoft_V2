@@ -1,0 +1,20 @@
+.info-panel {
+  background: var(--color-panel-bg);
+  border-radius: var(--panel-radius);
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: var(--color-panel-text);
+  line-height: 1.55;
+}
+
+.info-panel.border-green  { border: 2px solid var(--color-panel-border-green); }
+.info-panel.border-orange { border: 2px solid var(--color-panel-border-orange); }
+
+.info-panel ul { padding-left: 1px; }
+.info-panel li { padding-left: 12px; position: relative; }
+.info-panel li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #444;
+}

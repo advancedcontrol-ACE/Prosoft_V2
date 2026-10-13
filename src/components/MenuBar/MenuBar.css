@@ -1,0 +1,118 @@
+/* ============================================================
+   MenuBar.css — Windows-style horizontal menu bar + cascades
+   ============================================================ */
+
+/* ── Top bar strip ─────────────────────────────────────────── */
+.menu-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: var(--menu-bar-height);
+  background: var(--color-bg-menubar);
+  border-bottom: 1px solid var(--color-menubar-border);
+  user-select: none;
+  z-index: 1000;
+  position: relative;
+}
+
+/* ── Top-level buttons ─────────────────────────────────────── */
+.top-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 100%;
+  font-size: 13px;
+  color: var(--color-menu-fg);
+  cursor: default;
+  border-right: 1px solid var(--color-menu-sep);
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.top-menu-item:first-child { border-left: 1px solid var(--color-menu-sep); }
+
+.top-menu-item:hover,
+.top-menu-item.active {
+  background: var(--color-menu-active-bg);
+  color: var(--color-menu-active-fg);
+}
+
+/* ── Dropdown wrapper — anchored to top-level item ─────────── */
+.dropdown-wrapper {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 2000;
+}
+
+/* ── Cascade menus (all depths) ────────────────────────────── */
+.cascade-menu {
+  min-width: var(--dropdown-min-w);
+  background: var(--color-dropdown-bg);
+  border: 1px solid var(--color-dropdown-border);
+  box-shadow: 2px 4px 12px rgba(0,0,0,0.25);
+  padding: 2px 0;
+  list-style: none;
+}
+
+/* ── Individual menu item ──────────────────────────────────── */
+.cascade-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 4px 14px;
+  font-size: 13px;
+  color: var(--color-menu-fg);
+  cursor: default;
+  white-space: nowrap;
+  min-height: 24px;
+}
+
+.cascade-item:not(.disabled):hover,
+.cascade-item.open:not(.disabled) {
+  background: var(--color-dropdown-hover-bg);
+  color: var(--color-dropdown-hover-fg);
+}
+
+.cascade-item.disabled {
+  color: var(--color-dropdown-disabled);
+  cursor: not-allowed;
+}
+.cascade-item.disabled .arrow {
+  color: var(--color-dropdown-disabled);
+}
+
+/* ── Separator between menu items ──────────────────────────── */
+.menu-separator {
+  height: 1px;
+  background: var(--color-dropdown-border);
+  margin: 2px 6px;
+  padding: 0;
+  pointer-events: none;
+}
+
+.item-label { flex: 1; }
+
+.arrow {
+  font-size: 9px;
+  margin-left: 8px;
+  color: #555;
+}
+
+/* ── Sub-menu positioned to the right ─────────────────────── */
+.submenu-wrapper {
+  position: absolute;
+  top: -3px;
+  left: 100%;
+}
+
+/* Prevent hover gap from closing child menus */
+.cascade-item::after {
+  content: '';
+  position: absolute;
+  right: -12px;
+  top: 0;
+  width: 12px;
+  height: 100%;
+}

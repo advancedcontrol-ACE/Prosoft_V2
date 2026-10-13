@@ -1,0 +1,132 @@
+/* ============================================================
+   Trend Graph Styling — canvas + horizontal scrollbar layout
+   ============================================================ */
+
+/* Outer container: canvas area left, legend panel right */
+.trend-graph-container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border: 1.5px solid #364b60;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* Left column: canvas stacked above the scrollbar */
+.trend-main-area {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+/* Canvas fills the remaining vertical space above the scrollbar */
+.trend-canvas-wrapper {
+  flex: 1 1 auto;
+  position: relative;
+  min-height: 0;
+}
+
+.trend-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Horizontal scrollbar strip ─────────────────────────── */
+.trend-scrollbar {
+  flex: 0 0 18px;
+  height: 18px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  background: #587490;
+  border-top: 1.5px solid #364b60;
+  scrollbar-color: #475569 #e2e8f0;
+  scrollbar-width: thin;
+}
+
+/* Phantom div — its width controls the scrollbar range */
+.trend-scrollbar-phantom {
+  height: 1px;
+}
+
+/* Make the scrollbar thumb visible (webkit) */
+.trend-scrollbar::-webkit-scrollbar {
+  height: 12px;
+  display: block;
+}
+
+.trend-scrollbar::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+.trend-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+  border: 1.5px solid #e2e8f0;
+}
+
+.trend-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #1e293b;
+}
+
+/* ── Legend panel ────────────────────────────────────────── */
+.trend-legend {
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 8px 4px;
+  background: #587490;
+  border-left: 1.5px solid #364b60;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: all 0.1s;
+}
+
+.legend-item:hover {
+  background: #f1f5f9;
+  border-color: #64748b;
+}
+
+.legend-item.muted {
+  opacity: 0.45;
+  background: #cbd5e1;
+}
+
+.legend-indicator {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.blue-bar {
+  color: #0047ba;
+}
+
+.green-bar {
+  color: #16a34a;
+}
+
+.red-bar {
+  color: #dc2626;
+}

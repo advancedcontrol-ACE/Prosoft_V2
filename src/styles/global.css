@@ -1,0 +1,66 @@
+/* ============================================================
+   ACE Process Control Software — Global CSS Variables & Reset
+   ============================================================ */
+
+:root {
+  /* ── Colours (Figure 2 Matching Industrial Theme) ─────────── */
+  --color-bg-main:        #425c77;   /* Exact steel blue sampled from Figure 2 (rgb 66, 92, 119) */
+  --color-bg-menubar:     #eceef0;   /* Light Windows menu bar */
+  --color-menubar-border: #b8c4d0;
+  --color-menu-active-bg: #0078d4;   /* Windows blue highlight */
+  --color-menu-active-fg: #ffffff;
+  --color-menu-hover-bg:  #dce8f5;
+  --color-menu-fg:        #1e293b;
+  --color-menu-sep:       #b8c4d0;
+
+  /* Dropdown / cascading menus */
+  --color-dropdown-bg:    #ffffff;
+  --color-dropdown-border: #94a3b8;
+  --color-dropdown-hover-bg: #0078d4;
+  --color-dropdown-hover-fg: #ffffff;
+  --color-dropdown-disabled: #94a3b8;
+
+  /* Panels */
+  --color-panel-bg:       rgba(255, 255, 255, 0.92);
+  --color-panel-border-green:  #4caf50;
+  --color-panel-border-orange: #ff8c00;
+  --color-panel-text:     #1a1a1a;
+
+  /* ACE heading */
+  --color-ace-heading:    #1e90ff;
+  --color-ace-tagline:    #c8c8c8;
+
+  /* Prosoft circle quadrant colours (matching screenshot) */
+  --color-q-blue:         #1565c0;   /* Process — top-left */
+  --color-q-green:        #2e7d32;   /* Software — bottom-left (dark) */
+  --color-q-orange:       #e65100;   /* Modelling & Simulation */
+  --color-q-teal:         #00695c;   /* Controller Design */
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --font-ui:    'Segoe UI', Arial, sans-serif;
+  --font-mono:  'Consolas', monospace;
+
+  /* ── Spacing ─────────────────────────────────────────────── */
+  --menu-bar-height: 28px;
+  --dropdown-min-w:  240px;
+  --panel-radius:    10px;
+}
+
+/* ── Reset ───────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  overflow: hidden;         /* the app manages its own scroll if needed */
+  background: var(--color-bg-main);
+}
+
+ul { list-style: none; }
+button { cursor: pointer; border: none; background: transparent; font: inherit; }

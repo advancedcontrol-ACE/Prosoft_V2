@@ -1,0 +1,149 @@
+/* ============================================================
+   Trainer Toolbar Styling — Buttons spread full width with enhanced fonts
+   ============================================================ */
+
+.trainer-toolbar {
+  display: flex;
+  align-items: stretch;
+  background: #f7fcf9;
+  border-bottom: 2px solid #b7d7c2;
+  height: 52px;
+  padding: 3px 6px;
+  gap: 3px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.tb-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 6px;
+  flex: 1 1 0;              /* equal stretch across full width */
+  min-width: 0;             /* allow shrinking */
+  background: #ffffff;
+  border: 1px solid #b7d7c2;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #164e3b;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+  box-shadow: 0 1px 2px rgba(22, 101, 52, 0.05);
+  white-space: nowrap;
+}
+
+.tb-btn:hover:not(:disabled) {
+  background: #ecfdf5;
+  border-color: #86efac;
+  color: #14532d;
+}
+
+.tb-btn:active:not(:disabled) {
+  background: #dcfce7;
+  transform: translateY(1px);
+}
+
+.tb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+.tb-icon {
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tb-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+}
+
+/* Run & Stop highlights */
+.run-icon {
+  color: #16a34a;
+}
+
+.active-run {
+  background: #dcfce7 !important;
+  border-color: #22c55e !important;
+  color: #15803d !important;
+}
+
+.stop-icon {
+  color: #dc2626;
+}
+
+.active-stop {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+  color: #b91c1c !important;
+}
+
+.gear-icon {
+  color: #0284c7;
+}
+
+.tb-btn.active {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+  color: #0369a1;
+}
+
+/* Green Circular LED for Log ON */
+.tb-led {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #475569;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.tb-led.on {
+  background: radial-gradient(circle at 4px 4px, #4ade80, #16a34a 70%, #14532d);
+  box-shadow: 0 0 6px #22c55e;
+}
+
+.tb-led.off {
+  background: radial-gradient(circle at 4px 4px, #94a3b8, #475569 80%);
+}
+
+.logging-active {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+/* Home button */
+.home-icon {
+  color: #dc2626;
+}
+
+.home-btn:hover:not(:disabled) {
+  background: #fef2f2 !important;
+  border-color: #ef4444 !important;
+}
+
+/* Exit button — red accent */
+.exit-btn {
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.exit-btn:hover:not(:disabled) {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+  color: #7f1d1d !important;
+}
+
+.exit-icon {
+  color: #dc2626;
+}

@@ -1,0 +1,67 @@
+/* ============================================================
+   Trainer Header Styling (Figure 1 top banner - Enhanced Fonts)
+   ============================================================ */
+
+.trainer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 6px 16px;
+  border-bottom: 2.5px solid #0047ba;
+  height: 60px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  height: 46px;
+  width: auto;
+  object-fit: contain;
+}
+
+.header-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 23px;
+  font-weight: 800;
+  color: #0b4ea2;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 1px;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.header-trainer-category {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ea580c;
+  line-height: 1.15;
+}
+
+.header-trainer-model {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #ea580c;
+  line-height: 1.2;
+}
