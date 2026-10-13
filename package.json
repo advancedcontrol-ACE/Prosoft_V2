@@ -1,27 +1,70 @@
 {
   "name": "prosoft-v2",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "ACE Process Control Software V2",
+  "author": "Advanced Control Equipments",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "app": "cmd /c Launch_ACE_Prosoft.bat"
+    "app": "cmd /c Launch_ACE_Prosoft.bat",
+    "electron": "electron .",
+    "dist": "node scripts/build-dist.cjs"
   },
   "dependencies": {
     "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "serialport": "^13.0.0"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "electron": "^41.2.0",
+    "electron-builder": "^26.0.22",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
+  },
+  "build": {
+    "appId": "com.ace.prosoft",
+    "productName": "ACE Prosoft V2",
+    "directories": {
+      "output": "${env.TEMP}/prosoft-release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "src/services/modbus/**/*",
+      "ace.ico",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "src/services/modbus/modbus_daemon.ps1",
+        "to": "modbus_daemon.ps1"
+      },
+      {
+        "from": "ace.ico",
+        "to": "ace.ico"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "ace.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ACE Prosoft V2"
+    }
   }
 }

@@ -32,7 +32,14 @@ class ModbusBridge {
     if (this.ps) return Promise.resolve();
 
     return new Promise((resolve, reject) => {
-      const scriptPath = path.resolve(__dirname, 'modbus_daemon.ps1');
+      const fs = require('fs');
+      let scriptPath = path.resolve(__dirname, 'modbus_daemon.ps1');
+      if (process.resourcesPath) {
+        const resPath = path.join(process.resourcesPath, 'modbus_daemon.ps1');
+        if (fs.existsSync(resPath)) {
+          scriptPath = resPath;
+        }
+      }
       this.ps = spawn('powershell', [
         '-NoProfile',
         '-ExecutionPolicy',
