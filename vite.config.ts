@@ -3,13 +3,30 @@ import { defineConfig, type Plugin } from 'vite'
 import { exec } from 'child_process'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { bridgeInstance } = require('./src/services/modbus/modbusServerBridge.cjs')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { remoteLabManager } = require('./src/services/modbus/remoteLabManager.cjs')
 
 function serialPortPlugin(): Plugin {
   return {
     name: 'serial-port-api',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        const url = req.url || ''
+        const rawUrl = req.url || '/'
+        const parsedUrl = new URL(rawUrl, 'http://localhost')
+        const pathname = parsedUrl.pathname
+        const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1'
+        const sessionToken = req.headers['x-session-token'] as string | undefined
+
+        // Enable CORS
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-session-token')
+
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
 
         // Helper to parse JSON body
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,7 +46,70 @@ function serialPortPlugin(): Plugin {
           })
         }
 
-        if (url === '/api/ports') {
+        // ── Remote Lab Endpoints ──────────────────────────────────
+        if (pathname === '/api/remote/status' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(
+            JSON.stringify({
+              success: true,
+              serverName: 'ACE Prosoft V2 Lab Host',
+              hardwareConnected: bridgeInstance.isConnected,
+              activePort: bridgeInstance.currentPort || 'None',
+              passkeyRequired: true,
+            })
+          )
+          return
+        }
+
+        if (pathname === '/api/remote/auth' && req.method === 'POST') {
+          const body = await parseJsonBody()
+          const authResult = remoteLabManager.authenticate(body.passkey, body.studentName, clientIp)
+          res.setHeader('Content-Type', 'application/json')
+          if (authResult.success) {
+            res.end(
+              JSON.stringify({
+                ...authResult,
+                hardwareConnected: bridgeInstance.isConnected,
+                activePort: bridgeInstance.currentPort || 'None',
+              })
+            )
+          } else {
+            res.statusCode = 401
+            res.end(JSON.stringify(authResult))
+          }
+          return
+        }
+
+        if (pathname === '/api/remote/sessions' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(
+            JSON.stringify({
+              success: true,
+              passkey: remoteLabManager.getPasskey(),
+              sessions: remoteLabManager.getActiveSessions(),
+            })
+          )
+          return
+        }
+
+        if (pathname === '/api/remote/revoke' && req.method === 'POST') {
+          const body = await parseJsonBody()
+          const ok = remoteLabManager.revokeSession(body.token)
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ success: ok }))
+          return
+        }
+
+        if (pathname === '/api/remote/set-passkey' && req.method === 'POST') {
+          const body = await parseJsonBody()
+          const updated = remoteLabManager.setPasskey(body.passkey)
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ success: true, passkey: updated }))
+          return
+        }
+
+        // ── Serial & Modbus RTU Endpoints ─────────────────────────
+        if (pathname === '/api/ports') {
           exec('powershell -NoProfile -Command "[System.IO.Ports.SerialPort]::GetPortNames()"', (err, stdout) => {
             res.setHeader('Content-Type', 'application/json')
             if (err || !stdout) {
@@ -46,7 +126,7 @@ function serialPortPlugin(): Plugin {
           return
         }
 
-        if (url === '/api/modbus/connect' && req.method === 'POST') {
+        if (pathname === '/api/modbus/connect' && req.method === 'POST') {
           const body = await parseJsonBody()
           const port = body.port || 'COM4'
           const baud = Number(body.baud) || 9600
@@ -63,32 +143,45 @@ function serialPortPlugin(): Plugin {
           return
         }
 
-        if (url === '/api/modbus/poll' && req.method === 'GET') {
+        if (pathname === '/api/modbus/poll' && req.method === 'GET') {
+          if (sessionToken) {
+            const check = remoteLabManager.validateSession(sessionToken)
+            if (!check.valid) {
+              res.statusCode = 401
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: check.error, revoked: true }))
+              return
+            }
+          }
+
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify(bridgeInstance.latestData))
           return
         }
 
-        if (url === '/api/modbus/write' && req.method === 'POST') {
+        if (pathname === '/api/modbus/write' && req.method === 'POST') {
+          if (sessionToken) {
+            const check = remoteLabManager.validateSession(sessionToken)
+            if (!check.valid) {
+              res.statusCode = 401
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: check.error, revoked: true }))
+              return
+            }
+          }
+
           const body = await parseJsonBody()
           const slaveId = Number(body.slaveId) || bridgeInstance.slaveId || 1
           const reg = String(body.register || '').toLowerCase()
           const val = body.value
 
+          if (sessionToken) {
+            remoteLabManager.validateSession(sessionToken, `Wrote ${reg.toUpperCase()}=${val}`)
+          }
+
           let addr = 0
           let rawVal = 0
 
-          // Address & Multiplier mapping per Modbus specification:
-          // 1: PV 1000H (44097) - Read Only
-          // 2: SP 1001H (44098) - multiply by 10
-          // 3: Auto/Manual 1005H (44102)
-          // 4: Action 1006H (44103)
-          // 5: PB 1009H (44106) - multiply by 10
-          // 6: Ti 100AH (44107)
-          // 7: Td 100BH (44108)
-          // 8: Bias 100CH (44109)
-          // 9: OP 1012H (44115) - multiply by 10
-          // 10: Auto Tuning 813H (42068)
           if (reg === 'sp' || body.addr === 0x1001) {
             addr = 0x1001
             rawVal = Math.round(Number(val) * 10)
@@ -140,7 +233,7 @@ function serialPortPlugin(): Plugin {
           return
         }
 
-        if (url === '/api/modbus/disconnect' && req.method === 'POST') {
+        if (pathname === '/api/modbus/disconnect' && req.method === 'POST') {
           await bridgeInstance.disconnect()
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify({ success: true, message: 'Disconnected' }))
@@ -156,4 +249,7 @@ function serialPortPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), serialPortPlugin()],
+  server: {
+    host: '0.0.0.0', // Listen on all network interfaces
+  },
 })

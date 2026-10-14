@@ -1,21 +1,13 @@
 // ============================================================
-// Delta DTB9696 Modbus RTU Service
+// Delta DTB9696 Modbus RTU & Remote Lab Service
 // ============================================================
-// Supports live hardware communication via local Modbus RTU backend
-// and Web Serial API / simulation fallback.
-//
-// Addresses per specification:
-// 1   PV: 1000H (44097) - Read Only, divided by 10
-// 2   SP: 1001H (44098) - Multiplied by 10 on write, divided by 10 on read
-// 3   Auto/Manual: 1005H (44102)
-// 4   Action: 1006H (44103) - Direct / Reverse
-// 5   PB: 1009H (44106) - Multiplied by 10 on write, divided by 10 on read
-// 6   Ti: 100AH (44107) - Integral Time (s)
-// 7   Td: 100BH (44108) - Derivative Time (s)
-// 8   Bias: 100CH (44109)
-// 9   OP: 1012H (44115) - Controller Output (%)
-// 10  Auto Tuning: 813H (42068)
+// Supports:
+// 1. Local Hardware communication via local Modbus RTU daemon
+// 2. Remote Lab Client over Internet (via Host URL & Session Token)
+// 3. Virtual Simulation fallback
 // ============================================================
+
+import { RemoteLabClient } from '../remoteLab/remoteLabService';
 
 export interface ModbusConnectionResult {
   success: boolean;
@@ -24,6 +16,7 @@ export interface ModbusConnectionResult {
   txFrame?: string;
   rxFrame?: string;
   error?: string;
+  isRemote?: boolean;
 }
 
 export interface ModbusLiveState {
@@ -41,35 +34,17 @@ export interface ModbusLiveState {
   raw?: Record<string, number>;
 }
 
-// Calculate Modbus RTU CRC-16 (polynomial 0xA001)
-export function calculateCRC16(buffer: Uint8Array): number {
-  let crc = 0xffff;
-  for (let i = 0; i < buffer.length; i++) {
-    crc ^= buffer[i];
-    for (let j = 0; j < 8; j++) {
-      if ((crc & 0x0001) !== 0) {
-        crc = (crc >> 1) ^ 0xa001;
-      } else {
-        crc = crc >> 1;
-      }
-    }
-  }
-  return crc;
-}
-
-export function formatHex(buffer: Uint8Array): string {
-  return Array.from(buffer)
-    .map((b) => b.toString(16).padStart(2, '0').toUpperCase())
-    .join(' ');
-}
-
 export class DeltaDTBService {
   private static instance: DeltaDTBService;
   private isConnected = false;
   private currentPort = '';
   private isHardwareConnected = false;
+  private isRemoteMode = false;
+  private baseUrl = '';
+  private sessionToken = '';
   private pollIntervalId: number | null = null;
   private onPollCallbacks: Array<(state: ModbusLiveState) => void> = [];
+  private onRevokedCallbacks: Array<() => void> = [];
 
   public static getInstance(): DeltaDTBService {
     if (!DeltaDTBService.instance) {
@@ -90,11 +65,35 @@ export class DeltaDTBService {
     return this.isHardwareConnected;
   }
 
+  public isRemote(): boolean {
+    return this.isRemoteMode;
+  }
+
+  public onSessionRevoked(cb: () => void) {
+    this.onRevokedCallbacks.push(cb);
+    return () => {
+      this.onRevokedCallbacks = this.onRevokedCallbacks.filter((c) => c !== cb);
+    };
+  }
+
+  private triggerRevoked() {
+    this.isConnected = false;
+    this.isHardwareConnected = false;
+    this.isRemoteMode = false;
+    this.stopPolling();
+    for (const cb of this.onRevokedCallbacks) {
+      cb();
+    }
+  }
+
   /**
-   * Connects to the given COM port via local backend Modbus bridge.
-   * If hardware connects successfully, starts 1-second live polling.
+   * Connects to Local Serial Port via local Modbus daemon
    */
   public async connect(portName: string, slaveId = 1): Promise<ModbusConnectionResult> {
+    this.baseUrl = '';
+    this.sessionToken = '';
+    this.isRemoteMode = false;
+
     try {
       const res = await fetch('/api/modbus/connect', {
         method: 'POST',
@@ -113,6 +112,7 @@ export class DeltaDTBService {
           return {
             success: true,
             portName,
+            isRemote: false,
             message: `Connected to ${portName} (9600, 8-N-1). Delta DTB9696 Modbus RTU communication active.`,
             txFrame: '01 03 10 00 00 02 C0 CB',
             rxFrame: '01 03 04 00 13 01 F4 0B E1',
@@ -132,20 +132,87 @@ export class DeltaDTBService {
     return {
       success: true,
       portName,
+      isRemote: false,
       message: `Connected to ${portName}. Delta DTB9696 communication active (Simulation/Virtual Mode).`,
       txFrame: '01 03 10 00 00 02 C0 CB',
       rxFrame: '01 03 04 00 00 00 00 00 00',
     };
   }
 
+  /**
+   * Connects to a Remote Lab Host over the Internet
+   */
+  public async connectRemote(
+    hostUrl: string,
+    passkey: string,
+    studentName: string
+  ): Promise<ModbusConnectionResult> {
+    const client = RemoteLabClient.getInstance();
+    const cleanUrl = client.normalizeUrl(hostUrl);
+
+    try {
+      const auth = await client.login(cleanUrl, passkey, studentName);
+      if (!auth.success || !auth.token) {
+        return {
+          success: false,
+          portName: '',
+          message: auth.error || 'Authentication failed. Please verify the Passkey.',
+          error: auth.error,
+        };
+      }
+
+      this.baseUrl = cleanUrl;
+      this.sessionToken = auth.token;
+      this.isRemoteMode = true;
+      this.isConnected = true;
+      this.isHardwareConnected = Boolean(auth.hardwareConnected);
+      this.currentPort = `Remote Lab (${cleanUrl.replace(/^https?:\/\//, '')})`;
+
+      // Listen for remote revocation
+      client.setOnRevoked(() => {
+        this.triggerRevoked();
+      });
+
+      this.startPolling();
+
+      return {
+        success: true,
+        portName: this.currentPort,
+        isRemote: true,
+        message: `Connected to Remote Lab Host at ${cleanUrl}. Student: ${studentName}. Live hardware stream active!`,
+        txFrame: '01 03 10 00 00 02 C0 CB',
+        rxFrame: '01 03 04 00 13 01 F4 0B E1',
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        portName: '',
+        message: `Cannot reach Remote Lab Host at ${cleanUrl}. Ensure host is online. (${String(err)})`,
+        error: String(err),
+      };
+    }
+  }
+
   public startPolling() {
     if (this.pollIntervalId) return;
 
     this.pollIntervalId = window.setInterval(async () => {
-      if (!this.isConnected || !this.isHardwareConnected) return;
+      if (!this.isConnected) return;
 
       try {
-        const res = await fetch('/api/modbus/poll');
+        const url = this.baseUrl ? `${this.baseUrl}/api/modbus/poll` : '/api/modbus/poll';
+        const headers: Record<string, string> = {};
+        if (this.sessionToken) {
+          headers['x-session-token'] = this.sessionToken;
+        }
+
+        const res = await fetch(url, { headers });
+        if (res.status === 401) {
+          // Access revoked by host!
+          this.triggerRevoked();
+          return;
+        }
+
         if (res.ok) {
           const liveState: ModbusLiveState = await res.json();
           for (const cb of this.onPollCallbacks) {
@@ -155,7 +222,7 @@ export class DeltaDTBService {
       } catch (err) {
         console.warn('Poll error:', err);
       }
-    }, 1000); // Sampling time: exactly 1 second
+    }, 1000); // 1-second sampling rate
   }
 
   public stopPolling() {
@@ -172,36 +239,36 @@ export class DeltaDTBService {
     };
   }
 
-  /**
-   * Writes a parameter to Modbus register:
-   * 'sp' -> 1001H (multiplied by 10)
-   * 'pb' -> 1009H (multiplied by 10)
-   * 'it' -> 100AH
-   * 'dt' -> 100BH
-   * 'bias' -> 100CH
-   * 'op' -> 1012H (multiplied by 10)
-   * 'action' -> 1006H
-   * 'autoMan' -> 1005H
-   * 'autoTuning' -> 0813H
-   */
   public async writeRegister(
     register: string,
     value: number | string,
     slaveId = 1
   ): Promise<boolean> {
-    if (!this.isConnected || !this.isHardwareConnected) {
-      return true; // Virtual write
-    }
+    if (!this.isConnected) return false;
 
     try {
-      const res = await fetch('/api/modbus/write', {
+      const url = this.baseUrl ? `${this.baseUrl}/api/modbus/write` : '/api/modbus/write';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (this.sessionToken) {
+        headers['x-session-token'] = this.sessionToken;
+      }
+
+      const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ slaveId, register, value }),
       });
+
+      if (res.status === 401) {
+        this.triggerRevoked();
+        return false;
+      }
+
       if (res.ok) {
         const data = await res.json();
-        return data.success;
+        return Boolean(data.success);
       }
     } catch (err) {
       console.error('Modbus write error:', err);
@@ -211,15 +278,21 @@ export class DeltaDTBService {
 
   public async disconnect(): Promise<void> {
     this.stopPolling();
-    if (this.isConnected && this.isHardwareConnected) {
-      try {
-        await fetch('/api/modbus/disconnect', { method: 'POST' });
-      } catch {
-        // ignore
+    if (this.isConnected) {
+      if (!this.isRemoteMode && this.isHardwareConnected) {
+        try {
+          await fetch('/api/modbus/disconnect', { method: 'POST' });
+        } catch {
+          // ignore
+        }
       }
+      RemoteLabClient.getInstance().disconnect();
     }
     this.isConnected = false;
     this.currentPort = '';
     this.isHardwareConnected = false;
+    this.isRemoteMode = false;
+    this.baseUrl = '';
+    this.sessionToken = '';
   }
 }

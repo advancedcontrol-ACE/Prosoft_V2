@@ -247,8 +247,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     [ctrlState.deviceId]
   );
 
-  // Handle successful COM port connection — all values start from 0
-  const handlePortConnected = (port: string) => {
+  const handlePortConnected = (port: string, _isRemote?: boolean) => {
     setComPort(port);
     setIsConnected(true);
     setCtrlState((prev) => ({
@@ -263,6 +262,22 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     setLogEntries([]);
     simTimeRef.current = 0;
   };
+
+  // Listen for remote session revocation by host
+  useEffect(() => {
+    const modbusService = DeltaDTBService.getInstance();
+    const unsubRevoked = modbusService.onSessionRevoked(() => {
+      alert('⚠️ Your remote lab session has been revoked or ended by the Host teacher.');
+      setIsConnected(false);
+      setComPort('');
+      setIsRunning(false);
+      setTrendData([]);
+      setLogEntries([]);
+    });
+    return () => {
+      unsubRevoked();
+    };
+  }, []);
 
   // Close menus on outside click
   useEffect(() => {
@@ -363,7 +378,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
                   setIsComModalOpen(true);
                 }}
               >
-                ⚙ Communication Setup...
+                ⚙ Communication Setup & Remote Lab...
               </button>
               {isConnected && (
                 <button
@@ -379,7 +394,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
                     setOpenTopMenu(null);
                   }}
                 >
-                  Disconnect Port
+                  Disconnect Port / Remote Lab
                 </button>
               )}
             </div>

@@ -12,6 +12,7 @@ dist
 dist-ssr
 release
 dist-installer
+cloudflared.exe
 *.local
 
 # Editor directories and files

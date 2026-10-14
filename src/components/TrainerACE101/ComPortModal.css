@@ -1,11 +1,11 @@
 /* ============================================================
-   COM Port Modal Styling
+   COM Port & Remote Lab Setup Modal Styling
    ============================================================ */
 
 .com-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,12 +14,13 @@
 }
 
 .com-modal-window {
-  width: 480px;
+  width: 580px;
+  max-width: 95vw;
   background: #ffffff;
   border-radius: 6px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
   overflow: hidden;
-  border: 1px solid #475569;
+  border: 1px solid #334155;
   display: flex;
   flex-direction: column;
 }
@@ -30,30 +31,72 @@
   justify-content: space-between;
   background: #0047ba;
   color: #ffffff;
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: 13px;
   font-weight: 700;
 }
 
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .title-icon {
-  margin-right: 6px;
+  font-size: 14px;
 }
 
 .close-x {
   background: transparent;
   border: none;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
   padding: 0 4px;
 }
 
+/* ── Top Mode Navigation Tabs ── */
+.com-mode-nav {
+  display: flex;
+  background: #0f172a;
+  border-bottom: 2px solid #2563eb;
+}
+
+.com-mode-tab {
+  flex: 1;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.com-mode-tab:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.com-mode-tab.active {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+/* ── Modal Body ── */
 .com-modal-body {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: #f8fafc;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .config-section {
@@ -66,16 +109,25 @@
   font-size: 12px;
   font-weight: 700;
   color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field-hint {
+  font-size: 11px;
+  font-weight: normal;
+  color: #64748b;
 }
 
 .port-selection-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
 .port-chip {
-  padding: 6px;
+  padding: 7px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
@@ -84,10 +136,11 @@
   color: #334155;
   cursor: pointer;
   transition: all 0.1s;
+  text-align: center;
 }
 
 .port-chip:hover:not(:disabled) {
-  border-color: #3b82f6;
+  border-color: #2563eb;
   background: #eff6ff;
 }
 
@@ -98,12 +151,12 @@
 }
 
 .com-no-device-chip {
-  grid-column: span 3;
+  grid-column: span 4;
   padding: 8px;
   background: #f1f5f9;
   border: 1px dashed #94a3b8;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #64748b;
   text-align: center;
@@ -135,10 +188,286 @@
   font-weight: 700;
 }
 
-.p-val.highlight {
-  color: #ea580c;
+/* ── Host Remote Access & Monitoring Card ── */
+.host-monitor-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.host-monitor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.monitor-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.passkey-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.passkey-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.passkey-display-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.passkey-code {
+  background: #0f172a;
+  color: #38bdf8;
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.btn-passkey-edit,
+.btn-passkey-save,
+.btn-passkey-cancel {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.btn-passkey-save {
+  background: #047857;
+  color: #ffffff;
+  border-color: #047857;
+}
+
+.passkey-edit-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.passkey-input {
+  width: 100px;
+  padding: 3px 6px;
+  font-size: 11.5px;
+  border: 1px solid #94a3b8;
+  border-radius: 3px;
+}
+
+.host-tip-box {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #1e3a8a;
+  line-height: 1.4;
+  border-radius: 0 4px 4px 0;
+}
+
+.host-tip-box code {
+  background: #dbeafe;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: 'Consolas', monospace;
+}
+
+/* ── Students Monitor Table ── */
+.connected-students-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.students-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.students-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.btn-refresh-sessions {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.btn-refresh-sessions:hover {
+  background: #f1f5f9;
+}
+
+.students-table-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  max-height: 130px;
+  overflow-y: auto;
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+
+.students-table th {
+  background: #f1f5f9;
+  padding: 6px 8px;
+  color: #475569;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+}
+
+.students-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f8fafc;
+  color: #1e293b;
+}
+
+.students-table tr.revoked-row td {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.badge-online {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.badge-idle {
+  background: #fef9c3;
+  color: #854d0e;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.badge-revoked {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.btn-revoke-student {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.btn-revoke-student:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.no-students-placeholder {
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ── Remote Student Client Form ── */
+.remote-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.remote-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.remote-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.remote-info-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 11.5px;
+  color: #166534;
+  line-height: 1.45;
+}
+
+/* ── Logs & Errors ── */
 .com-log-box {
   background: #0f172a;
   color: #38bdf8;
@@ -146,7 +475,7 @@
   border-radius: 4px;
   font-family: 'Consolas', monospace;
   font-size: 11px;
-  max-height: 80px;
+  max-height: 70px;
   overflow-y: auto;
 }
 
@@ -156,10 +485,11 @@
   color: #b91c1c;
   padding: 6px 10px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
 }
 
+/* ── Footer ── */
 .com-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -170,7 +500,7 @@
 }
 
 .com-btn-cancel {
-  padding: 6px 14px;
+  padding: 7px 14px;
   background: #ffffff;
   border: 1px solid #94a3b8;
   border-radius: 3px;
@@ -181,7 +511,7 @@
 }
 
 .com-btn-connect {
-  padding: 6px 16px;
+  padding: 7px 18px;
   background: #0047ba;
   border: 1px solid #0047ba;
   border-radius: 3px;
@@ -192,8 +522,13 @@
   transition: all 0.1s;
 }
 
+.com-btn-connect.remote {
+  background: #059669;
+  border-color: #059669;
+}
+
 .com-btn-connect:hover:not(:disabled) {
-  background: #00368c;
+  opacity: 0.9;
 }
 
 .com-btn-connect:disabled {

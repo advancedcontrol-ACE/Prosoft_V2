@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 const { bridgeInstance } = require('../src/services/modbus/modbusServerBridge.cjs');
+const { remoteLabManager } = require('../src/services/modbus/remoteLabManager.cjs');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -44,11 +45,13 @@ function createApiServer(distPath) {
     const rawUrl = req.url || '/';
     const parsedUrl = new URL(rawUrl, 'http://localhost');
     const pathname = parsedUrl.pathname;
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const sessionToken = req.headers['x-session-token'];
 
-    // CORS headers for local loopback
+    // CORS headers for local loopback & remote tunnels
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-session-token');
 
     if (req.method === 'OPTIONS') {
       res.statusCode = 204;
@@ -56,7 +59,77 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 1. /api/ports
+    // ── Remote Lab Authentication & Session Endpoints ──────────
+
+    // 1. /api/remote/status - Public status check for remote connection
+    if (pathname === '/api/remote/status' && req.method === 'GET') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(
+        JSON.stringify({
+          success: true,
+          serverName: 'ACE Prosoft V2 Lab Host',
+          hardwareConnected: bridgeInstance.isConnected,
+          activePort: bridgeInstance.currentPort || 'None',
+          passkeyRequired: true,
+        })
+      );
+      return;
+    }
+
+    // 2. /api/remote/auth - Student login with passkey
+    if (pathname === '/api/remote/auth' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const authResult = remoteLabManager.authenticate(body.passkey, body.studentName, clientIp);
+      res.setHeader('Content-Type', 'application/json');
+      if (authResult.success) {
+        res.end(
+          JSON.stringify({
+            ...authResult,
+            hardwareConnected: bridgeInstance.isConnected,
+            activePort: bridgeInstance.currentPort || 'None',
+          })
+        );
+      } else {
+        res.statusCode = 401;
+        res.end(JSON.stringify(authResult));
+      }
+      return;
+    }
+
+    // 3. /api/remote/sessions - Host monitor listing connected students
+    if (pathname === '/api/remote/sessions' && req.method === 'GET') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(
+        JSON.stringify({
+          success: true,
+          passkey: remoteLabManager.getPasskey(),
+          sessions: remoteLabManager.getActiveSessions(),
+        })
+      );
+      return;
+    }
+
+    // 4. /api/remote/revoke - Host revoking student access
+    if (pathname === '/api/remote/revoke' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const ok = remoteLabManager.revokeSession(body.token);
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ success: ok }));
+      return;
+    }
+
+    // 5. /api/remote/set-passkey - Host updating the access passkey
+    if (pathname === '/api/remote/set-passkey' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const updated = remoteLabManager.setPasskey(body.passkey);
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ success: true, passkey: updated }));
+      return;
+    }
+
+    // ── Hardware & Modbus RTU Endpoints ────────────────────────
+
+    // 6. /api/ports
     if (pathname === '/api/ports') {
       exec('powershell -NoProfile -Command "[System.IO.Ports.SerialPort]::GetPortNames()"', (err, stdout) => {
         res.setHeader('Content-Type', 'application/json');
@@ -74,7 +147,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 2. /api/modbus/connect
+    // 7. /api/modbus/connect
     if (pathname === '/api/modbus/connect' && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const port = body.port || 'COM4';
@@ -92,19 +165,46 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 3. /api/modbus/poll
+    // 8. /api/modbus/poll
     if (pathname === '/api/modbus/poll' && req.method === 'GET') {
+      // Validate remote session token if incoming request is from a remote client
+      if (sessionToken) {
+        const check = remoteLabManager.validateSession(sessionToken);
+        if (!check.valid) {
+          res.statusCode = 401;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: check.error, revoked: true }));
+          return;
+        }
+      }
+
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(bridgeInstance.latestData));
       return;
     }
 
-    // 4. /api/modbus/write
+    // 9. /api/modbus/write
     if (pathname === '/api/modbus/write' && req.method === 'POST') {
+      // Validate remote session token if incoming request is from a remote client
+      if (sessionToken) {
+        const check = remoteLabManager.validateSession(sessionToken);
+        if (!check.valid) {
+          res.statusCode = 401;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: check.error, revoked: true }));
+          return;
+        }
+      }
+
       const body = await parseJsonBody(req);
       const slaveId = Number(body.slaveId) || bridgeInstance.slaveId || 1;
       const reg = String(body.register || '').toLowerCase();
       const val = body.value;
+
+      // Update session activity for host monitoring
+      if (sessionToken) {
+        remoteLabManager.validateSession(sessionToken, `Wrote ${reg.toUpperCase()}=${val}`);
+      }
 
       let addr = 0;
       let rawVal = 0;
@@ -160,7 +260,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 5. /api/modbus/disconnect
+    // 10. /api/modbus/disconnect
     if (pathname === '/api/modbus/disconnect' && req.method === 'POST') {
       await bridgeInstance.disconnect();
       res.setHeader('Content-Type', 'application/json');
@@ -200,8 +300,7 @@ function createApiServer(distPath) {
     server,
     start: () => {
       return new Promise((resolve, reject) => {
-        // Listen on 127.0.0.1 with port 0 (dynamic port)
-        server.listen(0, '127.0.0.1', () => {
+        server.listen(0, '0.0.0.0', () => {
           const address = server.address();
           resolve(address.port);
         });
@@ -221,4 +320,4 @@ function createApiServer(distPath) {
   };
 }
 
-module.exports = { createApiServer, bridgeInstance };
+module.exports = { createApiServer, bridgeInstance, remoteLabManager };
