@@ -1,27 +1,30 @@
 $readmeText = @'
 # ACE Prosoft V2 — Official Downloads & Releases
 
-Official standalone distribution repository for **ACE Process Control Software (Prosoft V2)** with Delta DTB9696 Modbus RTU and Remote Lab Client/Host capability.
+Official distribution repository for **ACE Process Control Software (Prosoft V2)** with Delta DTB9696 Modbus RTU and Remote Lab Client/Host capability.
 
 ---
 
-### 🚀 Direct Download
+### ⚡ Ultra-Quick 1-Line PowerShell Install
 
-Click the link below to download the latest Windows installer:
+Open Windows PowerShell on any PC and paste this short command:
+
+```powershell
+irm tinyurl.com/ace-setup | iex
+```
+*(or `irm tinyurl.com/aceprosoft-v2 | iex`)*
+
+This automatically downloads the setup and launches the installer window immediately!
+
+---
+
+### 🚀 Direct Browser Download
+
+Alternatively, download the `.exe` installer directly:
 
 👉 **[Download ACE Prosoft V2 Setup (v1.0.0)](https://github.com/meenasundaratgmaildotcom/ACE-Prosoft-Releases/releases/latest/download/ACE.Prosoft.V2.Setup.1.0.0.exe)**
 
 *(File size: ~94.9 MB • Standalone .exe • No Node.js or developer tools required)*
-
----
-
-### 💻 1-Line Quick Install via PowerShell
-
-Students can simply open Windows PowerShell and paste this command to automatically download and run the installer:
-
-```powershell
-Start-BitsTransfer "https://github.com/meenasundaratgmaildotcom/ACE-Prosoft-Releases/releases/latest/download/ACE.Prosoft.V2.Setup.1.0.0.exe" "$env:TEMP\ACE_Setup.exe"; Start-Process "$env:TEMP\ACE_Setup.exe"
-```
 
 ---
 
@@ -37,4 +40,4 @@ $bytes = [System.Text.Encoding]::UTF8.GetBytes($readmeText)
 $b64 = [Convert]::ToBase64String($bytes)
 $sha = (gh api repos/meenasundaratgmaildotcom/ACE-Prosoft-Releases/contents/README.md --jq .sha)
 
-gh api --method PUT repos/meenasundaratgmaildotcom/ACE-Prosoft-Releases/contents/README.md -f message='Update README with download links and quick install instructions' -f content="$b64" -f sha="$sha"
+gh api --method PUT repos/meenasundaratgmaildotcom/ACE-Prosoft-Releases/contents/README.md -f message='Add ultra-short PowerShell install command to README' -f content="$b64" -f sha="$sha"
