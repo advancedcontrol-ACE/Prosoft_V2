@@ -47,6 +47,32 @@ function serialPortPlugin(): Plugin {
         }
 
         // ── Remote Lab Endpoints ──────────────────────────────────
+        if (pathname === '/api/remote/host-info' && req.method === 'GET') {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const os = require('os')
+          const nets = os.networkInterfaces()
+          let localIp = '127.0.0.1'
+          for (const name of Object.keys(nets)) {
+            for (const net of nets[name]) {
+              if (net.family === 'IPv4' && !net.internal && !net.address.startsWith('169.254.')) {
+                localIp = net.address
+                break
+              }
+            }
+          }
+          res.setHeader('Content-Type', 'application/json')
+          res.end(
+            JSON.stringify({
+              success: true,
+              port: 5173,
+              localIp,
+              localUrl: `http://${localIp}:5173`,
+              passkey: remoteLabManager.getPasskey(),
+            })
+          )
+          return
+        }
+
         if (pathname === '/api/remote/status' && req.method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           res.end(

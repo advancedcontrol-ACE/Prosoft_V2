@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { exec } = require('child_process');
 const { bridgeInstance } = require('../src/services/modbus/modbusServerBridge.cjs');
 const { remoteLabManager } = require('../src/services/modbus/remoteLabManager.cjs');
@@ -23,6 +24,20 @@ const MIME_TYPES = {
   '.otf': 'font/otf',
   '.wasm': 'application/wasm',
 };
+
+function getPrimaryLocalIp() {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        if (!net.address.startsWith('169.254.')) {
+          return net.address;
+        }
+      }
+    }
+  }
+  return '127.0.0.1';
+}
 
 function parseJsonBody(req) {
   return new Promise((resolve) => {
@@ -61,7 +76,24 @@ function createApiServer(distPath) {
 
     // ── Remote Lab Authentication & Session Endpoints ──────────
 
-    // 1. /api/remote/status - Public status check for remote connection
+    // 1. /api/remote/host-info - Host network IP & Port details for teacher display
+    if (pathname === '/api/remote/host-info' && req.method === 'GET') {
+      const port = server.address() ? server.address().port : 5173;
+      const localIp = getPrimaryLocalIp();
+      res.setHeader('Content-Type', 'application/json');
+      res.end(
+        JSON.stringify({
+          success: true,
+          port,
+          localIp,
+          localUrl: `http://${localIp}:${port}`,
+          passkey: remoteLabManager.getPasskey(),
+        })
+      );
+      return;
+    }
+
+    // 2. /api/remote/status - Public status check for remote connection
     if (pathname === '/api/remote/status' && req.method === 'GET') {
       res.setHeader('Content-Type', 'application/json');
       res.end(
@@ -76,7 +108,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 2. /api/remote/auth - Student login with passkey
+    // 3. /api/remote/auth - Student login with passkey
     if (pathname === '/api/remote/auth' && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const authResult = remoteLabManager.authenticate(body.passkey, body.studentName, clientIp);
@@ -96,7 +128,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 3. /api/remote/sessions - Host monitor listing connected students
+    // 4. /api/remote/sessions - Host monitor listing connected students
     if (pathname === '/api/remote/sessions' && req.method === 'GET') {
       res.setHeader('Content-Type', 'application/json');
       res.end(
@@ -109,7 +141,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 4. /api/remote/revoke - Host revoking student access
+    // 5. /api/remote/revoke - Host revoking student access
     if (pathname === '/api/remote/revoke' && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const ok = remoteLabManager.revokeSession(body.token);
@@ -118,7 +150,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 5. /api/remote/set-passkey - Host updating the access passkey
+    // 6. /api/remote/set-passkey - Host updating the access passkey
     if (pathname === '/api/remote/set-passkey' && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const updated = remoteLabManager.setPasskey(body.passkey);
@@ -129,7 +161,7 @@ function createApiServer(distPath) {
 
     // ── Hardware & Modbus RTU Endpoints ────────────────────────
 
-    // 6. /api/ports
+    // 7. /api/ports
     if (pathname === '/api/ports') {
       exec('powershell -NoProfile -Command "[System.IO.Ports.SerialPort]::GetPortNames()"', (err, stdout) => {
         res.setHeader('Content-Type', 'application/json');
@@ -147,7 +179,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 7. /api/modbus/connect
+    // 8. /api/modbus/connect
     if (pathname === '/api/modbus/connect' && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const port = body.port || 'COM4';
@@ -165,9 +197,8 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 8. /api/modbus/poll
+    // 9. /api/modbus/poll
     if (pathname === '/api/modbus/poll' && req.method === 'GET') {
-      // Validate remote session token if incoming request is from a remote client
       if (sessionToken) {
         const check = remoteLabManager.validateSession(sessionToken);
         if (!check.valid) {
@@ -183,9 +214,8 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 9. /api/modbus/write
+    // 10. /api/modbus/write
     if (pathname === '/api/modbus/write' && req.method === 'POST') {
-      // Validate remote session token if incoming request is from a remote client
       if (sessionToken) {
         const check = remoteLabManager.validateSession(sessionToken);
         if (!check.valid) {
@@ -201,7 +231,6 @@ function createApiServer(distPath) {
       const reg = String(body.register || '').toLowerCase();
       const val = body.value;
 
-      // Update session activity for host monitoring
       if (sessionToken) {
         remoteLabManager.validateSession(sessionToken, `Wrote ${reg.toUpperCase()}=${val}`);
       }
@@ -260,7 +289,7 @@ function createApiServer(distPath) {
       return;
     }
 
-    // 10. /api/modbus/disconnect
+    // 11. /api/modbus/disconnect
     if (pathname === '/api/modbus/disconnect' && req.method === 'POST') {
       await bridgeInstance.disconnect();
       res.setHeader('Content-Type', 'application/json');
@@ -277,7 +306,6 @@ function createApiServer(distPath) {
 
     let filePath = path.join(distPath, pathname === '/' ? 'index.html' : pathname);
 
-    // If requested path doesn't exist, fallback to index.html (SPA routing support)
     if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
       filePath = path.join(distPath, 'index.html');
     }
@@ -298,13 +326,23 @@ function createApiServer(distPath) {
 
   return {
     server,
-    start: () => {
+    start: (preferredPort = 5173) => {
       return new Promise((resolve, reject) => {
-        server.listen(0, '0.0.0.0', () => {
-          const address = server.address();
-          resolve(address.port);
-        });
-        server.on('error', reject);
+        const tryListen = (p) => {
+          server.once('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+              console.warn(`[API Server] Port ${p} in use, trying ${p + 1}...`);
+              tryListen(p + 1);
+            } else {
+              reject(err);
+            }
+          });
+          server.listen(p, '0.0.0.0', () => {
+            const address = server.address();
+            resolve(address.port);
+          });
+        };
+        tryListen(preferredPort);
       });
     },
     stop: async () => {
