@@ -134,6 +134,40 @@ function serialPortPlugin(): Plugin {
           return
         }
 
+        if (pathname === '/api/remote/tunnel/start' && req.method === 'POST') {
+          try {
+            const result = await remoteLabManager.startTunnel(5173)
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(result))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ success: false, error: String(err && (err as any).message ? (err as any).message : err) }))
+          }
+          return
+        }
+
+        if (pathname === '/api/remote/tunnel/stop' && req.method === 'POST') {
+          const result = remoteLabManager.stopTunnel()
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(result))
+          return
+        }
+
+        if (pathname === '/api/remote/tunnel/status' && req.method === 'GET') {
+          const status = remoteLabManager.getTunnelStatus()
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ success: true, ...status }))
+          return
+        }
+
+        if (pathname === '/api/remote/tunnel/test' && req.method === 'POST') {
+          const testResult = await remoteLabManager.testTunnel()
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(testResult))
+          return
+        }
+
         // ── Serial & Modbus RTU Endpoints ─────────────────────────
         if (pathname === '/api/ports') {
           exec('powershell -NoProfile -Command "[System.IO.Ports.SerialPort]::GetPortNames()"', (err, stdout) => {

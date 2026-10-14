@@ -13,6 +13,7 @@ dist-ssr
 release
 dist-installer
 cloudflared.exe
+active_tunnel_url.txt
 *.local
 
 # Editor directories and files

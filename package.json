@@ -49,6 +49,10 @@
         "to": "modbus_daemon.ps1"
       },
       {
+        "from": "cloudflared.exe",
+        "to": "cloudflared.exe"
+      },
+      {
         "from": "ace.ico",
         "to": "ace.ico"
       }

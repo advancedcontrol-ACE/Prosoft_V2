@@ -352,6 +352,213 @@
   font-family: 'Consolas', monospace;
 }
 
+/* ── Host In-App Cloudflare Tunnel Styles ── */
+.host-tunnel-box {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.host-tunnel-box.active {
+  background: #f0f9ff;
+  border-color: #38bdf8;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.12);
+}
+
+.tunnel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tunnel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #0f172a;
+}
+
+.tunnel-icon {
+  font-size: 14px;
+}
+
+.tunnel-status-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.tunnel-status-pill.running {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.tunnel-status-pill.starting {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
+.tunnel-status-pill.stopped {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
+.tunnel-active-body,
+.tunnel-inactive-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tunnel-url-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tunnel-url-display {
+  background: #0f172a;
+  color: #38bdf8;
+  font-family: 'Consolas', monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  flex: 1;
+  min-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-tunnel-copy {
+  background: #0284c7;
+  color: #ffffff;
+  border: 1px solid #0369a1;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-tunnel-copy:hover {
+  background: #0369a1;
+}
+
+.btn-tunnel-test {
+  background: #4f46e5;
+  color: #ffffff;
+  border: 1px solid #4338ca;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-tunnel-test:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.btn-tunnel-test:disabled,
+.btn-tunnel-stop:disabled,
+.btn-start-tunnel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-tunnel-stop {
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid #dc2626;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-tunnel-stop:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-start-tunnel {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff;
+  border: 1px solid #1d4ed8;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
+}
+
+.btn-start-tunnel:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.tunnel-desc {
+  font-size: 11px;
+  color: #475569;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.tunnel-hint {
+  font-size: 10.5px;
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.tunnel-test-result {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tunnel-test-result.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.tunnel-test-result.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.tunnel-error-alert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
+
 /* ── Students Monitor Table ── */
 .connected-students-section {
   display: flex;

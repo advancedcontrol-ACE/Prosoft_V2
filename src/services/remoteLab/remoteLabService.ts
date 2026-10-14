@@ -36,6 +36,25 @@ export interface RemoteSessionsResponse {
   sessions: RemoteSession[];
 }
 
+export interface TunnelStatusResponse {
+  success: boolean;
+  status: 'stopped' | 'starting' | 'running' | 'error';
+  url: string | null;
+  error: string | null;
+  hasCloudflared: boolean;
+}
+
+export interface TunnelTestResponse {
+  success: boolean;
+  reachable: boolean;
+  latencyMs?: number;
+  tunnelUrl?: string;
+  serverName?: string;
+  hardwareConnected?: boolean;
+  activePort?: string;
+  error?: string;
+}
+
 export class RemoteLabClient {
   private static instance: RemoteLabClient;
   private currentHostUrl = '';
@@ -166,6 +185,47 @@ export class RemoteLabClient {
     if (!res.ok) throw new Error('Failed to update passkey');
     const data = await res.json();
     return data.passkey;
+  }
+
+  /**
+   * Host gets status of the Cloudflare tunnel
+   */
+  public async getTunnelStatus(hostUrl?: string): Promise<TunnelStatusResponse> {
+    const base = this.normalizeUrl(hostUrl || this.currentHostUrl);
+    const res = await fetch(`${base}/api/remote/tunnel/status`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  /**
+   * Host starts the Cloudflare tunnel
+   */
+  public async startTunnel(hostUrl?: string): Promise<TunnelStatusResponse & { tunnelUrl?: string }> {
+    const base = this.normalizeUrl(hostUrl || this.currentHostUrl);
+    const res = await fetch(`${base}/api/remote/tunnel/start`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to start tunnel');
+    }
+    return data;
+  }
+
+  /**
+   * Host stops the Cloudflare tunnel
+   */
+  public async stopTunnel(hostUrl?: string): Promise<{ success: boolean }> {
+    const base = this.normalizeUrl(hostUrl || this.currentHostUrl);
+    const res = await fetch(`${base}/api/remote/tunnel/stop`, { method: 'POST' });
+    return res.json();
+  }
+
+  /**
+   * Host tests the Cloudflare tunnel reachability and latency
+   */
+  public async testTunnel(hostUrl?: string): Promise<TunnelTestResponse> {
+    const base = this.normalizeUrl(hostUrl || this.currentHostUrl);
+    const res = await fetch(`${base}/api/remote/tunnel/test`, { method: 'POST' });
+    return res.json();
   }
 
   public disconnect() {

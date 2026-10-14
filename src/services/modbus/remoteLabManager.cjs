@@ -1,13 +1,38 @@
 // ============================================================
-// Remote Lab Manager: Session Management, Passkey Auth & Monitoring
+// Remote Lab Manager: Session Management, Passkey Auth & Tunnel Manager
 // ============================================================
+
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+function getCloudflaredPath() {
+  const candidates = [
+    path.resolve(__dirname, '../../../cloudflared.exe'),
+    path.resolve(__dirname, '../../cloudflared.exe'),
+    path.resolve(__dirname, '../cloudflared.exe'),
+    path.resolve(__dirname, 'cloudflared.exe'),
+    process.resourcesPath ? path.join(process.resourcesPath, 'cloudflared.exe') : null,
+    path.resolve(process.cwd(), 'cloudflared.exe'),
+    'cloudflared.exe',
+  ];
+  for (const c of candidates) {
+    if (c && fs.existsSync(c)) {
+      return c;
+    }
+  }
+  return 'cloudflared.exe';
+}
 
 class RemoteLabManager {
   constructor() {
     this.passkey = 'ACE-101';
     this.allowRemote = true;
-    // Map of token -> session object
     this.sessions = new Map();
+    this.tunnelProcess = null;
+    this.tunnelUrl = null;
+    this.tunnelStatus = 'stopped'; // 'stopped' | 'starting' | 'running' | 'error'
+    this.tunnelError = null;
   }
 
   getPasskey() {
@@ -30,7 +55,6 @@ class RemoteLabManager {
       return { success: false, error: 'Invalid Lab Access Passkey.' };
     }
 
-    // Generate unique session token
     const token = 'sess_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
     const session = {
       token,
@@ -83,7 +107,6 @@ class RemoteLabManager {
   }
 
   getActiveSessions() {
-    // Return sessions as array, sorted by latest activity
     const list = Array.from(this.sessions.values()).map((s) => ({
       token: s.token,
       studentName: s.studentName,
@@ -96,13 +119,139 @@ class RemoteLabManager {
     return list.sort((a, b) => b.lastSeen - a.lastSeen);
   }
 
-  clearRevokedSessions() {
-    for (const [token, s] of this.sessions.entries()) {
-      if (s.status === 'revoked') {
-        this.sessions.delete(token);
-      }
+  // ── In-App Cloudflare Tunnel Management ─────────────────────────
+
+  getTunnelStatus() {
+    return {
+      status: this.tunnelStatus,
+      tunnelUrl: this.tunnelUrl,
+      error: this.tunnelError,
+    };
+  }
+
+  startTunnel(localPort = 5173) {
+    if (this.tunnelProcess && this.tunnelUrl) {
+      return Promise.resolve({
+        success: true,
+        tunnelUrl: this.tunnelUrl,
+        alreadyRunning: true,
+      });
     }
-    return true;
+
+    this.stopTunnel();
+    this.tunnelStatus = 'starting';
+    this.tunnelError = null;
+    this.tunnelUrl = null;
+
+    const bin = getCloudflaredPath();
+
+    return new Promise((resolve, reject) => {
+      let resolved = false;
+
+      try {
+        this.tunnelProcess = spawn(bin, ['tunnel', '--url', `http://127.0.0.1:${localPort}`]);
+      } catch (err) {
+        this.tunnelStatus = 'error';
+        this.tunnelError = String(err);
+        return reject(err);
+      }
+
+      const onData = (data) => {
+        const text = data.toString();
+        const match = text.match(/(https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com)/);
+        if (match && !resolved) {
+          resolved = true;
+          this.tunnelUrl = match[1];
+          this.tunnelStatus = 'running';
+
+          try {
+            const outTxt = path.resolve(process.cwd(), 'active_tunnel_url.txt');
+            fs.writeFileSync(outTxt, this.tunnelUrl);
+          } catch {}
+
+          resolve({
+            success: true,
+            tunnelUrl: this.tunnelUrl,
+          });
+        }
+      };
+
+      this.tunnelProcess.stdout.on('data', onData);
+      this.tunnelProcess.stderr.on('data', onData);
+
+      this.tunnelProcess.on('error', (err) => {
+        this.tunnelStatus = 'error';
+        this.tunnelError = err.message;
+        if (!resolved) {
+          resolved = true;
+          reject(err);
+        }
+      });
+
+      this.tunnelProcess.on('exit', () => {
+        this.tunnelProcess = null;
+        this.tunnelUrl = null;
+        this.tunnelStatus = 'stopped';
+      });
+
+      // 25 second timeout
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          this.tunnelStatus = 'error';
+          this.tunnelError = 'Timeout waiting for Cloudflare Tunnel URL';
+          reject(new Error(this.tunnelError));
+        }
+      }, 25000);
+    });
+  }
+
+  stopTunnel() {
+    if (this.tunnelProcess) {
+      try {
+        this.tunnelProcess.kill('SIGTERM');
+      } catch {}
+      this.tunnelProcess = null;
+    }
+    this.tunnelUrl = null;
+    this.tunnelStatus = 'stopped';
+    this.tunnelError = null;
+    return { success: true };
+  }
+
+  async testTunnel() {
+    if (!this.tunnelUrl) {
+      return { success: false, reachable: false, error: 'No active tunnel running.' };
+    }
+
+    try {
+      const startTime = Date.now();
+      const res = await fetch(`${this.tunnelUrl}/api/remote/status`, {
+        signal: AbortSignal.timeout(8000),
+      });
+      const latencyMs = Date.now() - startTime;
+
+      if (!res.ok) {
+        return { success: false, reachable: false, error: `HTTP ${res.status}` };
+      }
+
+      const data = await res.json();
+      return {
+        success: true,
+        reachable: true,
+        latencyMs,
+        tunnelUrl: this.tunnelUrl,
+        serverName: data.serverName,
+        hardwareConnected: data.hardwareConnected,
+        activePort: data.activePort,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        reachable: false,
+        error: String(err && err.message ? err.message : err),
+      };
+    }
   }
 }
 

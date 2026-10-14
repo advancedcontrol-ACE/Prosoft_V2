@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DeltaDTBService } from '../../services/modbus/dtb9696Modbus';
 import { fetchAvailablePorts } from '../../services/modbus/serialPorts';
-import { RemoteLabClient, type RemoteSession } from '../../services/remoteLab/remoteLabService';
+import {
+  RemoteLabClient,
+  type RemoteSession,
+  type TunnelTestResponse,
+} from '../../services/remoteLab/remoteLabService';
 import './ComPortModal.css';
 
 interface ComPortModalProps {
@@ -32,6 +36,15 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
   const [tempPasskey, setTempPasskey] = useState('');
   const [remoteSessions, setRemoteSessions] = useState<RemoteSession[]>([]);
   const [isRefreshingSessions, setIsRefreshingSessions] = useState(false);
+
+  // In-App Cloudflare Tunnel States
+  const [tunnelStatus, setTunnelStatus] = useState<'stopped' | 'starting' | 'running' | 'error'>('stopped');
+  const [tunnelUrl, setTunnelUrl] = useState<string | null>(null);
+  const [tunnelError, setTunnelError] = useState<string | null>(null);
+  const [isStartingTunnel, setIsStartingTunnel] = useState(false);
+  const [isStoppingTunnel, setIsStoppingTunnel] = useState(false);
+  const [isTestingTunnel, setIsTestingTunnel] = useState(false);
+  const [tunnelTestResult, setTunnelTestResult] = useState<TunnelTestResponse | null>(null);
 
   // Remote Student Client States
   const [remoteHostUrl, setRemoteHostUrl] = useState<string>(() => {
@@ -68,14 +81,16 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
         .catch(() => {});
 
       refreshHostSessions();
+      refreshTunnelStatus();
     }
   }, [isOpen]);
 
-  // Periodic poll for host sessions when modal is open on local mode
+  // Periodic poll for host sessions and tunnel status when modal is open on local mode
   useEffect(() => {
     if (!isOpen || modalMode !== 'local') return;
     const interval = setInterval(() => {
       refreshHostSessions();
+      refreshTunnelStatus();
     }, 3000);
     return () => clearInterval(interval);
   }, [isOpen, modalMode]);
@@ -90,6 +105,74 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
       // ignore if local server not running or in client mode
     } finally {
       setIsRefreshingSessions(false);
+    }
+  };
+
+  const refreshTunnelStatus = async () => {
+    try {
+      const res = await RemoteLabClient.getInstance().getTunnelStatus();
+      if (res && res.success) {
+        setTunnelStatus(res.status);
+        if (res.url) setTunnelUrl(res.url);
+        if (res.status === 'stopped') {
+          setTunnelUrl(null);
+          setTunnelTestResult(null);
+        }
+        if (res.error) setTunnelError(res.error);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleStartTunnel = async () => {
+    setIsStartingTunnel(true);
+    setTunnelError(null);
+    setTunnelTestResult(null);
+    setTunnelStatus('starting');
+    try {
+      const res = await RemoteLabClient.getInstance().startTunnel();
+      if (res.tunnelUrl) {
+        setTunnelUrl(res.tunnelUrl);
+        setTunnelStatus('running');
+      }
+    } catch (err: any) {
+      setTunnelError(err?.message || 'Failed to start Cloudflare Tunnel');
+      setTunnelStatus('error');
+    } finally {
+      setIsStartingTunnel(false);
+    }
+  };
+
+  const handleStopTunnel = async () => {
+    setIsStoppingTunnel(true);
+    try {
+      await RemoteLabClient.getInstance().stopTunnel();
+      setTunnelStatus('stopped');
+      setTunnelUrl(null);
+      setTunnelTestResult(null);
+      setTunnelError(null);
+    } catch (err: any) {
+      setTunnelError(err?.message || 'Failed to stop Cloudflare Tunnel');
+    } finally {
+      setIsStoppingTunnel(false);
+    }
+  };
+
+  const handleTestTunnel = async () => {
+    setIsTestingTunnel(true);
+    setTunnelTestResult(null);
+    try {
+      const res = await RemoteLabClient.getInstance().testTunnel();
+      setTunnelTestResult(res);
+    } catch (err: any) {
+      setTunnelTestResult({
+        success: false,
+        reachable: false,
+        error: err?.message || 'Failed to contact tunnel URL',
+      });
+    } finally {
+      setIsTestingTunnel(false);
     }
   };
 
@@ -316,8 +399,109 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
                   <span className="host-ip-hint">If student & teacher are on the same Wi-Fi/router, student enters this directly!</span>
                 </div>
 
-                <div className="host-tip-box">
-                  🌐 <strong>For Internet Access (Different Locations):</strong> Double-click <code>Start_Remote_Lab_Tunnel.bat</code> in the app folder to get your real unique link (e.g. <code>https://xxxx.trycloudflare.com</code>) to give to remote students.
+                {/* Cloudflare Internet Tunnel Section (In-App Host Control) */}
+                <div className={`host-tunnel-box ${tunnelStatus === 'running' ? 'active' : ''}`}>
+                  <div className="tunnel-header-row">
+                    <div className="tunnel-title">
+                      <span className="tunnel-icon">🌐</span>
+                      <strong>Internet Remote Lab Tunnel (Worldwide Access):</strong>
+                    </div>
+                    {tunnelStatus === 'running' ? (
+                      <span className="tunnel-status-pill running">🟢 Live Online</span>
+                    ) : tunnelStatus === 'starting' || isStartingTunnel ? (
+                      <span className="tunnel-status-pill starting">⏳ Initializing...</span>
+                    ) : (
+                      <span className="tunnel-status-pill stopped">⚪ Stopped</span>
+                    )}
+                  </div>
+
+                  {tunnelStatus === 'running' && tunnelUrl ? (
+                    <div className="tunnel-active-body">
+                      <div className="tunnel-url-row">
+                        <code className="tunnel-url-display">{tunnelUrl}</code>
+                        <button
+                          type="button"
+                          className="btn-tunnel-copy"
+                          onClick={() => {
+                            navigator.clipboard.writeText(tunnelUrl);
+                            alert(`Copied ${tunnelUrl} to clipboard!\nShare this link with your remote students.`);
+                          }}
+                        >
+                          📋 Copy Link
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-tunnel-test"
+                          onClick={handleTestTunnel}
+                          disabled={isTestingTunnel}
+                        >
+                          {isTestingTunnel ? '🧪 Testing...' : '🧪 Test Connection'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-tunnel-stop"
+                          onClick={handleStopTunnel}
+                          disabled={isStoppingTunnel}
+                        >
+                          {isStoppingTunnel ? 'Stopping...' : '⏹️ Stop'}
+                        </button>
+                      </div>
+
+                      {tunnelTestResult && (
+                        <div
+                          className={`tunnel-test-result ${
+                            tunnelTestResult.reachable ? 'success' : 'error'
+                          }`}
+                        >
+                          {tunnelTestResult.reachable ? (
+                            <>
+                              ✅ <strong>Host Reachable via Internet!</strong> Latency:{' '}
+                              <strong>{tunnelTestResult.latencyMs} ms</strong> &bull; Hardware:{' '}
+                              <span
+                                style={{
+                                  color: tunnelTestResult.hardwareConnected ? '#059669' : '#d97706',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {tunnelTestResult.hardwareConnected
+                                  ? `Connected (${tunnelTestResult.activePort})`
+                                  : 'COM Port Offline'}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              ❌ <strong>Reachability Check Failed:</strong>{' '}
+                              {tunnelTestResult.error || 'Server did not respond'}
+                            </>
+                          )}
+                        </div>
+                      )}
+                      <span className="tunnel-hint">
+                        Students anywhere in the world can paste this link into their "Remote Lab Client" tab!
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="tunnel-inactive-body">
+                      <p className="tunnel-desc">
+                        Creates an encrypted, secure Cloudflare tunnel directly to this host PC. No router port-forwarding or public IP needed.
+                      </p>
+                      {tunnelError && (
+                        <div className="tunnel-error-alert">
+                          ⚠️ {tunnelError}
+                        </div>
+                      )}
+                      <div className="tunnel-action-row">
+                        <button
+                          type="button"
+                          className="btn-start-tunnel"
+                          onClick={handleStartTunnel}
+                          disabled={isStartingTunnel}
+                        >
+                          {isStartingTunnel ? '⏳ Creating Tunnel Link (5-10s)...' : '🚀 Start Cloudflare Tunnel URL'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Connected Students Table */}

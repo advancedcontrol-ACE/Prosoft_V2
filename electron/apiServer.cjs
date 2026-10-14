@@ -159,6 +159,45 @@ function createApiServer(distPath) {
       return;
     }
 
+    // 6a. /api/remote/tunnel/start - Host starting the Cloudflare tunnel
+    if (pathname === '/api/remote/tunnel/start' && req.method === 'POST') {
+      const port = server.address() ? server.address().port : 5173;
+      try {
+        const result = await remoteLabManager.startTunnel(port);
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+      } catch (err) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: false, error: String(err && err.message ? err.message : err) }));
+      }
+      return;
+    }
+
+    // 6b. /api/remote/tunnel/stop - Host stopping the Cloudflare tunnel
+    if (pathname === '/api/remote/tunnel/stop' && req.method === 'POST') {
+      const result = remoteLabManager.stopTunnel();
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(result));
+      return;
+    }
+
+    // 6c. /api/remote/tunnel/status - Status of the Cloudflare tunnel
+    if (pathname === '/api/remote/tunnel/status' && req.method === 'GET') {
+      const status = remoteLabManager.getTunnelStatus();
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ success: true, ...status }));
+      return;
+    }
+
+    // 6d. /api/remote/tunnel/test - Test tunnel connectivity and latency
+    if (pathname === '/api/remote/tunnel/test' && req.method === 'POST') {
+      const testResult = await remoteLabManager.testTunnel();
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(testResult));
+      return;
+    }
+
     // ── Hardware & Modbus RTU Endpoints ────────────────────────
 
     // 7. /api/ports
