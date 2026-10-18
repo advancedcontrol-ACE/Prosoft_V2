@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import './ProcessSchematic.css';
 import { ProcessSchematicSvg } from './ProcessSchematicSvg';
+import piDiagramImg from '../../assets/pi_diagram.png';
 
 interface ProcessSchematicProps {
   pv: number;
   sp: number;
   op: number;
   isRunning?: boolean;
-  firebaseUrl: string;
-  enableIoT: boolean;
-  onFirebaseUrlChange: (val: string) => void;
-  onToggleIoT: () => void;
+  firebaseUrl?: string;
+  enableIoT?: boolean;
+  onFirebaseUrlChange?: (val: string) => void;
+  onToggleIoT?: () => void;
 }
 
 export const ProcessSchematic: React.FC<ProcessSchematicProps> = ({
@@ -18,26 +19,24 @@ export const ProcessSchematic: React.FC<ProcessSchematicProps> = ({
   sp,
   op,
   isRunning = false,
-  firebaseUrl,
-  enableIoT,
-  onFirebaseUrlChange,
-  onToggleIoT,
 }) => {
   const [activeTab, setActiveTab] = useState<'schematic' | 'pid'>('schematic');
   const [currentTime, setCurrentTime] = useState<string>('');
 
+  const formatSystemClock = (d: Date = new Date()): string => {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    // Match exact Windows system format: dd-MM-yyyy (e.g. 18-10-2026) and 24-hour HH:mm:ss (e.g. 20:47:55)
+    return `${day}-${month}-${year} - ${hours}:${minutes}:${seconds}`;
+  };
+
   useEffect(() => {
     const updateTime = () => {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const year = now.getFullYear();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      setCurrentTime(`${month}/${day}/${year} - ${hours}:${minutes}:${seconds} ${ampm}`);
+      setCurrentTime(formatSystemClock());
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
@@ -77,53 +76,21 @@ export const ProcessSchematic: React.FC<ProcessSchematicProps> = ({
             />
           </div>
         ) : (
-          <div className="pid-placeholder">
-            <div className="pid-info-box">
-              <h3>P &amp; I Diagram (Level Control ACE 101)</h3>
-              <p>Piping and Instrumentation Diagram with ISA-5.1 tag annotations:</p>
-              <ul>
-                <li><strong>LIC-101:</strong> Level Indicating Controller (Delta DTB9696)</li>
-                <li><strong>LT-101:</strong> Hydrostatic Level Transmitter (4-20 mA)</li>
-                <li><strong>FY-101:</strong> Current-to-Pneumatic (I/P) Converter (4-20mA to 3-15 psi)</li>
-                <li><strong>FCV-101:</strong> Pneumatic Control Valve (Air to Open)</li>
-                <li><strong>FI-101:</strong> Variable Area Flowmeter (Rotameter)</li>
-              </ul>
-            </div>
+          <div className="pid-content-area">
+            <img
+              src={piDiagramImg}
+              alt="P & I Diagram (Level Control ACE 101)"
+              className="pid-diagram-img"
+            />
           </div>
         )}
       </div>
 
-      {/* Bottom Controls Bar: Firebase URL + IoT Toggle + Live Timestamp */}
+      {/* Bottom Status Bar: Live System Clock */}
       <div className="schematic-footer">
-        <div className="footer-left-controls">
-          <div className="footer-field">
-            <label htmlFor="firebase-url-input">Firebase URL</label>
-            <input
-              id="firebase-url-input"
-              type="text"
-              value={firebaseUrl}
-              placeholder="https://your-project.firebaseio.com"
-              onChange={(e) => onFirebaseUrlChange(e.target.value)}
-              className="firebase-input"
-            />
-          </div>
-
-          <div className="footer-iot-field">
-            <span className="iot-label">Enable IoT</span>
-            <button
-              type="button"
-              className={`iot-toggle-switch ${enableIoT ? 'on' : 'off'}`}
-              onClick={onToggleIoT}
-              title="Enable Industrial IoT Gateway"
-            >
-              <span className="iot-thumb" />
-            </button>
-          </div>
-        </div>
-
-        {/* Live Date/Time Stamp matching Figure 1 bottom center */}
         <div className="footer-timestamp">
-          {currentTime || '10/10/2026 - 11:50:34 PM'}
+          <span className="clock-icon">🕒</span>
+          <span className="clock-text">{currentTime || formatSystemClock()}</span>
         </div>
       </div>
     </div>

@@ -26,31 +26,51 @@ public class ModbusCRC {
 "@
 
 $global:serialPort = $null
+$global:lastState = @{
+    pv = 0
+    sp = 500
+    autoMan = 0
+    action = 0
+    pb = 1000
+    ti = 100
+    td = 0
+    bias = 500
+    op = 0
+}
 
 function Send-ModbusFrame([byte[]]$pdu, [int]$expectedBytes, [int]$timeoutMs = 400) {
     if (-not $global:serialPort -or -not $global:serialPort.IsOpen) {
         return @{ error = "Port not open" }
     }
 
-    $crc = [ModbusCRC]::CalculateCRC($pdu, $pdu.Length)
-    $frame = [byte[]]@($pdu[0], $pdu[1], $pdu[2], $pdu[3], $pdu[4], $pdu[5], [byte]($crc -band 0xFF), [byte](($crc -shr 8) -band 0xFF))
+    try {
+        $crc = [ModbusCRC]::CalculateCRC($pdu, $pdu.Length)
+        $frame = [byte[]]@($pdu[0], $pdu[1], $pdu[2], $pdu[3], $pdu[4], $pdu[5], [byte]($crc -band 0xFF), [byte](($crc -shr 8) -band 0xFF))
 
-    $global:serialPort.DiscardInBuffer()
-    $global:serialPort.DiscardOutBuffer()
-    $global:serialPort.Write($frame, 0, $frame.Length)
+        $global:serialPort.DiscardInBuffer()
+        $global:serialPort.DiscardOutBuffer()
+        $global:serialPort.Write($frame, 0, $frame.Length)
 
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    while ($global:serialPort.BytesToRead -lt $expectedBytes -and $sw.ElapsedMilliseconds -lt $timeoutMs) {
-        Start-Sleep -Milliseconds 10
-    }
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        while ($global:serialPort.BytesToRead -lt $expectedBytes -and $sw.ElapsedMilliseconds -lt $timeoutMs) {
+            Start-Sleep -Milliseconds 5
+        }
 
-    $avail = $global:serialPort.BytesToRead
-    if ($avail -ge $expectedBytes) {
-        $buf = New-Object byte[] $avail
-        $global:serialPort.Read($buf, 0, $avail)
-        return @{ success = $true; data = $buf }
-    } else {
-        return @{ error = "Timeout after ${timeoutMs}ms (got $avail of $expectedBytes bytes)" }
+        $avail = $global:serialPort.BytesToRead
+        if ($avail -ge $expectedBytes) {
+            $buf = New-Object byte[] $avail
+            $global:serialPort.Read($buf, 0, $avail)
+            Start-Sleep -Milliseconds 25  # Half-duplex RS-485 transceiver turnaround pause
+            return @{ success = $true; data = $buf }
+        } else {
+            Start-Sleep -Milliseconds 25
+            return @{ error = "Timeout after ${timeoutMs}ms (got $avail of $expectedBytes bytes)" }
+        }
+    } catch {
+        # Hardware unplugged while port was open: clean up handle immediately
+        try { if ($global:serialPort) { $global:serialPort.Close(); $global:serialPort.Dispose() } } catch {}
+        $global:serialPort = $null
+        return @{ error = "Port I/O error: $($_.Exception.Message)" }
     }
 }
 
@@ -86,6 +106,16 @@ function Write-Reg([int]$slaveId, [int]$addr, [int]$val) {
     return $res
 }
 
+function Write-Bit([int]$slaveId, [int]$addr, [bool]$val) {
+    $hi = if ($val) { [byte]0xFF } else { [byte]0x00 }
+    $pdu = [byte[]]@([byte]$slaveId, 0x05, [byte](($addr -shr 8) -band 0xFF), [byte]($addr -band 0xFF), $hi, [byte]0x00)
+    $res = Send-ModbusFrame $pdu 8 500
+    if ($res.success) {
+        return @{ success = $true }
+    }
+    return $res
+}
+
 Write-Output '{"status":"ready"}'
 
 while ($true) {
@@ -107,6 +137,10 @@ while ($true) {
             $global:serialPort.ReadTimeout = 400
             $global:serialPort.WriteTimeout = 400
             $global:serialPort.Open()
+            # Enable Communication Write-In (0810H) & Run (0814H) on controller
+            $slaveId = if ($cmd.slaveId) { [int]$cmd.slaveId } else { 1 }
+            Write-Bit $slaveId 0x0810 $true | Out-Null
+            Write-Bit $slaveId 0x0814 $true | Out-Null
             Write-Output ((@{ status = "opened"; port = $pName; baud = $baud } | ConvertTo-Json -Compress))
         }
         elseif ($action -eq "close") {
@@ -128,25 +162,40 @@ while ($true) {
             # 4. OP: 1012H (count 1)
             $r4 = Read-Regs $slaveId 0x1012 1
 
-            $pvRaw = if ($r1.success) { $r1.values[0] } else { 0 }
-            $spRaw = if ($r1.success) { $r1.values[1] } else { 0 }
+            if ($r1.success) {
+                $global:lastState.pv = $r1.values[0]
+                $global:lastState.sp = $r1.values[1]
+            }
+            if ($r2.success) {
+                $global:lastState.autoMan = $r2.values[0]
+                $global:lastState.action = $r2.values[1]
+            }
+            if ($r3.success) {
+                $global:lastState.pb = $r3.values[0]
+                $global:lastState.ti = $r3.values[1]
+                $global:lastState.td = $r3.values[2]
+                $global:lastState.bias = $r3.values[3]
+            }
+            if ($r4.success) {
+                $global:lastState.op = $r4.values[0]
+            }
 
-            $autoManRaw = if ($r2.success) { $r2.values[0] } else { 0 }
-            $actionRaw = if ($r2.success) { $r2.values[1] } else { 0 }
-
-            $pbRaw = if ($r3.success) { $r3.values[0] } else { 0 }
-            $tiRaw = if ($r3.success) { $r3.values[1] } else { 0 }
-            $tdRaw = if ($r3.success) { $r3.values[2] } else { 0 }
-            $biasRaw = if ($r3.success) { $r3.values[3] } else { 0 }
-
-            $opRaw = if ($r4.success) { $r4.values[0] } else { 0 }
+            $pvRaw = $global:lastState.pv
+            $spRaw = $global:lastState.sp
+            $autoManRaw = $global:lastState.autoMan
+            $actionRaw = $global:lastState.action
+            $pbRaw = $global:lastState.pb
+            $tiRaw = $global:lastState.ti
+            $tdRaw = $global:lastState.td
+            $biasRaw = $global:lastState.bias
+            $opRaw = $global:lastState.op
 
             # Conversions per requirements:
             # PV: divided by 10
             # SP: divided by 10 (since stored multiplied by 10)
             # PB: divided by 10 (since stored multiplied by 10)
             # Action: 0 = Reverse, 1 = Direct
-            # AutoMan: 0 = Auto, 1 = Manual
+            # AutoMan: 2 = Manual, 0 = Auto
             $payload = @{
                 status = "ok"
                 timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
@@ -159,9 +208,9 @@ while ($true) {
                 pb = [Math]::Round(($pbRaw / 10.0), 1)
                 it = $tiRaw
                 dt = $tdRaw
-                bias = $biasRaw
+                bias = [Math]::Round(($biasRaw / 10.0), 1)
                 op = [Math]::Round(($opRaw / 10.0), 1)
-                autoMan = if ($autoManRaw -eq 1) { "Manual" } else { "Auto" }
+                autoMan = if ($autoManRaw -eq 2) { "Manual" } else { "Auto" }
                 action = if ($actionRaw -eq 1 -or $actionRaw -eq 512) { "Direct" } else { "Reverse" }
             }
             Write-Output ($payload | ConvertTo-Json -Compress)
@@ -170,7 +219,21 @@ while ($true) {
             $slaveId = if ($cmd.slaveId) { [int]$cmd.slaveId } else { 1 }
             $addr = [int]$cmd.addr
             $val = [int]$cmd.val
-            $res = Write-Reg $slaveId $addr $val
+            if ($addr -eq 0x0810 -or $addr -eq 0x0813 -or $addr -eq 0x0814) {
+                $res = Write-Bit $slaveId $addr ($val -ne 0)
+            } else {
+                $res = Write-Reg $slaveId $addr $val
+            }
+            if ($res.success) {
+                if ($addr -eq 0x1001) { $global:lastState.sp = $val }
+                elseif ($addr -eq 0x1005) { $global:lastState.autoMan = $val }
+                elseif ($addr -eq 0x1006) { $global:lastState.action = $val }
+                elseif ($addr -eq 0x1009) { $global:lastState.pb = $val }
+                elseif ($addr -eq 0x100A) { $global:lastState.ti = $val }
+                elseif ($addr -eq 0x100B) { $global:lastState.td = $val }
+                elseif ($addr -eq 0x100C) { $global:lastState.bias = $val }
+                elseif ($addr -eq 0x1012) { $global:lastState.op = $val }
+            }
             Write-Output ($res | ConvertTo-Json -Compress)
         }
         elseif ($action -eq "quit") {

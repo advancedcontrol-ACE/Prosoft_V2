@@ -53,6 +53,14 @@ async function createWindow(targetUrl) {
 
   mainWindow.setMenuBarVisibility(false);
 
+  // Disable right-click on the top window title bar
+  const WM_NCRBUTTONDOWN = 0x00A4;
+  const WM_NCRBUTTONUP = 0x00A5;
+  const WM_CONTEXTMENU = 0x007B;
+  mainWindow.hookWindowMessage(WM_NCRBUTTONDOWN, () => {});
+  mainWindow.hookWindowMessage(WM_NCRBUTTONUP, () => {});
+  mainWindow.hookWindowMessage(WM_CONTEXTMENU, () => {});
+
   // Maximize and prevent resize per user requirement
   mainWindow.maximize();
   mainWindow.setResizable(false);

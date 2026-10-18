@@ -1,0 +1,160 @@
+/* ============================================================
+   Experiment Notice Modal Styling (LabVIEW / Industrial Windows)
+   ============================================================ */
+
+.exp-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+  animation: expModalFadeIn 0.15s ease-out;
+}
+
+@keyframes expModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.exp-modal-window {
+  width: 440px;
+  max-width: 90vw;
+  background: #f8fafc;
+  border: 2px solid #0047ba;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 71, 186, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  animation: expModalPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes expModalPop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Titlebar */
+.exp-modal-titlebar {
+  background: linear-gradient(180deg, #0052cc 0%, #003d99 100%);
+  color: #ffffff;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  user-select: none;
+}
+
+.exp-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exp-title-icon {
+  font-size: 15px;
+}
+
+.exp-close-x {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+
+.exp-close-x:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Body */
+.exp-modal-body {
+  padding: 22px 20px 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+}
+
+.exp-info-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.exp-modal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exp-highlight-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0047ba;
+}
+
+.exp-modal-message {
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.exp-modal-message strong {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+/* Footer */
+.exp-modal-footer {
+  background: #f1f5f9;
+  border-top: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.exp-modal-btn {
+  padding: 7px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.exp-btn-ok {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: 1px solid #1e40af;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.exp-btn-ok:hover {
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+.exp-btn-ok:focus {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}

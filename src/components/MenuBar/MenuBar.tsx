@@ -115,11 +115,7 @@ const TopLevelItem: React.FC<TopLevelItemProps> = ({
       onMouseEnter={onOpen}
       onClick={(e) => {
         e.stopPropagation();
-        if (isOpen) {
-          onClose();
-        } else {
-          onOpen();
-        }
+        onOpen();
       }}
       role="menuitem"
       aria-haspopup="true"

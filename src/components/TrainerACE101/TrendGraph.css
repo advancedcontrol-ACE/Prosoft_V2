@@ -130,3 +130,170 @@
 .red-bar {
   color: #dc2626;
 }
+
+/* ── X-Axis Scale Bar (Min/Max Controls) ─────────────────── */
+.trend-xaxis-bar {
+  flex: 0 0 26px;
+  height: 26px;
+  background: #f1f5f9;
+  border-top: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-size: 11px;
+  color: #334155;
+  box-sizing: border-box;
+}
+
+.xaxis-bar-left,
+.xaxis-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.xaxis-bar-tag {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 11px;
+}
+
+.xaxis-input-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.xaxis-field-label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 10.5px;
+}
+
+.xaxis-field-input {
+  width: 48px;
+  height: 20px;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  color: #0f172a;
+  transition: all 0.15s ease;
+}
+
+.xaxis-field-input:focus {
+  outline: 1.5px solid #2563eb;
+  border-color: #2563eb;
+  background: #f8fafc;
+}
+
+.xaxis-field-input.editing {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 1.5px rgba(37, 99, 235, 0.25);
+}
+
+.xaxis-sep {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.xaxis-unit {
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.xaxis-presets-label {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-right: -2px;
+}
+
+.xaxis-btn {
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 14px;
+}
+
+.xaxis-btn:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.xaxis-btn.active {
+  background: #0047ba;
+  border-color: #003380;
+  color: #ffffff;
+}
+
+.xaxis-btn.reset {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.xaxis-btn.reset:hover {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+/* Custom Context Menu on Graph Canvas */
+.trend-context-menu {
+  position: fixed;
+  z-index: 99999;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 4px 0;
+  min-width: 155px;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  font-family: inherit;
+  animation: trendMenuFadeIn 0.08s ease-out;
+}
+
+@keyframes trendMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.trend-context-menu-item {
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.trend-context-menu-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}

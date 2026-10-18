@@ -15,6 +15,7 @@ dist-installer
 cloudflared.exe
 active_tunnel_url.txt
 *.local
+*.mp4
 
 # Editor directories and files
 .vscode/*

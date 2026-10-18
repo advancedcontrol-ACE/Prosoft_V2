@@ -77,6 +77,18 @@
   justify-content: space-between;
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15), 0 1px 3px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
+  transition: opacity 0.2s ease;
+}
+
+.controller-settings-card.disabled {
+  opacity: 0.72;
+}
+
+.controller-settings-card.disabled input,
+.controller-settings-card.disabled select,
+.controller-settings-card.disabled button {
+  cursor: not-allowed !important;
+  opacity: 0.65;
 }
 
 .settings-card-title {
@@ -114,19 +126,44 @@
   text-align: left;
 }
 
-/* ── Uniform Control Box Sizing (105px Width, 22px Height, Right-Aligned) ── */
+/* ── LabVIEW Standard 3D Beveled Frame Box (Matching Device ID) ── */
+.setting-frame-box {
+  width: 118px;
+  max-width: 118px;
+  height: 24px;
+  background: #d5d8dc;
+  border: 1.5px solid #a8adb5;
+  border-radius: 3px;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #8c939d,
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  padding: 2px;
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.action-frame-box {
+  position: relative;
+}
+
 .setting-btn {
-  width: 105px;
-  height: 22px;
-  background: #e2e8f0;
-  border: 1px solid #94a3b8;
-  border-radius: 2px;
-  font-size: 11px;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid #7c838d;
+  border-radius: 1px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11.5px;
   color: #0284c7;
   font-weight: 700;
   padding: 0 8px;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
   transition: all 0.15s;
   text-align: right;
   display: flex;
@@ -135,9 +172,14 @@
   box-sizing: border-box;
 }
 
-.setting-btn:hover {
-  background: #ffffff;
-  border-color: #cbd5e1;
+.setting-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.setting-btn.disabled,
+.setting-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
 }
 
 .port-btn {
@@ -145,17 +187,20 @@
 }
 
 .setting-status-val {
-  width: 105px;
-  height: 22px;
-  font-size: 11px;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11.5px;
   font-weight: bold;
   padding: 0 8px;
-  border-radius: 2px;
+  border-radius: 1px;
   text-align: right;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #7c838d;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
 }
 
@@ -170,16 +215,18 @@
 }
 
 .setting-readonly-val {
-  width: 105px;
-  height: 22px;
-  font-size: 11px;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11.5px;
   font-weight: bold;
   color: #0f172a;
   background: #ffffff;
   padding: 0 8px;
-  border-radius: 2px;
-  border: 1px solid #94a3b8;
-  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: 1px;
+  border: 1px solid #7c838d;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
   text-align: right;
   display: flex;
   align-items: center;
@@ -189,9 +236,9 @@
 
 /* ── Figure 2 LabVIEW Device ID Digital Spinner Box ───────── */
 .device-id-spinner-box {
-  width: 105px;
-  max-width: 105px;
-  height: 22px;
+  width: 118px;
+  max-width: 118px;
+  height: 24px;
   background: #d5d8dc;
   border: 1.5px solid #a8adb5;
   border-radius: 3px;
@@ -210,7 +257,7 @@
 }
 
 .device-id-spinners {
-  width: 13px;
+  width: 14px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -225,7 +272,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 5px;
+  font-size: 6px;
   color: #1f2937;
   padding: 0;
   line-height: 1;
@@ -262,11 +309,11 @@
   border-radius: 1px;
   box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
   font-family: 'Segoe UI', Arial, sans-serif;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #000000;
   text-align: right;
-  padding: 0 6px 0 2px;
+  padding: 0 8px 0 2px;
   outline: none;
   box-sizing: border-box;
 }
@@ -276,20 +323,25 @@
 }
 
 .setting-select-val {
-  width: 105px;
-  height: 22px;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
   background: #ffffff;
-  border: 1px solid #94a3b8;
-  border-radius: 2px;
-  font-size: 11px;
+  border: 1px solid #7c838d;
+  border-radius: 1px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 11.5px;
   font-weight: bold;
   color: #0f172a;
-  padding: 0 6px 0 4px;
-  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  padding: 0 18px 0 6px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   outline: none;
   text-align: right;
   text-align-last: right;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   box-sizing: border-box;
 }
 
@@ -297,21 +349,38 @@
   border-color: #2563eb;
 }
 
+.action-down-arrow {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+}
+
 .setting-exp-val {
-  width: 105px;
-  height: 22px;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid #7c838d;
+  border-radius: 1px;
+  font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 11px;
-  color: #ffffff;
   font-weight: 700;
+  color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: right;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 4px;
+  padding: 0 8px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
 }
 

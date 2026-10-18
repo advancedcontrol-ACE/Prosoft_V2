@@ -170,8 +170,12 @@ function serialPortPlugin(): Plugin {
 
         // ── Serial & Modbus RTU Endpoints ─────────────────────────
         if (pathname === '/api/ports') {
-          exec('powershell -NoProfile -Command "[System.IO.Ports.SerialPort]::GetPortNames()"', (err, stdout) => {
+          const psCmd = `powershell -NoProfile -Command "$valid = @(); foreach ($n in [System.IO.Ports.SerialPort]::GetPortNames()) { try { $sp = New-Object System.IO.Ports.SerialPort($n); $sp.Open(); $sp.Close(); $sp.Dispose(); $valid += $n } catch { $m = $_.Exception.Message; if ($m -match 'Access.*denied' -or ($_.Exception.InnerException -and $_.Exception.InnerException.Message -match 'Access.*denied')) { $valid += $n } } }; Write-Output ($valid -join [Environment]::NewLine)"`
+          exec(psCmd, (err, stdout) => {
             res.setHeader('Content-Type', 'application/json')
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+            res.setHeader('Pragma', 'no-cache')
+            res.setHeader('Expires', '0')
             if (err || !stdout) {
               res.end(JSON.stringify([]))
               return
@@ -191,8 +195,9 @@ function serialPortPlugin(): Plugin {
           const port = body.port || 'COM4'
           const baud = Number(body.baud) || 9600
           const slaveId = Number(body.slaveId) || 1
+          const action = body.action || 'Direct'
           try {
-            const result = await bridgeInstance.connect(port, baud, slaveId)
+            const result = await bridgeInstance.connect(port, baud, slaveId, action)
             res.setHeader('Content-Type', 'application/json')
             res.end(JSON.stringify(result))
           } catch (err: unknown) {
@@ -242,31 +247,40 @@ function serialPortPlugin(): Plugin {
           let addr = 0
           let rawVal = 0
 
-          if (reg === 'sp' || body.addr === 0x1001) {
+          if (reg === 'sp' || body.addr === 0x1001 || body.addr === 4097) {
             addr = 0x1001
             rawVal = Math.round(Number(val) * 10)
-          } else if (reg === 'pb' || body.addr === 0x1009) {
+          } else if (reg === 'pb' || reg === 'p' || body.addr === 0x1009 || body.addr === 4105) {
             addr = 0x1009
             rawVal = Math.round(Number(val) * 10)
-          } else if (reg === 'it' || reg === 'ti' || body.addr === 0x100a) {
+          } else if (reg === 'it' || reg === 'ti' || reg === 'i' || body.addr === 0x100a || body.addr === 4106) {
             addr = 0x100a
             rawVal = Math.round(Number(val))
-          } else if (reg === 'dt' || reg === 'td' || body.addr === 0x100b) {
+          } else if (reg === 'dt' || reg === 'td' || reg === 'd' || body.addr === 0x100b || body.addr === 4107) {
             addr = 0x100b
             rawVal = Math.round(Number(val))
-          } else if (reg === 'bias' || body.addr === 0x100c) {
+          } else if (reg === 'bias' || body.addr === 0x100c || body.addr === 4108) {
             addr = 0x100c
-            rawVal = Math.round(Number(val))
-          } else if (reg === 'op' || body.addr === 0x1012) {
+            rawVal = Math.round(Number(val) * 10)
+          } else if (reg === 'op' || body.addr === 0x1012 || body.addr === 4114) {
             addr = 0x1012
             rawVal = Math.round(Number(val) * 10)
-          } else if (reg === 'automan' || reg === 'auto' || body.addr === 0x1005) {
+          } else if (reg === 'automan' || reg === 'auto' || reg === 'am' || reg === 'a/m' || body.addr === 0x1005 || body.addr === 4101) {
             addr = 0x1005
-            rawVal = val === 'Manual' || val === 1 ? 1 : 0
-          } else if (reg === 'action' || body.addr === 0x1006) {
+            // Writing 2 enables Manual mode, 0 enables Auto mode (Delta DTB: 0=PID/Auto, 2=Manual)
+            if (typeof val === 'number') {
+              rawVal = val
+            } else if (val === 'Manual' || val === 'manual' || val === '2') {
+              rawVal = 2
+            } else if (val === 'Auto' || val === 'auto' || val === '0') {
+              rawVal = 0
+            } else {
+              rawVal = Number(val) || 0
+            }
+          } else if (reg === 'action' || body.addr === 0x1006 || body.addr === 4102) {
             addr = 0x1006
             rawVal = val === 'Direct' || val === 1 ? 1 : 0
-          } else if (reg === 'autotuning' || reg === 'at' || body.addr === 0x0813) {
+          } else if (reg === 'autotuning' || reg === 'at' || body.addr === 0x0813 || body.addr === 2067) {
             addr = 0x0813
             rawVal = Number(val) ? 1 : 0
           } else if (typeof body.addr === 'number') {
@@ -298,6 +312,59 @@ function serialPortPlugin(): Plugin {
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify({ success: true, message: 'Disconnected' }))
           return
+        }
+
+        // ── Persistent App Settings Endpoints ─────────────────────
+        if (pathname === '/api/settings') {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const fs = require('fs')
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const os = require('os')
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const path = require('path')
+          const settingsDir = path.join(os.homedir(), '.ace_prosoft')
+          const settingsFile = path.join(settingsDir, 'settings.json')
+
+          if (req.method === 'GET') {
+            try {
+              if (fs.existsSync(settingsFile)) {
+                const content = fs.readFileSync(settingsFile, 'utf8')
+                res.setHeader('Content-Type', 'application/json')
+                res.end(JSON.stringify({ success: true, settings: JSON.parse(content) }))
+                return
+              }
+            } catch (err) {
+              console.warn('[Vite API] Error reading settings:', err)
+            }
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ success: true, settings: null }))
+            return
+          }
+
+          if (req.method === 'POST') {
+            try {
+              const body = await parseJsonBody()
+              if (!fs.existsSync(settingsDir)) {
+                fs.mkdirSync(settingsDir, { recursive: true })
+              }
+              let existing: Record<string, unknown> = {}
+              if (fs.existsSync(settingsFile)) {
+                try {
+                  existing = JSON.parse(fs.readFileSync(settingsFile, 'utf8'))
+                } catch {}
+              }
+              const merged = { ...existing, ...body }
+              fs.writeFileSync(settingsFile, JSON.stringify(merged, null, 2), 'utf8')
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true, settings: merged }))
+              return
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: false, error: String(err) }))
+              return
+            }
+          }
         }
 
         next()

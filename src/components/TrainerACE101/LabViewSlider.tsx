@@ -26,6 +26,9 @@ export const LabViewSlider: React.FC<LabViewSliderProps> = ({
 }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const repeatRef = useRef<number | null>(null);
+  const isFocusedRef = useRef(false);
+  const lastCommittedValRef = useRef<number>(value);
+  const lastCommitTimeRef = useRef<number>(0);
 
   // Clamped numeric value and percentage
   const clampedVal = Math.min(Math.max(value, min), max);
@@ -35,7 +38,19 @@ export const LabViewSlider: React.FC<LabViewSliderProps> = ({
   const [inputText, setInputText] = useState<string>(() => Number(value).toFixed(decimals));
 
   useEffect(() => {
+    // If the input is currently focused by user typing, don't overwrite
+    if (isFocusedRef.current) return;
+
+    // If user recently committed a value (within 2.5s) and incoming poll hasn't reflected it yet, suppress reversion
+    const now = Date.now();
+    if (now - lastCommitTimeRef.current < 2500) {
+      if (Math.abs(value - lastCommittedValRef.current) > 0.05) {
+        return;
+      }
+    }
+
     setInputText(Number(value).toFixed(decimals));
+    lastCommittedValRef.current = value;
   }, [value, decimals]);
 
   // Commit text input to parent
@@ -46,10 +61,12 @@ export const LabViewSlider: React.FC<LabViewSliderProps> = ({
       const clamped = Math.min(Math.max(n, min), max);
       const stepped = Math.round(clamped / step) * step;
       const finalVal = Number(stepped.toFixed(decimals));
+      lastCommittedValRef.current = finalVal;
+      lastCommitTimeRef.current = Date.now();
       onChange(finalVal);
       setInputText(finalVal.toFixed(decimals));
     } else {
-      setInputText(Number(value).toFixed(decimals));
+      setInputText(lastCommittedValRef.current.toFixed(decimals));
     }
   };
 
@@ -68,6 +85,9 @@ export const LabViewSlider: React.FC<LabViewSliderProps> = ({
         const raw = min + clampedRatio * (max - min);
         const stepped = Math.round(raw / step) * step;
         const finalVal = Number(Math.min(Math.max(stepped, min), max).toFixed(decimals));
+        lastCommittedValRef.current = finalVal;
+        lastCommitTimeRef.current = Date.now();
+        setInputText(finalVal.toFixed(decimals));
         onChange(finalVal);
       };
 
@@ -93,6 +113,9 @@ export const LabViewSlider: React.FC<LabViewSliderProps> = ({
     if (!enabled || !onChange) return;
     const next = Math.min(max, clampedVal + step);
     const finalVal = Number(next.toFixed(decimals));
+    lastCommittedValRef.current = finalVal;
+    lastCommitTimeRef.current = Date.now();
+    setInputText(finalVal.toFixed(decimals));
     onChange(finalVal);
   }, [enabled, onChange, max, clampedVal, step, decimals]);
 
@@ -101,6 +124,9 @@ export const LabViewSlider: React.FC<LabViewSliderProps> = ({
     if (!enabled || !onChange) return;
     const next = Math.max(min, clampedVal - step);
     const finalVal = Number(next.toFixed(decimals));
+    lastCommittedValRef.current = finalVal;
+    lastCommitTimeRef.current = Date.now();
+    setInputText(finalVal.toFixed(decimals));
     onChange(finalVal);
   }, [enabled, onChange, min, clampedVal, step, decimals]);
 
@@ -218,12 +244,44 @@ export const LabViewSlider: React.FC<LabViewSliderProps> = ({
             className="digital-input"
             value={inputText}
             disabled={!enabled}
+            onFocus={() => {
+              isFocusedRef.current = true;
+            }}
             onChange={(e) => setInputText(e.target.value)}
-            onBlur={() => commitInput(inputText)}
+            onBlur={() => {
+              isFocusedRef.current = false;
+              commitInput(inputText);
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 commitInput(inputText);
                 (e.target as HTMLInputElement).blur();
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!enabled || !onChange) return;
+                const currentNum = parseFloat(inputText);
+                const base = isNaN(currentNum) ? clampedVal : currentNum;
+                const next = Math.min(max, base + step);
+                const stepped = Math.round(next / step) * step;
+                const finalVal = Number(Math.min(max, Math.max(min, stepped)).toFixed(decimals));
+                const formatted = finalVal.toFixed(decimals);
+                lastCommittedValRef.current = finalVal;
+                lastCommitTimeRef.current = Date.now();
+                setInputText(formatted);
+                onChange(finalVal);
+              } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!enabled || !onChange) return;
+                const currentNum = parseFloat(inputText);
+                const base = isNaN(currentNum) ? clampedVal : currentNum;
+                const next = Math.max(min, base - step);
+                const stepped = Math.round(next / step) * step;
+                const finalVal = Number(Math.min(max, Math.max(min, stepped)).toFixed(decimals));
+                const formatted = finalVal.toFixed(decimals);
+                lastCommittedValRef.current = finalVal;
+                lastCommitTimeRef.current = Date.now();
+                setInputText(formatted);
+                onChange(finalVal);
               }
             }}
           />

@@ -1,0 +1,160 @@
+/* ============================================================
+   Connection Notice Modal Styling (LabVIEW / Industrial Windows)
+   ============================================================ */
+
+.conn-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+  animation: connModalFadeIn 0.15s ease-out;
+}
+
+@keyframes connModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.conn-modal-window {
+  width: 460px;
+  max-width: 90vw;
+  background: #f8fafc;
+  border: 2px solid #0047ba;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 71, 186, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  animation: connModalPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes connModalPop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Titlebar */
+.conn-modal-titlebar {
+  background: linear-gradient(180deg, #0052cc 0%, #003d99 100%);
+  color: #ffffff;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  user-select: none;
+}
+
+.conn-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.conn-title-icon {
+  font-size: 15px;
+}
+
+.conn-close-x {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+
+.conn-close-x:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Body */
+.conn-modal-body {
+  padding: 22px 20px 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+}
+
+.conn-success-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.conn-modal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.conn-highlight-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0047ba;
+}
+
+.conn-modal-message {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.conn-modal-message strong {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+/* Footer */
+.conn-modal-footer {
+  background: #f1f5f9;
+  border-top: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.conn-modal-btn {
+  padding: 7px 26px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.conn-btn-ok {
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  border: 1px solid #1e40af;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.conn-btn-ok:hover {
+  background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+.conn-btn-ok:focus {
+  outline: 2px solid #60a5fa;
+  outline-offset: 1px;
+}

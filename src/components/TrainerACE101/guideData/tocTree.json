@@ -1,0 +1,260 @@
+[
+  {
+    "id": "guide-page-1",
+    "title": "Level Process Trainer",
+    "page": 1
+  },
+  {
+    "id": "guide-page-2",
+    "title": "Table of contents",
+    "page": 2
+  },
+  {
+    "id": "guide-page-4",
+    "title": "1. Product Details",
+    "page": 4,
+    "children": [
+      {
+        "id": "guide-page-4",
+        "title": "1.1 Description",
+        "page": 4
+      },
+      {
+        "id": "guide-page-5",
+        "title": "1.2. Specification Details",
+        "page": 5
+      },
+      {
+        "id": "guide-page-5",
+        "title": "1.3 P&I Diagram",
+        "page": 5
+      },
+      {
+        "id": "guide-page-6",
+        "title": "1.4 Component Details",
+        "page": 6
+      },
+      {
+        "id": "guide-page-6",
+        "title": "1.5 Requirements",
+        "page": 6
+      },
+      {
+        "id": "guide-page-6",
+        "title": "1.6 Warranty",
+        "page": 6
+      }
+    ]
+  },
+  {
+    "id": "guide-page-7",
+    "title": "2. Process Control",
+    "page": 7,
+    "children": [
+      {
+        "id": "guide-page-7",
+        "title": "2.1 Essentials of Process Control",
+        "page": 7
+      },
+      {
+        "id": "guide-page-10",
+        "title": "2.2 Feedback Control",
+        "page": 10
+      },
+      {
+        "id": "guide-page-12",
+        "title": "2.3 Controller Modes",
+        "page": 12
+      },
+      {
+        "id": "guide-page-17",
+        "title": "2.4 Test Inputs and Responses",
+        "page": 17
+      },
+      {
+        "id": "guide-page-21",
+        "title": "2.5 Tuning Techniques",
+        "page": 21,
+        "children": [
+          {
+            "id": "guide-page-21",
+            "title": "2.5.1 Open loop tuning (Process reaction method)",
+            "page": 21
+          },
+          {
+            "id": "guide-page-22",
+            "title": "2.5.2 Closed loop tuning (Ultimate gain method)",
+            "page": 22
+          }
+        ]
+      },
+      {
+        "id": "guide-page-23",
+        "title": "2.6 Stability Analysis",
+        "page": 23
+      },
+      {
+        "id": "guide-page-25",
+        "title": "2.7 Mathematical Model",
+        "page": 25
+      }
+    ]
+  },
+  {
+    "id": "guide-page-28",
+    "title": "3. Software Interface & Features",
+    "page": 28,
+    "children": [
+      {
+        "id": "guide-page-28",
+        "title": "3.1 Device Connection",
+        "page": 28
+      },
+      {
+        "id": "guide-page-29",
+        "title": "3.2 Features",
+        "page": 29
+      }
+    ]
+  },
+  {
+    "id": "guide-page-32",
+    "title": "4. Experiments",
+    "page": 32,
+    "children": [
+      {
+        "id": "guide-page-33",
+        "title": "4.1 Study of Level Transmitter Characteristics",
+        "page": 33
+      },
+      {
+        "id": "guide-page-34",
+        "title": "4.2 Open Loop, On-Off & Closed Loop Experiments",
+        "page": 34,
+        "children": [
+          {
+            "id": "guide-page-37",
+            "title": "4.2.1 Open Loop",
+            "page": 37
+          },
+          {
+            "id": "guide-page-38",
+            "title": "4.2.2 On/Off Control",
+            "page": 38
+          },
+          {
+            "id": "guide-page-39",
+            "title": "4.2.3 P Mode",
+            "page": 39
+          },
+          {
+            "id": "guide-page-40",
+            "title": "4.2.4 PI Mode",
+            "page": 40
+          },
+          {
+            "id": "guide-page-41",
+            "title": "4.2.5 PD Mode",
+            "page": 41
+          },
+          {
+            "id": "guide-page-42",
+            "title": "4.2.6 PID Mode",
+            "page": 42
+          },
+          {
+            "id": "guide-page-43",
+            "title": "4.2.7 Open Loop Tuning",
+            "page": 43
+          },
+          {
+            "id": "guide-page-44",
+            "title": "4.2.8 Closed Loop Tuning",
+            "page": 44
+          }
+        ]
+      },
+      {
+        "id": "guide-page-45",
+        "title": "4.3 Empirical Model Estimation",
+        "page": 45
+      }
+    ]
+  },
+  {
+    "id": "guide-page-49",
+    "title": "5. Component Specifications",
+    "page": 49,
+    "children": [
+      {
+        "id": "guide-page-49",
+        "title": "5.1 WIKA – Pressure Transmitter",
+        "page": 49
+      },
+      {
+        "id": "guide-page-51",
+        "title": "5.2 Delta – Digital Temperature Indicating Controller (DTB9696CR)",
+        "page": 51
+      },
+      {
+        "id": "guide-page-52",
+        "title": "5.3 Control Air – I/P Converter",
+        "page": 52
+      },
+      {
+        "id": "guide-page-53",
+        "title": "5.4 Pneucon – Control Valve",
+        "page": 53
+      },
+      {
+        "id": "guide-page-55",
+        "title": "5.5 Eureka – Rotameter",
+        "page": 55
+      }
+    ]
+  },
+  {
+    "id": "guide-page-56",
+    "title": "6. Controller Settings & Modbus Address",
+    "page": 56,
+    "children": [
+      {
+        "id": "guide-page-56",
+        "title": "6.1 Default Settings",
+        "page": 56
+      },
+      {
+        "id": "guide-page-57",
+        "title": "6.2 Modbus Addresses",
+        "page": 57
+      }
+    ]
+  },
+  {
+    "id": "guide-page-58",
+    "title": "7. About Us",
+    "page": 58,
+    "children": [
+      {
+        "id": "guide-page-58",
+        "title": "7.1 Introduction",
+        "page": 58
+      },
+      {
+        "id": "guide-page-58",
+        "title": "7.2 Vision and Values",
+        "page": 58
+      },
+      {
+        "id": "guide-page-58",
+        "title": "7.3 Product Range",
+        "page": 58
+      },
+      {
+        "id": "guide-page-62",
+        "title": "7.4 Customer List",
+        "page": 62
+      }
+    ]
+  }
+]

@@ -29,7 +29,9 @@ export interface LogEntry {
 
 interface ControllerParametersPanelProps {
   state: ControllerState;
+  isRunning?: boolean;
   isConnected: boolean;
+  isAuto?: boolean;
   comPort: string;
   logEntries?: LogEntry[];
   onOpenComModal: () => void;
@@ -38,9 +40,115 @@ interface ControllerParametersPanelProps {
   onSaveSettings?: (settings: { deviceId: number; action: 'Direct' | 'Reverse' }) => void;
 }
 
+export function getEnabledParameters(experiment: string) {
+  const norm = (experiment || '').trim().toLowerCase();
+
+  switch (norm) {
+    case 'open loop':
+      return {
+        sp: false,
+        pv: false,
+        op: true,
+        bias: false,
+        pb: false,
+        it: false,
+        dt: false,
+        hysteresis: false,
+      };
+
+    case 'on / off control':
+    case 'on/off control':
+      return {
+        sp: true,
+        pv: false,
+        op: false,
+        bias: false,
+        pb: false,
+        it: false,
+        dt: false,
+        hysteresis: true,
+      };
+
+    case 'p mode':
+      return {
+        sp: true,
+        pv: false,
+        op: false,
+        bias: true,
+        pb: true,
+        it: false,
+        dt: false,
+        hysteresis: false,
+      };
+
+    case 'pi mode':
+      return {
+        sp: true,
+        pv: false,
+        op: false,
+        bias: false,
+        pb: true,
+        it: true,
+        dt: false,
+        hysteresis: false,
+      };
+
+    case 'pd mode':
+      return {
+        sp: true,
+        pv: false,
+        op: false,
+        bias: false,
+        pb: true,
+        it: false,
+        dt: true,
+        hysteresis: false,
+      };
+
+    case 'pid mode':
+      return {
+        sp: true,
+        pv: false,
+        op: false,
+        bias: false,
+        pb: true,
+        it: true,
+        dt: true,
+        hysteresis: false,
+      };
+
+    case 'closed loop':
+      return {
+        sp: true,
+        pv: false,
+        op: false,
+        bias: true,
+        pb: true,
+        it: false,
+        dt: false,
+        hysteresis: false,
+      };
+
+    default:
+      // When loading or no experiment selected: ALL disabled like PV
+      return {
+        sp: false,
+        pv: false,
+        op: false,
+        bias: false,
+        pb: false,
+        it: false,
+        dt: false,
+        hysteresis: false,
+      };
+  }
+}
+
 export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps> = ({
   state,
+  isRunning = false,
   isConnected,
+  isAuto = true,
   comPort,
   logEntries,
   onOpenComModal,
@@ -52,23 +160,47 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
   const [saveSuccess, setSaveSuccess] = useState(false);
   const repeatRef = useRef<number | null>(null);
 
-  const handleSaveSettings = () => {
+  const enabledParams = getEnabledParameters(state.selectedExperiment);
+  const normExp = (state.selectedExperiment || '').trim().toLowerCase();
+  // Controller Output is editable ONLY in Open Loop when in Manual mode (!isAuto)
+  const isOpEditable = normExp === 'open loop' && !isAuto;
+
+  const handleSaveSettings = async () => {
+    if (isRunning) return;
+    const devId = Number(state.deviceId) || 1;
+    const act = state.action || 'Direct';
+
+    // 1. Save to browser / WebView localStorage
     try {
-      const devId = Number(state.deviceId) || 1;
-      const act = state.action || 'Direct';
       localStorage.setItem(
         'ace_prosoft_controller_settings',
         JSON.stringify({ deviceId: devId, action: act })
       );
-      setSaveSuccess(true);
-      window.setTimeout(() => setSaveSuccess(false), 2000);
-      onSaveSettings?.({ deviceId: devId, action: act });
     } catch (e) {
-      console.error('Error saving settings to localStorage:', e);
+      console.warn('localStorage save warning:', e);
     }
+
+    // 2. Persist to disk via /api/settings (essential for installed desktop version)
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId: devId, action: act }),
+      });
+    } catch (e) {
+      console.warn('Backend settings save warning:', e);
+    }
+
+    // 3. Sync Action to hardware register if connected
+    onParamWrite?.('action', act);
+
+    setSaveSuccess(true);
+    window.setTimeout(() => setSaveSuccess(false), 2000);
+    onSaveSettings?.({ deviceId: devId, action: act });
   };
 
   const startRepeat = (action: () => void) => {
+    if (isRunning) return;
     action();
     const timeout = window.setTimeout(() => {
       repeatRef.current = window.setInterval(action, 75);
@@ -86,6 +218,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
   };
 
   const handleDeviceIncrement = () => {
+    if (isRunning) return;
     onStateChange((prev) => ({
       ...prev,
       deviceId: Math.min(247, ((Number(prev.deviceId) || 1) + 1)),
@@ -93,6 +226,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
   };
 
   const handleDeviceDecrement = () => {
+    if (isRunning) return;
     onStateChange((prev) => ({
       ...prev,
       deviceId: Math.max(1, ((Number(prev.deviceId) || 1) - 1)),
@@ -121,42 +255,54 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
 
       {activeTab === 'params' ? (
         <div className="controller-content">
-          {/* Left sub-box: Controller Setting matching Figure 1 */}
-          <div className="controller-settings-card">
+          {/* Left sub-box: Controller Setting matching Figure 1 (Disabled when RUN is hit) */}
+          <div
+            className={`controller-settings-card ${isRunning ? 'disabled' : ''}`}
+            title={isRunning ? 'Controller settings are locked while experiment is running. Click Stop to edit.' : undefined}
+          >
             <div className="settings-card-title">Controller Setting</div>
 
             <div className="setting-row">
               <span className="setting-label">COM Port</span>
-              <button
-                type="button"
-                className="setting-btn port-btn"
-                onClick={onOpenComModal}
-                title="Select COM Port to connect"
-              >
-                {comPort || 'Select Port'}
-              </button>
+              <div className="setting-frame-box">
+                <button
+                  type="button"
+                  className={`setting-btn port-btn ${isConnected || isRunning ? 'disabled' : ''}`}
+                  disabled={isConnected || isRunning}
+                  onClick={onOpenComModal}
+                  title={isRunning ? 'Locked while running' : isConnected ? 'Connected' : 'Select COM Port to connect'}
+                >
+                  {comPort || 'Select Port'}
+                </button>
+              </div>
             </div>
 
             <div className="setting-row">
               <span className="setting-label">Status</span>
-              <div className={`setting-status-val ${isConnected ? 'connected' : 'disconnected'}`}>
-                {isConnected ? 'Connected' : 'Not Connected'}
+              <div className="setting-frame-box">
+                <div className={`setting-status-val ${isConnected ? 'connected' : 'disconnected'}`}>
+                  {isConnected ? 'Connected' : 'Not Connected'}
+                </div>
               </div>
             </div>
 
             <div className="setting-row">
               <span className="setting-label">Controller</span>
-              <div className="setting-readonly-val">DELTA DTB9696</div>
+              <div className="setting-frame-box">
+                <div className="setting-readonly-val">DELTA DTB9696</div>
+              </div>
             </div>
 
             <div className="setting-row">
               <span className="setting-label">Device ID</span>
-              <div className="device-id-spinner-box">
+              <div className={`device-id-spinner-box ${isRunning ? 'disabled' : ''}`}>
                 <div className="device-id-spinners">
                   <button
                     type="button"
                     className="device-id-spin-btn spin-up"
+                    disabled={isRunning}
                     onMouseDown={(e) => {
+                      if (isRunning) return;
                       e.preventDefault();
                       startRepeat(handleDeviceIncrement);
                     }}
@@ -168,7 +314,9 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                   <button
                     type="button"
                     className="device-id-spin-btn spin-down"
+                    disabled={isRunning}
                     onMouseDown={(e) => {
+                      if (isRunning) return;
                       e.preventDefault();
                       startRepeat(handleDeviceDecrement);
                     }}
@@ -182,13 +330,15 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                   type="text"
                   inputMode="numeric"
                   className="device-id-input"
+                  disabled={isRunning}
                   value={
                     state.deviceId === ('' as any)
                       ? ''
                       : (Number(state.deviceId) || 1)
                   }
-                  title="Device ID (Numeric only, 1-247)"
+                  title={isRunning ? 'Locked while running' : 'Device ID (Numeric only, 1-247)'}
                   onChange={(e) => {
+                    if (isRunning) return;
                     const cleaned = e.target.value.replace(/\D/g, '');
                     if (cleaned === '') {
                       onStateChange((prev) => ({ ...prev, deviceId: '' as any }));
@@ -203,6 +353,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                     }
                   }}
                   onKeyDown={(e) => {
+                    if (isRunning) return;
                     if (
                       [
                         'Backspace',
@@ -235,34 +386,46 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
 
             <div className="setting-row">
               <span className="setting-label">Action</span>
-              <select
-                className="setting-select-val"
-                value={state.action}
-                title="Control Action (Direct / Reverse)"
-                onChange={(e) => {
-                  const val = e.target.value as 'Direct' | 'Reverse';
-                  onStateChange((prev) => ({ ...prev, action: val }));
-                  onParamWrite?.('action', val);
-                }}
-              >
-                <option value="Direct">Direct</option>
-                <option value="Reverse">Reverse</option>
-              </select>
+              <div className="setting-frame-box action-frame-box">
+                <select
+                  className="setting-select-val"
+                  disabled={isRunning}
+                  value={state.action}
+                  title={isRunning ? 'Locked while running' : 'Control Action (Direct / Reverse)'}
+                  onChange={(e) => {
+                    if (isRunning) return;
+                    const val = e.target.value as 'Direct' | 'Reverse';
+                    onStateChange((prev) => ({ ...prev, action: val }));
+                    onParamWrite?.('action', val);
+                  }}
+                >
+                  <option value="Direct">Direct</option>
+                  <option value="Reverse">Reverse</option>
+                </select>
+                <span className="action-down-arrow" aria-hidden="true">
+                  <svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L4 4L7 1" stroke="#1e293b" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              </div>
             </div>
 
             <div className="setting-row">
               <span className="setting-label">Experiment</span>
-              <div className="setting-exp-val">
-                {state.selectedExperiment || 'Select Experiment'}
+              <div className="setting-frame-box">
+                <div className="setting-exp-val">
+                  {state.selectedExperiment || 'Select Experiment'}
+                </div>
               </div>
             </div>
 
             <div className="setting-save-row">
               <button
                 type="button"
-                className={`save-settings-btn ${saveSuccess ? 'saved' : ''}`}
+                className={`save-settings-btn ${saveSuccess ? 'saved' : ''} ${isRunning ? 'disabled' : ''}`}
+                disabled={isRunning}
                 onClick={handleSaveSettings}
-                title="Save Device ID and Action locally"
+                title={isRunning ? 'Locked while running' : 'Save Device ID and Action locally'}
               >
                 {saveSuccess ? 'Settings Saved ✓' : 'Save Settings'}
               </button>
@@ -281,7 +444,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.sp}
                 decimals={0}
-                enabled={true}
+                enabled={enabledParams.sp}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, sp: val }));
                   onParamWrite?.('sp', val);
@@ -308,7 +471,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.op}
                 decimals={1}
-                enabled={true}
+                enabled={isOpEditable}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, op: val }));
                   onParamWrite?.('op', val);
@@ -323,7 +486,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.bias}
                 decimals={1}
-                enabled={true}
+                enabled={enabledParams.bias}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, bias: val }));
                   onParamWrite?.('bias', val);
@@ -341,7 +504,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 100, 200, 300, 400]}
                 value={state.pb}
                 decimals={0}
-                enabled={true}
+                enabled={enabledParams.pb}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, pb: val }));
                   onParamWrite?.('pb', val);
@@ -356,7 +519,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 250, 500, 750, 1000]}
                 value={state.it}
                 decimals={0}
-                enabled={true}
+                enabled={enabledParams.it}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, it: val }));
                   onParamWrite?.('it', val);
@@ -371,7 +534,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 5, 10, 15, 20]}
                 value={state.dt}
                 decimals={0}
-                enabled={true}
+                enabled={enabledParams.dt}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, dt: val }));
                   onParamWrite?.('dt', val);
@@ -386,7 +549,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 5, 10, 15, 20]}
                 value={state.hysteresis}
                 decimals={0}
-                enabled={true}
+                enabled={enabledParams.hysteresis}
                 onChange={(val) => onStateChange((prev) => ({ ...prev, hysteresis: val }))}
               />
             </div>

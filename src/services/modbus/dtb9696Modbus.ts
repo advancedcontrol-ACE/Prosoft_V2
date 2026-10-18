@@ -87,9 +87,13 @@ export class DeltaDTBService {
   }
 
   /**
-   * Connects to Local Serial Port via local Modbus daemon
+   * Connects to Local Serial Port via local Modbus daemon and verifies Action register handshake
    */
-  public async connect(portName: string, slaveId = 1): Promise<ModbusConnectionResult> {
+  public async connect(
+    portName: string,
+    slaveId = 1,
+    action: 'Direct' | 'Reverse' = 'Direct'
+  ): Promise<ModbusConnectionResult> {
     this.baseUrl = '';
     this.sessionToken = '';
     this.isRemoteMode = false;
@@ -98,45 +102,47 @@ export class DeltaDTBService {
       const res = await fetch('/api/modbus/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ port: portName, baud: 9600, slaveId }),
+        body: JSON.stringify({ port: portName, baud: 9600, slaveId, action }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          this.isConnected = true;
-          this.currentPort = portName;
-          this.isHardwareConnected = true;
-          this.startPolling();
+      const data = await res.json();
+      if (res.ok && data.success) {
+        this.isConnected = true;
+        this.currentPort = portName;
+        this.isHardwareConnected = true;
 
-          return {
-            success: true,
-            portName,
-            isRemote: false,
-            message: `Connected to ${portName} (9600, 8-N-1). Delta DTB9696 Modbus RTU communication active.`,
-            txFrame: '01 03 10 00 00 02 C0 CB',
-            rxFrame: '01 03 04 00 13 01 F4 0B E1',
-          };
-        }
+        return {
+          success: true,
+          portName,
+          isRemote: false,
+          message: data.message || `Connected to ${portName}. Action register handshake verified.`,
+          txFrame: '01 06 10 06 00 01 6D 08',
+          rxFrame: '01 06 10 06 00 01 6D 08',
+        };
+      } else {
+        this.isConnected = false;
+        this.currentPort = '';
+        this.isHardwareConnected = false;
+        return {
+          success: false,
+          portName,
+          isRemote: false,
+          error: data.error || 'Connection failed',
+          message: data.error || 'Delta DTB9696 controller did not respond to Action handshake (address 4102).',
+        };
       }
-    } catch (err) {
-      console.warn('Backend connect failed, attempting fallback...', err);
+    } catch (err: unknown) {
+      this.isConnected = false;
+      this.currentPort = '';
+      this.isHardwareConnected = false;
+      return {
+        success: false,
+        portName,
+        isRemote: false,
+        error: String(err),
+        message: `Failed to connect to ${portName}: ${String(err)}`,
+      };
     }
-
-    // Fallback simulated connection if server bridge not running
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    this.isConnected = true;
-    this.currentPort = portName;
-    this.isHardwareConnected = false;
-
-    return {
-      success: true,
-      portName,
-      isRemote: false,
-      message: `Connected to ${portName}. Delta DTB9696 communication active (Simulation/Virtual Mode).`,
-      txFrame: '01 03 10 00 00 02 C0 CB',
-      rxFrame: '01 03 04 00 00 00 00 00 00',
-    };
   }
 
   /**
@@ -172,8 +178,6 @@ export class DeltaDTBService {
       client.setOnRevoked(() => {
         this.triggerRevoked();
       });
-
-      this.startPolling();
 
       return {
         success: true,
@@ -230,6 +234,10 @@ export class DeltaDTBService {
       window.clearInterval(this.pollIntervalId);
       this.pollIntervalId = null;
     }
+  }
+
+  public isPolling(): boolean {
+    return this.pollIntervalId !== null;
   }
 
   public onLivePoll(cb: (state: ModbusLiveState) => void) {

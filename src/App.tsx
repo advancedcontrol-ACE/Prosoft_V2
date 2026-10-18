@@ -29,6 +29,28 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', lockMaximized);
   }, []);
 
+  // Disable right-click context menu across the application except strictly on the trend graph canvas
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.closest('#ace101-trend-canvas') ||
+          target.closest('.trend-canvas'))
+      ) {
+        return; // Allow context menu ONLY strictly on the canvas itself
+      }
+      e.preventDefault(); // Disable right-click everywhere else (space right of graph, legends, etc.)
+    };
+
+    window.addEventListener('contextmenu', handleContextMenu, true);
+    document.addEventListener('contextmenu', handleContextMenu, true);
+    return () => {
+      window.removeEventListener('contextmenu', handleContextMenu, true);
+      document.removeEventListener('contextmenu', handleContextMenu, true);
+    };
+  }, []);
+
   const handleAction = (action: string, label: string) => {
     if (action === 'home') {
       setCurrentPage(null);

@@ -4,7 +4,13 @@
 
 export async function fetchAvailablePorts(): Promise<string[]> {
   try {
-    const res = await fetch('/api/ports');
+    const res = await fetch(`/api/ports?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+      },
+    });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data)) {

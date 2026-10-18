@@ -19,9 +19,6 @@ interface TrendGraphProps {
   onToggleOP?: () => void;
 }
 
-/** Number of data points visible in the canvas window at one time */
-const WINDOW_SIZE = 100;
-
 export const TrendGraph: React.FC<TrendGraphProps> = ({
   data,
   showSP = true,
@@ -34,15 +31,86 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  /** Index of the first data point currently visible on the left edge */
-  const [scrollOffset, setScrollOffset] = useState(0);
-  /**
-   * When true the view auto-follows the newest data (scrolled to the rightmost end).
-   * Becomes false when the user manually scrolls left; returns to true when they
-   * scroll back to the right edge.
-   */
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [containerWidth, setContainerWidth] = useState(800);
+  // X-Axis min & max controls (allow user to shrink or expand the graph)
+  const [xMin, setXMin] = useState<number>(0);
+  const [xMax, setXMax] = useState<number>(100);
+  const [minInput, setMinInput] = useState<string>('0');
+  const [maxInput, setMaxInput] = useState<string>('100');
+  const [isEditingMin, setIsEditingMin] = useState<boolean>(false);
+  const [isEditingMax, setIsEditingMax] = useState<boolean>(false);
+  const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  const [containerWidth, setContainerWidth] = useState<number>(800);
+
+  // Custom Context Menu state (removes browser Inspect option)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleCanvasContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const menuWidth = 150;
+    const menuHeight = 75;
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
+    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
+    setContextMenu({ x, y });
+  };
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClose = () => setContextMenu(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    window.addEventListener('click', handleClose);
+    window.addEventListener('scroll', handleClose, true);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('click', handleClose);
+      window.removeEventListener('scroll', handleClose, true);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [contextMenu]);
+
+  const handleSaveImageAs = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setContextMenu(null);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = `trend_graph_${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
+  const handleCopyImage = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setContextMenu(null);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    try {
+      canvas.toBlob(async (blob) => {
+        if (blob && navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob }),
+          ]);
+        }
+      });
+    } catch (err) {
+      console.error('Failed to copy graph image:', err);
+    }
+  };
+
+  // ── Sync inputs with dynamic xMin and xMax when NOT actively editing ──────
+  useEffect(() => {
+    if (!isEditingMin) {
+      setMinInput(String(Math.round(xMin)));
+    }
+  }, [xMin, isEditingMin]);
+
+  useEffect(() => {
+    if (!isEditingMax) {
+      setMaxInput(String(Math.round(xMax)));
+    }
+  }, [xMax, isEditingMax]);
 
   // ── Track container width dynamically ─────────────────────────────────────
   useEffect(() => {
@@ -57,38 +125,128 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
     return () => ro.disconnect();
   }, []);
 
-  // ── Auto-scroll scrollbar to the right end when new data arrives ──────────
+  // ── Reset X-Axis when data is cleared (Stop -> Yes) ──────────────────────
   useEffect(() => {
-    if (autoScroll && scrollRef.current) {
-      const el = scrollRef.current;
-      el.scrollLeft = el.scrollWidth - el.clientWidth;
+    if (data.length === 0) {
+      setXMin(0);
+      setXMax(100);
+      setMinInput('0');
+      setMaxInput('100');
+      setIsEditingMin(false);
+      setIsEditingMax(false);
+      setAutoScroll(true);
     }
-  }, [data.length, autoScroll, containerWidth]);
+  }, [data.length]);
 
-  // ── Sync scrollOffset when data.length changes and we are in auto mode ────
+  // ── Auto-scroll to latest data when in auto mode ───────────────────────────
   useEffect(() => {
-    if (autoScroll) {
-      const maxOffset = Math.max(0, data.length - WINDOW_SIZE);
-      setScrollOffset(maxOffset);
-    }
-  }, [data.length, autoScroll]);
+    if (data.length === 0) return;
+    const latestTime = data[data.length - 1].time;
 
-  // ── Handle manual scroll ──────────────────────────────────────────────────
+    // Do not jump while user is typing into Min or Max inputs
+    if (autoScroll && !isEditingMin && !isEditingMax) {
+      const span = Math.max(10, xMax - xMin);
+      if (latestTime > xMax) {
+        setXMax(latestTime);
+        setXMin(Math.max(0, latestTime - span));
+      }
+      if (scrollRef.current) {
+        scrollRef.current.scrollLeft = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+      }
+    }
+  }, [data, autoScroll, xMin, xMax, isEditingMin, isEditingMax]);
+
+  // ── Handle manual scrollbar dragging ──────────────────────────────────────
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     const maxScroll = el.scrollWidth - el.clientWidth;
-    const atEnd = maxScroll <= 0 || el.scrollLeft >= maxScroll - 2;
+    const atEnd = maxScroll <= 0 || el.scrollLeft >= maxScroll - 3;
     setAutoScroll(atEnd);
 
-    if (!atEnd) {
-      const ratio = el.scrollLeft / Math.max(1, maxScroll);
-      const maxOffset = Math.max(0, data.length - WINDOW_SIZE);
-      setScrollOffset(Math.round(ratio * maxOffset));
+    const span = Math.max(10, xMax - xMin);
+    const totalMax = Math.max(data.length > 0 ? data[data.length - 1].time : 100, span);
+    const maxStart = Math.max(0, totalMax - span);
+
+    if (!atEnd && maxScroll > 0) {
+      const ratio = el.scrollLeft / maxScroll;
+      const newMin = Math.round(ratio * maxStart);
+      setXMin(newMin);
+      setXMax(newMin + span);
     } else {
-      setScrollOffset(Math.max(0, data.length - WINDOW_SIZE));
+      setXMin(maxStart);
+      setXMax(totalMax);
     }
-  }, [data.length]);
+  }, [data, xMin, xMax]);
+
+  // ── Commit Min / Max on Enter or Blur ──────────────────────────────────────
+  const commitMin = () => {
+    setIsEditingMin(false);
+    const parsed = parseFloat(minInput);
+    if (!isNaN(parsed) && parsed >= 0) {
+      if (parsed < xMax) {
+        setXMin(parsed);
+        setAutoScroll(false);
+      } else {
+        setMinInput(String(Math.round(xMin)));
+      }
+    } else {
+      setMinInput(String(Math.round(xMin)));
+    }
+  };
+
+  const commitMax = () => {
+    setIsEditingMax(false);
+    const parsed = parseFloat(maxInput);
+    if (!isNaN(parsed)) {
+      if (parsed > xMin) {
+        setXMax(parsed);
+        setAutoScroll(false);
+      } else {
+        setMaxInput(String(Math.round(xMax)));
+      }
+    } else {
+      setMaxInput(String(Math.round(xMax)));
+    }
+  };
+
+  const handleSetSpan = (newSpan: number) => {
+    setIsEditingMin(false);
+    setIsEditingMax(false);
+    const span = Math.max(10, newSpan);
+    const latest = data.length > 0 ? data[data.length - 1].time : 0;
+    if (autoScroll && latest > 0) {
+      const newMax = Math.max(span, latest);
+      const newMin = Math.max(0, newMax - span);
+      setXMax(newMax);
+      setXMin(newMin);
+      setMinInput(String(Math.round(newMin)));
+      setMaxInput(String(Math.round(newMax)));
+    } else {
+      const newMax = xMin + span;
+      setXMax(newMax);
+      setMaxInput(String(Math.round(newMax)));
+    }
+  };
+
+  const handleResetXAxis = () => {
+    setIsEditingMin(false);
+    setIsEditingMax(false);
+    const latest = data.length > 0 ? data[data.length - 1].time : 0;
+    if (latest > 100) {
+      const newMin = Math.max(0, latest - 100);
+      setXMax(latest);
+      setXMin(newMin);
+      setMinInput(String(Math.round(newMin)));
+      setMaxInput(String(Math.round(latest)));
+    } else {
+      setXMin(0);
+      setXMax(100);
+      setMinInput('0');
+      setMaxInput('100');
+    }
+    setAutoScroll(true);
+  };
 
   // ── Canvas render ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -135,14 +293,11 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
       ctx.fillText(yVal.toString(), padL - 4, yPos);
     }
 
-    // X-Axis Grid Lines & Labels — show actual data-point indices
+    // X-Axis Grid Lines & Labels (scaled to current xMin .. xMax)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
 
-    const startIdx = scrollOffset;
-    const endIdx = Math.min(data.length, startIdx + WINDOW_SIZE);
-    const pointsInWindow = endIdx - startIdx;
-    const displayWindow = Math.max(pointsInWindow, WINDOW_SIZE);
+    const span = Math.max(1, xMax - xMin);
 
     for (let tick = 0; tick <= 10; tick++) {
       const xPos = padL + (tick / 10) * plotW;
@@ -150,8 +305,8 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
       ctx.moveTo(xPos, padT);
       ctx.lineTo(xPos, padT + plotH);
       ctx.stroke();
-      const labelVal = startIdx + Math.round((tick / 10) * displayWindow);
-      ctx.fillText(labelVal.toString(), xPos, padT + plotH + 4);
+      const labelVal = xMin + (tick / 10) * span;
+      ctx.fillText(Math.round(labelVal).toString(), xPos, padT + plotH + 4);
     }
 
     // Plot border
@@ -161,41 +316,58 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
 
     if (data.length === 0) return;
 
-    // Draw a trace for a given accessor function and colour
+    // Clip traces cleanly within the plot border
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(padL, padT, plotW, plotH);
+    ctx.clip();
+
+    // Draw traces
     const drawTrace = (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       accessor: (p: TrendDataPoint) => number,
       color: string
     ) => {
-      const slice = data.slice(startIdx, endIdx);
-      if (slice.length === 0) return;
-
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.lineJoin = 'round';
       ctx.beginPath();
 
-      slice.forEach((p, idx) => {
-        const xPos = padL + (idx / (displayWindow - 1 || 1)) * plotW;
+      let started = false;
+      for (let i = 0; i < data.length; i++) {
+        const p = data[i];
+        const t = p.time;
+
+        // Skip points before visible window (allow 1 point buffer for continuous line)
+        if (t < xMin && i < data.length - 1 && data[i + 1].time < xMin) continue;
+
+        const xPos = padL + ((t - xMin) / span) * plotW;
         const val = Math.min(Math.max(accessor(p), 0), 100);
         const yPos = padT + plotH - (val / 100) * plotH;
-        if (idx === 0) ctx.moveTo(xPos, yPos);
-        else ctx.lineTo(xPos, yPos);
-      });
+
+        if (!started) {
+          ctx.moveTo(xPos, yPos);
+          started = true;
+        } else {
+          ctx.lineTo(xPos, yPos);
+        }
+
+        // Break once well past the visible window
+        if (t > xMax && i > 0 && data[i - 1].time > xMax) break;
+      }
       ctx.stroke();
     };
 
     if (showSP) drawTrace((p) => p.sp, '#0047ba');
     if (showPV) drawTrace((p) => p.pv, '#16a34a');
     if (showOP) drawTrace((p) => p.op, '#dc2626');
-  }, [data, scrollOffset, showSP, showPV, showOP]);
 
-  // Proportional phantom width:
-  // Scales with total accumulated data points beyond WINDOW_SIZE (100).
-  // Always at least containerWidth + 30 so the scrollbar thumb is visibly rendered and active!
-  const totalPoints = Math.max(data.length, WINDOW_SIZE);
+    ctx.restore();
+  }, [data, xMin, xMax, showSP, showPV, showOP]);
+
+  const totalMax = Math.max(data.length > 0 ? data[data.length - 1].time : 100, xMax, 100);
+  const span = Math.max(10, xMax - xMin);
   const phantomWidth = Math.max(
-    Math.round(containerWidth * (totalPoints / WINDOW_SIZE)),
+    Math.round(containerWidth * (totalMax / span)),
     containerWidth + 30
   );
 
@@ -204,7 +376,12 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
       <div className="trend-main-area">
         {/* Canvas */}
         <div className="trend-canvas-wrapper">
-          <canvas ref={canvasRef} className="trend-canvas" />
+          <canvas
+            ref={canvasRef}
+            id="ace101-trend-canvas"
+            className="trend-canvas"
+            onContextMenu={handleCanvasContextMenu}
+          />
         </div>
 
         {/* Horizontal Scrollbar — appears below the canvas */}
@@ -218,6 +395,99 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
             className="trend-scrollbar-phantom"
             style={{ width: phantomWidth }}
           />
+        </div>
+
+        {/* X-Axis Range Control Strip (Modify Min & Max to Shrink or Expand Graph) */}
+        <div className="trend-xaxis-bar">
+          <div className="xaxis-bar-left">
+            <span className="xaxis-bar-tag">X-Axis Range:</span>
+            <div className="xaxis-input-group">
+              <span className="xaxis-field-label">Min:</span>
+              <input
+                type="number"
+                className={`xaxis-field-input ${isEditingMin ? 'editing' : ''}`}
+                value={minInput}
+                step={10}
+                min={0}
+                onFocus={() => setIsEditingMin(true)}
+                onChange={(e) => setMinInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    commitMin();
+                    (e.target as HTMLInputElement).blur();
+                  } else if (e.key === 'Escape') {
+                    setMinInput(String(Math.round(xMin)));
+                    setIsEditingMin(false);
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
+                onBlur={commitMin}
+                title="Enter Min value and press Enter to apply to X-Axis"
+              />
+            </div>
+            <span className="xaxis-sep">–</span>
+            <div className="xaxis-input-group">
+              <span className="xaxis-field-label">Max:</span>
+              <input
+                type="number"
+                className={`xaxis-field-input ${isEditingMax ? 'editing' : ''}`}
+                value={maxInput}
+                step={10}
+                min={xMin + 5}
+                onFocus={() => setIsEditingMax(true)}
+                onChange={(e) => setMaxInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    commitMax();
+                    (e.target as HTMLInputElement).blur();
+                  } else if (e.key === 'Escape') {
+                    setMaxInput(String(Math.round(xMax)));
+                    setIsEditingMax(false);
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
+                onBlur={commitMax}
+                title="Enter Max value and press Enter to apply to X-Axis"
+              />
+              <span className="xaxis-unit">s</span>
+            </div>
+          </div>
+
+          <div className="xaxis-bar-right">
+            <span className="xaxis-presets-label">Span:</span>
+            <button
+              type="button"
+              className={`xaxis-btn ${xMax - xMin === 50 ? 'active' : ''}`}
+              onClick={() => handleSetSpan(50)}
+              title="Expand waveform (50s Window)"
+            >
+              50s
+            </button>
+            <button
+              type="button"
+              className={`xaxis-btn ${xMax - xMin === 100 ? 'active' : ''}`}
+              onClick={() => handleSetSpan(100)}
+              title="Default waveform (100s Window)"
+            >
+              100s
+            </button>
+            <button
+              type="button"
+              className={`xaxis-btn ${xMax - xMin === 200 ? 'active' : ''}`}
+              onClick={() => handleSetSpan(200)}
+              title="Shrink waveform (200s Window)"
+            >
+              200s
+            </button>
+            <button
+              type="button"
+              className="xaxis-btn reset"
+              onClick={handleResetXAxis}
+              title="Reset X-Axis to default"
+            >
+              Reset
+            </button>
+          </div>
         </div>
       </div>
 
@@ -253,6 +523,30 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
           <span className="legend-indicator red-bar">︽</span>
         </button>
       </div>
+
+      {contextMenu && (
+        <div
+          className="trend-context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <button
+            type="button"
+            className="trend-context-menu-item"
+            onClick={handleSaveImageAs}
+          >
+            Save image as...
+          </button>
+          <button
+            type="button"
+            className="trend-context-menu-item"
+            onClick={handleCopyImage}
+          >
+            Copy image
+          </button>
+        </div>
+      )}
     </div>
   );
 };

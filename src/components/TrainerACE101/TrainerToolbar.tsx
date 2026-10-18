@@ -6,7 +6,8 @@ interface TrainerToolbarProps {
   isLogging: boolean;
   isAuto: boolean;
   isGraphHold: boolean;
-  enabled: boolean;
+  isConnected: boolean;
+  isExperimentSelected: boolean;
   onRun: () => void;
   onStop: () => void;
   onToggleAuto: () => void;
@@ -25,7 +26,8 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
   isLogging,
   isAuto,
   isGraphHold,
-  enabled,
+  isConnected,
+  isExperimentSelected,
   onRun,
   onStop,
   onToggleAuto,
@@ -40,47 +42,63 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
 }) => {
   return (
     <div className="trainer-toolbar" role="toolbar">
-      {/* Run Button */}
+      {/* Run Button (Enabled only when COM port connected AND experiment selected) */}
       <button
         type="button"
         className={`tb-btn ${isRunning ? 'active-run' : ''}`}
-        disabled={!enabled || isRunning}
+        disabled={!isConnected || !isExperimentSelected || isRunning}
         onClick={onRun}
-        title="Run Simulation / Acquisition"
+        title={
+          !isConnected
+            ? 'Connect to COM Port first'
+            : !isExperimentSelected
+            ? 'Select an Experiment from the menu first'
+            : isRunning
+            ? 'Simulation is running'
+            : 'Run Simulation / Acquisition'
+        }
       >
         <span className="tb-icon run-icon">▶</span>
         <span className="tb-label">Run</span>
       </button>
 
-      {/* Stop Button */}
+      {/* Stop Button (Enabled only while running) */}
       <button
         type="button"
         className={`tb-btn ${!isRunning ? 'active-stop' : ''}`}
-        disabled={!enabled || !isRunning}
+        disabled={!isRunning}
         onClick={onStop}
-        title="Stop"
+        title={!isRunning ? 'Click RUN to start' : 'Stop Experiment'}
       >
         <span className="tb-icon stop-icon">■</span>
         <span className="tb-label">Stop</span>
       </button>
 
-      {/* Auto Button */}
+      {/* Auto / Manual Button (Enabled when Experiment is selected) */}
       <button
         type="button"
-        className={`tb-btn ${isAuto ? 'active' : ''}`}
-        disabled={!enabled}
+        className={`tb-btn ${isAuto ? 'active' : 'mode-manual'}`}
+        disabled={!isConnected || !isExperimentSelected}
         onClick={onToggleAuto}
-        title="Automatic PID Control Mode"
+        title={
+          !isConnected
+            ? 'Connect to COM Port first'
+            : !isExperimentSelected
+            ? 'Select an Experiment from the menu first'
+            : isAuto
+            ? 'Auto mode active (Click to switch to Manual)'
+            : 'Manual mode active (Click to switch to Auto)'
+        }
       >
         <span className="tb-icon gear-icon">⚙</span>
-        <span className="tb-label">Auto</span>
+        <span className="tb-label">{isAuto ? 'Auto' : 'Manual'}</span>
       </button>
 
-      {/* Log ON Button */}
+      {/* Log ON Button (Enabled after RUN is hit) */}
       <button
         type="button"
         className={`tb-btn log-btn ${isLogging ? 'logging-active' : ''}`}
-        disabled={!enabled}
+        disabled={!isRunning}
         onClick={onToggleLog}
         title="Toggle Real-Time Logging"
       >
@@ -88,11 +106,11 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Log ON</span>
       </button>
 
-      {/* Save Log Data */}
+      {/* Save Log Data (Enabled after RUN is hit) */}
       <button
         type="button"
         className="tb-btn"
-        disabled={!enabled}
+        disabled={!isRunning}
         onClick={onSaveLog}
         title="Save Logged Data to CSV / Excel"
       >
@@ -100,11 +118,11 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Save Log<br />Data</span>
       </button>
 
-      {/* Clear Log */}
+      {/* Clear Log (Enabled after RUN is hit) */}
       <button
         type="button"
         className="tb-btn"
-        disabled={!enabled}
+        disabled={!isRunning}
         onClick={onClearLog}
         title="Clear Log History"
       >
@@ -112,11 +130,11 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Clear Log</span>
       </button>
 
-      {/* Hold Graph */}
+      {/* Hold Graph (Enabled after RUN is hit) */}
       <button
         type="button"
         className={`tb-btn ${isGraphHold ? 'active' : ''}`}
-        disabled={!enabled}
+        disabled={!isRunning}
         onClick={onToggleHold}
         title="Pause / Resume Live Waveform Graph"
       >
@@ -124,11 +142,11 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Hold<br />Graph</span>
       </button>
 
-      {/* Export Graph */}
+      {/* Export Graph (Enabled after RUN is hit) */}
       <button
         type="button"
         className="tb-btn"
-        disabled={!enabled}
+        disabled={!isRunning}
         onClick={onExportGraph}
         title="Export Graph Image"
       >
@@ -136,14 +154,14 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Export<br />Graph</span>
       </button>
 
-      {/* User Guide */}
+      {/* User Guide (Enabled all the time) */}
       <button
         type="button"
         className="tb-btn"
         onClick={onUserGuide}
         title="Open User Guide and Hardware Manual"
       >
-        <span className="tb-icon help-icon">❓</span>
+        <img src="/images/user_guide_icon.png" alt="User Guide" className="tb-icon-img" />
         <span className="tb-label">User<br />Guide</span>
       </button>
 

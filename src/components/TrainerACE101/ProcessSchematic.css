@@ -71,127 +71,62 @@
 }
 
 /* P & I Diagram Tab Content */
-.pid-placeholder {
-  padding: 16px;
-  color: #f1f5f9;
-  font-size: 12px;
-  line-height: 1.6;
+.pid-content-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.pid-info-box h3 {
-  font-size: 14px;
-  color: #38bdf8;
-  margin-bottom: 8px;
+.pid-diagram-img {
+  width: 100%;
+  height: 75%;
+  object-fit: fill;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.pid-info-box ul {
-  margin-top: 8px;
-  padding-left: 18px;
-}
-
-.pid-info-box li {
-  margin-bottom: 4px;
-}
-
-/* ── Footer Controls ───────────────────────────────────────── */
+/* ── Footer Status Bar: Live System Clock ──────────────────── */
 .schematic-footer {
   display: flex;
-  flex-direction: column;
-  background: #425c77;
-  border-top: 1px solid #58738e;
-  padding: 6px 10px;
-  gap: 4px;
-}
-
-.footer-left-controls {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.footer-field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-}
-
-.footer-field label {
-  font-size: 11px;
-  color: #ffffff;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.firebase-input {
-  flex: 1;
-  height: 22px;
-  background: #ffffff;
-  border: 1.5px solid #2f4357;
-  border-radius: 2px;
-  padding: 0 6px;
-  font-size: 11px;
-  color: #0f172a;
-}
-
-.footer-iot-field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.iot-label {
-  font-size: 11px;
-  color: #ffffff;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.iot-toggle-switch {
-  width: 38px;
-  height: 18px;
-  border-radius: 10px;
-  background: #64748b;
-  border: 1px solid #475569;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0;
-}
-
-.iot-toggle-switch.on {
-  background: #22c55e;
-  border-color: #16a34a;
-}
-
-.iot-thumb {
-  position: absolute;
-  top: 1px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s;
-}
-
-.iot-toggle-switch.on .iot-thumb {
-  transform: translateX(18px);
+  justify-content: flex-end;
+  background: #33485d;
+  border-top: 1px solid #4a637d;
+  padding: 7px 14px;
 }
 
 .footer-timestamp {
-  text-align: right;
-  padding-right: 8px;
-  font-family: 'Consolas', monospace;
-  font-size: 11px;
-  color: #ffffff;
-  background: #344a60;
-  border: 1px solid #28394a;
-  border-radius: 2px;
-  padding: 2px 8px;
-  letter-spacing: 0.5px;
-  font-weight: bold;
-  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Consolas', 'Roboto Mono', 'Courier New', monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  background: #1e293b;
+  border: 1.5px solid #64748b;
+  border-radius: 4px;
+  padding: 5px 18px;
+  letter-spacing: 0.8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(255, 255, 255, 0.08);
+  user-select: none;
+}
+
+.clock-icon {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.clock-text {
+  letter-spacing: 0.8px;
 }

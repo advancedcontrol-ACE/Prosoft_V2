@@ -26,6 +26,7 @@ class ModbusBridge {
     this.daemonReady = false;
     this.responseQueue = [];
     this.lineBuffer = '';
+    this.commandChain = Promise.resolve();
   }
 
   startDaemon() {
@@ -63,7 +64,8 @@ class ModbusBridge {
               continue;
             }
             if (this.responseQueue.length > 0) {
-              const { resolver } = this.responseQueue.shift();
+              const { resolver, timer } = this.responseQueue.shift();
+              clearTimeout(timer);
               resolver(parsed);
             }
           } catch {
@@ -91,33 +93,56 @@ class ModbusBridge {
     });
   }
 
-  sendCommand(cmdObj, timeoutMs = 1200) {
-    return new Promise((resolve, reject) => {
-      if (!this.ps || !this.daemonReady) {
-        return reject(new Error('Daemon not ready'));
-      }
-
-      const timer = setTimeout(() => {
-        const idx = this.responseQueue.findIndex((item) => item.timer === timer);
-        if (idx !== -1) {
-          this.responseQueue.splice(idx, 1);
+  sendCommand(cmdObj, timeoutMs = 2500) {
+    const run = () =>
+      new Promise((resolve, reject) => {
+        if (!this.ps || !this.daemonReady) {
+          return reject(new Error('Daemon not ready'));
         }
-        reject(new Error('Modbus daemon response timeout'));
-      }, timeoutMs);
 
-      this.responseQueue.push({ resolver: resolve, timer });
-      this.ps.stdin.write(JSON.stringify(cmdObj) + '\n');
-    });
+        const timer = setTimeout(() => {
+          const idx = this.responseQueue.findIndex((item) => item.timer === timer);
+          if (idx !== -1) {
+            this.responseQueue.splice(idx, 1);
+          }
+          reject(new Error(`Modbus daemon response timeout for ${cmdObj.cmd}`));
+        }, timeoutMs);
+
+        this.responseQueue.push({ resolver: resolve, timer });
+        this.ps.stdin.write(JSON.stringify(cmdObj) + '\n');
+      });
+
+    const chain = this.commandChain.then(run, run);
+    this.commandChain = chain.catch(() => {});
+    return chain;
   }
 
-  async connect(portName = 'COM4', baud = 9600, slaveId = 1) {
+  async connect(portName = 'COM4', baud = 9600, slaveId = 1, action = 'Direct') {
     await this.startDaemon();
     this.slaveId = slaveId || 1;
-    const res = await this.sendCommand({ cmd: 'open', port: portName, baud });
+    const res = await this.sendCommand({ cmd: 'open', port: portName, baud, slaveId: this.slaveId });
     if (res.status === 'opened') {
       this.isConnected = true;
       this.currentPort = portName;
+
+      // Action register handshake: write Action value (1 for Direct, 0 for Reverse) to Action address 4102 (1006H)
+      const actionRaw = (action === 'Direct' || action === 1 || action === '1') ? 1 : 0;
+      try {
+        const writeRes = await this.sendCommand(
+          { cmd: 'write_reg', slaveId: this.slaveId, addr: 0x1006, val: actionRaw },
+          2500
+        );
+        if (!writeRes || !writeRes.success) {
+          throw new Error(writeRes?.error || 'No response to Action register (4102) handshake');
+        }
+      } catch (handshakeErr) {
+        // Handshake failed! Disconnect and release the serial port
+        await this.disconnect();
+        throw new Error(`Controller did not respond to Action register (4102) handshake on ${portName}. (${handshakeErr.message})`);
+      }
+
       this.latestData.connected = true;
+      this.latestData.action = actionRaw === 1 ? 'Direct' : 'Reverse';
 
       // Start 1-second continuous poll loop
       this.startPollingLoop();
@@ -125,7 +150,7 @@ class ModbusBridge {
       return {
         success: true,
         portName,
-        message: `Connected to ${portName} at ${baud} bps. Modbus communication active.`,
+        message: `Connected to ${portName}. Action register (4102) handshake verified.`,
       };
     } else {
       throw new Error(res.error || 'Failed to open serial port');
@@ -139,7 +164,7 @@ class ModbusBridge {
       if (!this.isConnected || this.isPolling) return;
       this.isPolling = true;
       try {
-        const res = await this.sendCommand({ cmd: 'poll_all', slaveId: this.slaveId }, 1500);
+        const res = await this.sendCommand({ cmd: 'poll_all', slaveId: this.slaveId }, 2500);
         if (res.status === 'ok') {
           this.latestData = {
             connected: true,
@@ -174,9 +199,18 @@ class ModbusBridge {
     }
     const res = await this.sendCommand(
       { cmd: 'write_reg', slaveId: slaveId || this.slaveId, addr, val: rawVal },
-      1000
+      2500
     );
     if (res.success) {
+      // Immediately reflect written value in cache
+      if (addr === 0x1001) this.latestData.sp = rawVal / 10.0;
+      else if (addr === 0x1005) this.latestData.autoMan = rawVal === 2 ? 'Manual' : 'Auto';
+      else if (addr === 0x1006) this.latestData.action = rawVal === 1 ? 'Direct' : 'Reverse';
+      else if (addr === 0x1009) this.latestData.pb = rawVal / 10.0;
+      else if (addr === 0x100a) this.latestData.it = rawVal;
+      else if (addr === 0x100b) this.latestData.dt = rawVal;
+      else if (addr === 0x100c) this.latestData.bias = rawVal / 10.0;
+      else if (addr === 0x1012) this.latestData.op = rawVal / 10.0;
       return res;
     }
     throw new Error(res.error || 'Write failed');
