@@ -13,7 +13,11 @@
     "preview": "vite preview",
     "app": "cmd /c Launch_ACE_Prosoft.bat",
     "electron": "electron .",
-    "dist": "node scripts/build-dist.cjs"
+    "dist": "node scripts/build-dist.cjs",
+    "install-app": "node scripts/install-app.cjs"
+  },
+  "bin": {
+    "ace-prosoft": "./scripts/install-app.cjs"
   },
   "dependencies": {
     "react": "^19.2.8",
