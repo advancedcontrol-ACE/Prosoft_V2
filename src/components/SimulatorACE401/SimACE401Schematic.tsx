@@ -27,10 +27,14 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
   const tankBaseY = 630;
   const tankWaterTopY = tankBaseY - tankWaterHeight;
 
-  // ── Supply Pipe Segments (Skipping Control Valve Body and Rotameter Body) ──
-  // Segment 1: From Pump connection flange (X=884, Y=739), through lower horizontal pipe, around lower elbow,
-  // continuously UP the vertical pipeline (X=958) to upper elbow, and left to Control Valve inlet flange (X=908, Y=415)
-  const pipePath1 = 'M 884,739 L 946,739 Q 958,739 958,727 L 958,427 Q 958,415 946,415 L 908,415';
+  // ── Supply Pipe Segments (Skipping Table Shelf, Control Valve Body, and Rotameter Body) ──
+  // Segment 0: From Pump connection flange (X=884, Y=739), through lower horizontal pipe, around lower elbow,
+  // up vertical pipeline (X=958) to below table platform shelf (stops at Y=664)
+  const pipePath0 = 'M 884,739 L 946,739 Q 958,739 958,727 L 958,664';
+
+  // Segment 1: Above table platform shelf (starts at Y=638), up vertical pipeline (X=958) to upper elbow,
+  // and left to Control Valve inlet flange (X=908, Y=415)
+  const pipePath1 = 'M 958,638 L 958,427 Q 958,415 946,415 L 908,415';
 
   // Segment 2: Control Valve outlet (starts after CV body at X=804) to Rotameter bottom fitting (stops at Y=385)
   const pipePath2 = 'M 804,415 L 697,415 Q 685,415 685,403 L 685,385';
@@ -38,7 +42,7 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
   // Segment 3: Rotameter top fitting (starts above rotameter at Y=215) to Process Tank top flange (Y=335)
   const pipePath3 = 'M 685,215 L 685,202 Q 685,190 673,190 L 488,190 Q 476,190 476,202 L 476,335';
 
-  const pipeSegments = [pipePath1, pipePath2, pipePath3];
+  const pipeSegments = [pipePath0, pipePath1, pipePath2, pipePath3];
 
   // ── 3 Drain Line Segments (Process Tank to Supply Tank through Drain Valve - Centered at Y=612) ──
   // Drain 1: Process tank bottom outlet (X=600) to Drain Valve inlet (X=642)
@@ -47,8 +51,8 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
   // Drain 2: Drain Valve outlet (starts at X=690 after valve collar) to elbow, down to table top (Y=645)
   const drainPath2 = 'M 690,612 L 710,612 Q 718,612 718,620 L 718,645';
 
-  // Drain 3: Below table (Y=665) down to drain discharge nozzle (ends right at nozzle rim Y=748)
-  const drainPath3 = 'M 718,665 L 718,748';
+  // Drain 3: Below table (Y=665) down to drain discharge nozzle collar (ends inside nozzle collar at Y=715, so no animation extends past the rim into the water)
+  const drainPath3 = 'M 718,665 L 718,715';
 
   const drainSegments = [drainPath1, drainPath2, drainPath3];
 
