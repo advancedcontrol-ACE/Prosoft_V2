@@ -39,8 +39,8 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
   // Segment 2: Control Valve outlet (starts after CV body at X=804) to Rotameter bottom fitting (stops at Y=385)
   const pipePath2 = 'M 804,415 L 697,415 Q 685,415 685,403 L 685,385';
 
-  // Segment 3: Rotameter top fitting (starts above rotameter at Y=215) to Process Tank top flange (Y=335)
-  const pipePath3 = 'M 685,215 L 685,202 Q 685,190 673,190 L 488,190 Q 476,190 476,202 L 476,335';
+  // Segment 3: Rotameter top fitting (starts above rotameter at Y=215) to Process Tank top flange (stops at Y=312 above tank lid)
+  const pipePath3 = 'M 685,215 L 685,202 Q 685,190 673,190 L 488,190 Q 476,190 476,202 L 476,312';
 
   const pipeSegments = [pipePath0, pipePath1, pipePath2, pipePath3];
 
@@ -188,12 +188,12 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
                 </g>
               ))}
 
-              {/* Water Stream Pouring into Process Tank */}
-              {tankWaterTopY > 340 && (
+              {/* Water Stream Pouring into Process Tank (starts below solid tank lid rim at Y=348) */}
+              {tankWaterTopY > 352 && (
                 <g className="tank-inlet-stream">
                   <line
                     x1="476"
-                    y1="335"
+                    y1="348"
                     x2="476"
                     y2={tankWaterTopY}
                     stroke="#0284c7"
@@ -203,7 +203,7 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
                   />
                   <line
                     x1="476"
-                    y1="335"
+                    y1="348"
                     x2="476"
                     y2={tankWaterTopY}
                     stroke="#38bdf8"
@@ -213,7 +213,7 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
                   />
                   <line
                     x1="476"
-                    y1="335"
+                    y1="348"
                     x2="476"
                     y2={tankWaterTopY}
                     stroke="#ffffff"
