@@ -26,30 +26,28 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
   const tankBaseY = 630;
   const tankWaterTopY = tankBaseY - tankWaterHeight;
 
-  // ── Supply Pipe Segments (Skipping Control Valve, Rotameter, and Table Platform) ──
-  // Segment 0: Pump discharge nozzle (X=866, Y=740) through horizontal pipe, elbow, and up through table bottom (Y=660)
-  const pipePath0 = 'M 866,740 L 942,740 Q 954,740 954,728 L 954,660';
+  // ── Supply Pipe Segments (Skipping Control Valve Body and Rotameter Body) ──
+  // Segment 1: From Pump connection flange (X=884, Y=739), through lower horizontal pipe, around lower elbow,
+  // continuously UP the vertical pipeline (X=958) to upper elbow, and left to Control Valve inlet flange (X=908, Y=415)
+  const pipePath1 = 'M 884,739 L 946,739 Q 958,739 958,727 L 958,427 Q 958,415 946,415 L 908,415';
 
-  // Segment 1: Above table edge (Y=625) up to Control Valve inlet (stops before CV body at X=896)
-  const pipePath1 = 'M 954,625 L 954,422 Q 954,412 944,412 L 896,412';
-
-  // Segment 2: Control Valve outlet (starts after CV body at X=806) to Rotameter bottom fitting (stops at Y=395)
-  const pipePath2 = 'M 806,412 L 694,412 Q 684,412 684,402 L 684,395';
+  // Segment 2: Control Valve outlet (starts after CV body at X=804) to Rotameter bottom fitting (stops at Y=385)
+  const pipePath2 = 'M 804,415 L 697,415 Q 685,415 685,403 L 685,385';
 
   // Segment 3: Rotameter top fitting (starts above rotameter at Y=215) to Process Tank top flange (Y=335)
-  const pipePath3 = 'M 684,215 L 684,198 Q 684,188 674,188 L 487,188 Q 477,188 477,198 L 477,335';
+  const pipePath3 = 'M 685,215 L 685,202 Q 685,190 673,190 L 488,190 Q 476,190 476,202 L 476,335';
 
-  const pipeSegments = [pipePath0, pipePath1, pipePath2, pipePath3];
+  const pipeSegments = [pipePath1, pipePath2, pipePath3];
 
-  // ── 3 Drain Line Segments (Process Tank to Supply Tank through Drain Valve - Green Boarded) ──
-  // Drain 1: Process tank bottom outlet (X=600) to Drain Valve inlet (X=646)
-  const drainPath1 = 'M 600,625 L 646,625';
+  // ── 3 Drain Line Segments (Process Tank to Supply Tank through Drain Valve - Centered at Y=612) ──
+  // Drain 1: Process tank bottom outlet (X=600) to Drain Valve inlet (X=644)
+  const drainPath1 = 'M 600,612 L 644,612';
 
-  // Drain 2: Drain Valve outlet (X=674) to elbow, down to table top (Y=645)
-  const drainPath2 = 'M 674,625 L 714,625 Q 722,625 722,633 L 722,645';
+  // Drain 2: Drain Valve outlet (X=672) to elbow, down to table top (Y=645)
+  const drainPath2 = 'M 672,612 L 710,612 Q 718,612 718,620 L 718,645';
 
   // Drain 3: Below table (Y=665) down to drain discharge nozzle (Y=752)
-  const drainPath3 = 'M 722,665 L 722,752';
+  const drainPath3 = 'M 718,665 L 718,752';
 
   const drainSegments = [drainPath1, drainPath2, drainPath3];
 
@@ -87,103 +85,6 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               </feMerge>
             </filter>
           </defs>
-
-          {/* ── Active Submersible Pump Dynamic Animation in Supply Tank ── */}
-          <g className="sim401-active-pump-group">
-            {/* 1. Volute Internal Kinetic Fluid Vortex (Suction Eye to Discharge Flange) */}
-            <path
-              d="M 841,774 C 825,752 838,730 866,740"
-              fill="none"
-              stroke="#38bdf8"
-              strokeWidth="3.5"
-              strokeOpacity="0.75"
-              strokeLinecap="round"
-              filter="url(#fluid-glow)"
-              className="fluid-slugs"
-              style={{ animationDuration: flowSpeed }}
-            />
-
-            {/* 2. Suction Vortex Inward Ripples at Impeller Eye */}
-            <ellipse
-              cx="841"
-              cy="774"
-              rx="15"
-              ry="15"
-              fill="none"
-              stroke="#7dd3fc"
-              strokeWidth="1.6"
-              className="sim401-suction-ripple-1"
-            />
-            <ellipse
-              cx="841"
-              cy="774"
-              rx="15"
-              ry="15"
-              fill="none"
-              stroke="#38bdf8"
-              strokeWidth="1.4"
-              className="sim401-suction-ripple-2"
-            />
-
-            {/* 3. Swirling Inflow Cavitation Micro-Bubbles into Suction Eye */}
-            <circle cx="828" cy="764" r="1.6" fill="#ffffff" className="sim401-suction-bubble-1" />
-            <circle cx="853" cy="768" r="1.4" fill="#e0f2fe" className="sim401-suction-bubble-2" />
-            <circle cx="836" cy="786" r="1.5" fill="#ffffff" className="sim401-suction-bubble-3" />
-
-            {/* 4. High-Precision Centrifugal Impeller (Rotating at exact center 841, 774) */}
-            <g
-              className="sim401-pump-impeller"
-              style={{
-                transformOrigin: '841px 774px',
-                animationDuration: flowSpeed,
-              }}
-            >
-              {/* Impeller Backplate disc */}
-              <circle cx="841" cy="774" r="13" fill="#0284c7" fillOpacity="0.3" />
-
-              {/* 6 Curved Impeller Vanes */}
-              {[0, 60, 120, 180, 240, 300].map((deg) => (
-                <g key={`trainer101-vane-${deg}`} transform={`rotate(${deg} 841 774)`}>
-                  <path
-                    d="M 841,774 Q 848,767 853,770"
-                    fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    filter="url(#fluid-glow)"
-                  />
-                  <path
-                    d="M 841,774 Q 848,767 853,770"
-                    fill="none"
-                    stroke="#ffffff"
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                  />
-                </g>
-              ))}
-
-              {/* Center Hub & Shaft Nut */}
-              <circle
-                cx="841"
-                cy="774"
-                r="4.5"
-                fill="#0f172a"
-                stroke="#38bdf8"
-                strokeWidth="1.2"
-              />
-              <circle cx="841" cy="774" r="2.2" fill="#e2e8f0" />
-            </g>
-
-            {/* 5. Electric Motor Operating Status Indicator */}
-            <circle
-              cx="928"
-              cy="798"
-              r="2.8"
-              fill="#22c55e"
-              filter="drop-shadow(0 0 4px #22c55e)"
-              className="sim401-motor-status-beacon"
-            />
-          </g>
 
           {/* 2. Disconnected Pipe Fluid Segments */}
           {pipeSegments.map((pathD, idx) => (
@@ -297,12 +198,12 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
             </g>
           ))}
 
-          {/* 4. Drain Discharging into Supply Tank Nozzle (X=722, Y=752 to 780) */}
+          {/* 4. Drain Discharging into Supply Tank Nozzle (X=718, Y=752 to 780) */}
           <g className="drain-outlet-stream">
             <line
-              x1="722"
+              x1="718"
               y1="752"
-              x2="722"
+              x2="718"
               y2="780"
               stroke="#0284c7"
               strokeWidth="5"
@@ -310,9 +211,9 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               strokeLinecap="round"
             />
             <line
-              x1="722"
+              x1="718"
               y1="752"
-              x2="722"
+              x2="718"
               y2="780"
               stroke="#38bdf8"
               strokeWidth="3.5"
@@ -320,9 +221,9 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               className="fluid-jet-flow"
             />
             <line
-              x1="722"
+              x1="718"
               y1="752"
-              x2="722"
+              x2="718"
               y2="780"
               stroke="#ffffff"
               strokeWidth="1.8"
@@ -330,7 +231,7 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               className="fluid-jet-bubbles"
             />
             <ellipse
-              cx="722"
+              cx="718"
               cy="780"
               rx="11"
               ry="3.5"
@@ -346,9 +247,9 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
             <g className="tank-inlet-stream">
               {/* Base falling fluid column */}
               <line
-                x1="477"
+                x1="476"
                 y1="335"
-                x2="477"
+                x2="476"
                 y2={tankWaterTopY}
                 stroke="#0284c7"
                 strokeWidth="6"
@@ -357,9 +258,9 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               />
               {/* Falling fluid pulses */}
               <line
-                x1="477"
+                x1="476"
                 y1="335"
-                x2="477"
+                x2="476"
                 y2={tankWaterTopY}
                 stroke="#38bdf8"
                 strokeWidth="4"
@@ -368,9 +269,9 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               />
               {/* Sparkling droplet beads */}
               <line
-                x1="477"
+                x1="476"
                 y1="335"
-                x2="477"
+                x2="476"
                 y2={tankWaterTopY}
                 stroke="#ffffff"
                 strokeWidth="2"
@@ -379,7 +280,7 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               />
               {/* Dual Concentric Surface Ripples at impact */}
               <ellipse
-                cx="477"
+                cx="476"
                 cy={tankWaterTopY}
                 rx="14"
                 ry="4"
@@ -389,7 +290,7 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
                 className="fluid-ripple-1"
               />
               <ellipse
-                cx="477"
+                cx="476"
                 cy={tankWaterTopY}
                 rx="14"
                 ry="4"
