@@ -1315,14 +1315,6 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         onExportGraph={handleExportGraph}
         onUserGuide={handleUserGuide}
         onHome={onHome}
-        onExit={() => {
-          try {
-            window.close();
-          } catch {
-            // ignore
-          }
-          onHome();
-        }}
       />
 
       {/* ── Real-Time ML Control Status Ribbon ──────────────── */}

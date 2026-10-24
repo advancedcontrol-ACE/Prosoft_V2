@@ -49,8 +49,6 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
   onExportGraph,
   onUserGuide,
   onHome,
-  onExit,
-  showExit = true,
   speedMultiplier,
   onSpeedChange,
 }) => {
@@ -238,19 +236,6 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-icon home-icon">🏠</span>
         <span className="tb-label">Home</span>
       </button>
-
-      {/* Exit Button (Figure 3) */}
-      {showExit && onExit && (
-        <button
-          type="button"
-          className="tb-btn exit-btn"
-          onClick={onExit}
-          title="Exit Application"
-        >
-          <span className="tb-icon exit-icon">✕</span>
-          <span className="tb-label">Exit</span>
-        </button>
-      )}
     </div>
   );
 };
