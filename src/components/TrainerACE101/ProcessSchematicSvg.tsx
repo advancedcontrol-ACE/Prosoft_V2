@@ -40,14 +40,14 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
   const pipeSegments = [pipePath1, pipePath2, pipePath3];
 
   // ── 3 Drain Line Segments (Process Tank to Supply Tank through Drain Valve - Centered at Y=612) ──
-  // Drain 1: Process tank bottom outlet (X=600) to Drain Valve inlet (X=644)
-  const drainPath1 = 'M 600,612 L 644,612';
+  // Drain 1: Process tank bottom outlet (X=600) to Drain Valve inlet (X=642)
+  const drainPath1 = 'M 600,612 L 642,612';
 
-  // Drain 2: Drain Valve outlet (X=672) to elbow, down to table top (Y=645)
-  const drainPath2 = 'M 672,612 L 710,612 Q 718,612 718,620 L 718,645';
+  // Drain 2: Drain Valve outlet (starts at X=690 after valve collar) to elbow, down to table top (Y=645)
+  const drainPath2 = 'M 690,612 L 710,612 Q 718,612 718,620 L 718,645';
 
-  // Drain 3: Below table (Y=665) down to drain discharge nozzle (Y=752)
-  const drainPath3 = 'M 718,665 L 718,752';
+  // Drain 3: Below table (Y=665) down to drain discharge nozzle (ends right at nozzle rim Y=748)
+  const drainPath3 = 'M 718,665 L 718,748';
 
   const drainSegments = [drainPath1, drainPath2, drainPath3];
 
@@ -197,50 +197,6 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
               />
             </g>
           ))}
-
-          {/* 4. Drain Discharging into Supply Tank Nozzle (X=718, Y=752 to 780) */}
-          <g className="drain-outlet-stream">
-            <line
-              x1="718"
-              y1="752"
-              x2="718"
-              y2="780"
-              stroke="#0284c7"
-              strokeWidth="5"
-              strokeOpacity="0.45"
-              strokeLinecap="round"
-            />
-            <line
-              x1="718"
-              y1="752"
-              x2="718"
-              y2="780"
-              stroke="#38bdf8"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              className="fluid-jet-flow"
-            />
-            <line
-              x1="718"
-              y1="752"
-              x2="718"
-              y2="780"
-              stroke="#ffffff"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              className="fluid-jet-bubbles"
-            />
-            <ellipse
-              cx="718"
-              cy="780"
-              rx="11"
-              ry="3.5"
-              fill="none"
-              stroke="#7dd3fc"
-              strokeWidth="1.8"
-              className="fluid-ripple-1"
-            />
-          </g>
 
           {/* 5. Water Stream Pouring into Process Tank from Top Flange (Y=335) to Water Surface */}
           {tankWaterTopY > 340 && (
