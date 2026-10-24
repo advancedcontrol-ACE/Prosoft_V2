@@ -1,0 +1,317 @@
+/* ============================================================
+   ACE 403 Parameters Panel (Exact Figure 1 Matching Layout & Frame Size)
+   ============================================================ */
+
+.sim403-params-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #425c77;
+  border: 1.5px solid #587490;
+  border-radius: 4px;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.2),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Top Tabs Bar ── */
+.sim403-params-tab-bar {
+  display: flex;
+  height: 34px;
+  background: #364b60;
+  border-bottom: 1.5px solid #283747;
+  flex-shrink: 0;
+}
+
+.sim403-params-tab-btn {
+  flex: 1;
+  border: none;
+  background: #3c536b;
+  color: #cbd5e1;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease-in-out;
+  border-right: 1px solid #283747;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sim403-params-tab-btn:last-child {
+  border-right: none;
+}
+
+.sim403-params-tab-btn:hover:not(:disabled) {
+  background: #4a6684;
+  color: #ffffff;
+}
+
+.sim403-params-tab-btn.active {
+  background: #587490;
+  color: #ffffff;
+  border-top: 3px solid #60a5fa;
+  border-bottom: none;
+  font-weight: 700;
+}
+
+.sim403-params-tab-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #2b3947;
+  color: #64748b;
+}
+
+/* ── Active Control Strategy Banner ── */
+.sim403-active-logic-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  margin: 0 0 6px 0;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.sim403-active-logic-banner.mpc {
+  background: linear-gradient(90deg, #1e3a8a 0%, #1e40af 100%);
+  border: 1px solid #3b82f6;
+  color: #eff6ff;
+}
+
+.sim403-active-logic-banner.pid {
+  background: linear-gradient(90deg, #065f46 0%, #047857 100%);
+  border: 1px solid #10b981;
+  color: #ecfdf5;
+}
+
+.sim403-active-logic-banner.direct {
+  background: linear-gradient(90deg, #581c87 0%, #6b21a8 100%);
+  border: 1px solid #a855f7;
+  color: #faf5ff;
+}
+
+.sim403-banner-badge {
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.sim403-banner-text {
+  line-height: 1.3;
+  opacity: 0.95;
+}
+
+/* ── Body ── */
+.sim403-params-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  overflow: hidden;
+}
+
+/* ── Plant Parameters Grid (Figure 1 Matching: Pushed towards Top) ── */
+.sim403-plant-sliders-grid {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-around;
+  width: 100%;
+  height: 100%;
+  padding-top: 4px;
+}
+
+/* ── Controller Parameters Layout (Figure 1 Matching) ── */
+.sim403-ctrl-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  gap: 12px;
+}
+
+.sim403-ctrl-sliders-grid {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1 1 auto;
+  gap: 4px;
+  height: 100%;
+}
+
+.sim403-ctrl-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* ── Right Dedicated Action & Contribution Column (Figure 1 Matching) ── */
+.sim403-actions-contrib-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 130px;
+  flex-shrink: 0;
+  padding: 6px 4px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sim403-add-load-btn {
+  width: 110px;
+  height: 30px;
+  background: #ffffff;
+  border: 1.5px solid #7c838d;
+  border-radius: 4px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: all 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sim403-add-load-btn:hover {
+  background: #f1f5f9;
+  border-color: #475569;
+}
+
+.sim403-add-load-btn:active,
+.sim403-add-load-btn.active {
+  background: #fbbf24;
+  border-color: #d97706;
+  color: #78350f;
+  transform: translateY(1px);
+}
+
+.sim403-contrib-box-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 2px;
+}
+
+.sim403-contrib-box-label {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.sim403-contrib-box-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  height: 22px;
+  background: #ffffff;
+  border: 1.5px solid #7c838d;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.sim403-contrib-box-display span {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sim403-removed-hys-slot {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── Log Table (White Background Matching User Figure) ── */
+.sim403-log-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.sim403-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.sim403-log-table th {
+  background: #ffffff;
+  color: #0f2b48;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 8px 10px;
+  text-align: center;
+  border-bottom: 2px solid #0f2b48;
+  border-right: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sim403-log-table th:last-child {
+  border-right: none;
+}
+
+.sim403-log-table td {
+  padding: 6px 10px;
+  text-align: center;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.sim403-log-table td:last-child {
+  border-right: none;
+}
+
+.sim403-log-table tr:hover td {
+  background: #f8fafc;
+}
+
+.sim403-no-log {
+  padding: 36px 20px !important;
+  color: #64748b;
+  font-style: italic;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  font-size: 13px;
+  border: none !important;
+  background: #ffffff !important;
+}

@@ -1,5 +1,6 @@
 /* ============================================================
    MenuBar.css — Windows-style horizontal menu bar + cascades
+   Retains style and color as Figure 2
    ============================================================ */
 
 /* ── Top bar strip ─────────────────────────────────────────── */
@@ -23,7 +24,8 @@
   padding: 0 10px;
   height: 100%;
   font-size: 13px;
-  color: var(--color-menu-fg);
+  font-weight: 500;
+  color: #000000;
   cursor: default;
   border-right: 1px solid var(--color-menu-sep);
   white-space: nowrap;
@@ -48,9 +50,9 @@
 /* ── Cascade menus (all depths) ────────────────────────────── */
 .cascade-menu {
   min-width: var(--dropdown-min-w);
-  background: var(--color-dropdown-bg);
-  border: 1px solid var(--color-dropdown-border);
-  box-shadow: 2px 4px 12px rgba(0,0,0,0.25);
+  background: #ececec;
+  border: 1px solid #7c838d;
+  box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.3);
   padding: 2px 0;
   list-style: none;
 }
@@ -61,43 +63,90 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px 4px 14px;
+  padding: 4px 10px 4px 14px;
   font-size: 13px;
-  color: var(--color-menu-fg);
+  font-weight: 500;
+  color: #000000;
   cursor: default;
   white-space: nowrap;
   min-height: 24px;
 }
 
+/* Direct child item label and arrow base styles */
+.cascade-item > .item-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+}
+
+.cascade-item > .arrow {
+  font-size: 9px;
+  margin-left: 10px;
+  color: inherit;
+}
+
+/* Enabled items: solid black text */
+.cascade-item.enabled,
+.cascade-item:not(.disabled) {
+  color: #000000 !important;
+}
+
+.cascade-item.enabled > .item-label,
+.cascade-item:not(.disabled) > .item-label {
+  color: #000000 !important;
+}
+
+.cascade-item.enabled > .arrow,
+.cascade-item:not(.disabled) > .arrow {
+  color: #000000 !important;
+}
+
+/* Hover or open active item: Windows blue highlight with crisp white text */
+.cascade-item.enabled:hover,
+.cascade-item.enabled.open,
 .cascade-item:not(.disabled):hover,
-.cascade-item.open:not(.disabled) {
-  background: var(--color-dropdown-hover-bg);
-  color: var(--color-dropdown-hover-fg);
+.cascade-item:not(.disabled).open {
+  background: #0078d7 !important;
+  color: #ffffff !important;
 }
 
+.cascade-item.enabled:hover > .item-label,
+.cascade-item.enabled.open > .item-label,
+.cascade-item:not(.disabled):hover > .item-label,
+.cascade-item:not(.disabled).open > .item-label {
+  color: #ffffff !important;
+}
+
+.cascade-item.enabled:hover > .arrow,
+.cascade-item.enabled.open > .arrow,
+.cascade-item:not(.disabled):hover > .arrow,
+.cascade-item:not(.disabled).open > .arrow {
+  color: #ffffff !important;
+}
+
+/* Disabled items: muted grey (#94a3b8) */
 .cascade-item.disabled {
-  color: var(--color-dropdown-disabled);
-  cursor: not-allowed;
-}
-.cascade-item.disabled .arrow {
-  color: var(--color-dropdown-disabled);
+  color: #94a3b8 !important;
+  cursor: default;
+  background: transparent !important;
 }
 
-/* ── Separator between menu items ──────────────────────────── */
+.cascade-item.disabled > .item-label {
+  color: #94a3b8 !important;
+}
+
+.cascade-item.disabled > .arrow {
+  color: #94a3b8 !important;
+}
+
+/* ── Separator between menu items ──────────────────── */
 .menu-separator {
   height: 1px;
-  background: var(--color-dropdown-border);
-  margin: 2px 6px;
+  background: #c8c8c8;
+  margin: 2px 0;
   padding: 0;
   pointer-events: none;
-}
-
-.item-label { flex: 1; }
-
-.arrow {
-  font-size: 9px;
-  margin-left: 8px;
-  color: #555;
 }
 
 /* ── Sub-menu positioned to the right ─────────────────────── */
@@ -116,3 +165,53 @@
   width: 12px;
   height: 100%;
 }
+
+/* ── Menu bar right license status ─────────────────────────── */
+.menu-bar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding-right: 12px;
+}
+
+.menu-bar-license-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #0f172a;
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.license-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+}
+
+.menu-bar-activate-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.menu-bar-activate-btn:hover {
+  background: #1d4ed8;
+}
+

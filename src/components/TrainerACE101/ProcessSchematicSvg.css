@@ -17,30 +17,89 @@
   overflow: hidden;
 }
 
-/* ── Fluid Flow Stream Animations in Pipes ─────────────────── */
-.pipe-flow-path {
-  stroke-dasharray: 10 10;
-  animation: pipeFlowMove 1s linear infinite;
+/* ── Volumetric Fluid Flow Motion (Seamless 36px loop period) ── */
+.fluid-slugs {
+  stroke-dasharray: 16 20;
+  animation: fluidFlowForward 0.85s linear infinite;
 }
 
-.pipe-flow-path.fast {
-  animation-duration: 0.5s;
+.fluid-bubbles {
+  stroke-dasharray: 3 33;
+  animation: fluidFlowForward 0.85s linear infinite;
 }
 
-.pipe-flow-path.medium {
-  animation-duration: 0.9s;
-}
-
-.pipe-flow-path.slow {
-  animation-duration: 1.6s;
-}
-
-@keyframes pipeFlowMove {
+@keyframes fluidFlowForward {
   from {
-    stroke-dashoffset: 20;
+    stroke-dashoffset: 36;
   }
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+/* ── Tank Inlet Jet Stream ─────────────────────────────────── */
+.fluid-jet-flow {
+  stroke-dasharray: 8 14;
+  animation: fluidJetFall 0.45s linear infinite;
+}
+
+.fluid-jet-bubbles {
+  stroke-dasharray: 2 20;
+  animation: fluidJetFall 0.45s linear infinite;
+}
+
+@keyframes fluidJetFall {
+  from {
+    stroke-dashoffset: 22;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Fluid Surface Expanding Concentric Ripples ────────────── */
+.fluid-ripple-1 {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fluidRippleExpand 1.4s ease-out infinite;
+}
+
+.fluid-ripple-2 {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fluidRippleExpand 1.4s ease-out infinite 0.7s;
+}
+
+@keyframes fluidRippleExpand {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.95;
+  }
+  60% {
+    transform: scale(1.3);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* ── Pump Discharge Glow ───────────────────────────────────── */
+.pump-discharge-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pumpDischargePulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes pumpDischargePulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0.9;
   }
 }
 

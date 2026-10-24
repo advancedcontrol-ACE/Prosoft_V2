@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { LabViewSlider } from './LabViewSlider';
 import './ControllerParametersPanel.css';
 
@@ -45,6 +45,11 @@ export function getEnabledParameters(experiment: string) {
 
   switch (norm) {
     case 'open loop':
+    case 'process reaction':
+    case 'two point method':
+    case 'classical method':
+    case 'machine learning control':
+    case 'ml control':
       return {
         sp: false,
         pv: false,
@@ -157,6 +162,15 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
   onSaveSettings,
 }) => {
   const [activeTab, setActiveTab] = useState<'params' | 'log'>('params');
+  const logTableWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll log table so slider moves along with newest entry at bottom
+  useEffect(() => {
+    if (activeTab === 'log' && logTableWrapperRef.current) {
+      logTableWrapperRef.current.scrollTop = logTableWrapperRef.current.scrollHeight;
+    }
+  }, [logEntries?.length, activeTab]);
+
   const [saveSuccess, setSaveSuccess] = useState(false);
   const repeatRef = useRef<number | null>(null);
 
@@ -252,6 +266,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
           Log Table
         </button>
       </div>
+
 
       {activeTab === 'params' ? (
         <div className="controller-content">
@@ -444,7 +459,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.sp}
                 decimals={0}
-                enabled={enabledParams.sp}
+                enabled={isRunning && enabledParams.sp}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, sp: val }));
                   onParamWrite?.('sp', val);
@@ -471,7 +486,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.op}
                 decimals={1}
-                enabled={isOpEditable}
+                enabled={isRunning && isOpEditable}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, op: val }));
                   onParamWrite?.('op', val);
@@ -486,7 +501,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.bias}
                 decimals={1}
-                enabled={enabledParams.bias}
+                enabled={isRunning && enabledParams.bias}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, bias: val }));
                   onParamWrite?.('bias', val);
@@ -504,7 +519,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 100, 200, 300, 400]}
                 value={state.pb}
                 decimals={0}
-                enabled={enabledParams.pb}
+                enabled={isRunning && enabledParams.pb}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, pb: val }));
                   onParamWrite?.('pb', val);
@@ -519,7 +534,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 250, 500, 750, 1000]}
                 value={state.it}
                 decimals={0}
-                enabled={enabledParams.it}
+                enabled={isRunning && enabledParams.it}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, it: val }));
                   onParamWrite?.('it', val);
@@ -534,7 +549,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 5, 10, 15, 20]}
                 value={state.dt}
                 decimals={0}
-                enabled={enabledParams.dt}
+                enabled={isRunning && enabledParams.dt}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, dt: val }));
                   onParamWrite?.('dt', val);
@@ -549,7 +564,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 5, 10, 15, 20]}
                 value={state.hysteresis}
                 decimals={0}
-                enabled={enabledParams.hysteresis}
+                enabled={isRunning && enabledParams.hysteresis}
                 onChange={(val) => onStateChange((prev) => ({ ...prev, hysteresis: val }))}
               />
             </div>
@@ -557,7 +572,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
         </div>
       ) : (
         <div className="log-table-container">
-          <div className="log-table-scroll">
+          <div className="log-table-scroll" ref={logTableWrapperRef}>
             <table className="log-table">
               <thead>
                 <tr>

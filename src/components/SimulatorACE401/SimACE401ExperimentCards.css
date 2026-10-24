@@ -1,0 +1,167 @@
+/* ============================================================
+   Figure 5: Select Experiment, Study Parameters, and IoT Bar
+   ============================================================ */
+
+.sim401-fig5-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.sim401-fig5-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Card Bezel (Matching Figure 5's exact dark slate-blue frame) */
+.sim401-fig5-card {
+  position: relative;
+  background: #354e68;
+  border: 1.5px solid #233547;
+  border-radius: 4px;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.2),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  padding: 6px 10px 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sim401-exp-box {
+  flex: 4.8 1 0;
+  min-width: 0;
+}
+
+.sim401-study-box {
+  flex: 5.2 1 0;
+  min-width: 0;
+}
+
+.sim401-fig5-title {
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  margin-bottom: 8px;
+  letter-spacing: 0.2px;
+}
+
+/* Content Columns */
+.sim401-exp-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sim401-exp-col {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.sim401-fig5-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.sim401-fig5-item:hover {
+  filter: brightness(1.2);
+}
+
+/* Glowing LED circles */
+.sim401-fig5-led {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0f2b14;
+  border: 1.5px solid #06150a;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.sim401-fig5-led.active {
+  background: #22c55e;
+  border-color: #16a34a;
+  box-shadow:
+    0 0 8px #22c55e,
+    inset 0 0 3px #ffffff;
+}
+
+.sim401-fig5-label {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Study Parameters Grid */
+.sim401-study-grid {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sim401-study-col {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+/* Action Direct / Reverse Row */
+.sim401-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.sim401-action-label {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.sim401-action-btn {
+  background: #ffffff;
+  border: 1.5px solid #7c838d;
+  border-radius: 3px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  color: #000000;
+  padding: 2px 22px;
+  cursor: pointer;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #9ca3af,
+    0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.1s ease;
+}
+
+.sim401-action-btn:hover {
+  background: #f1f5f9;
+}
+
+.sim401-action-btn:active {
+  transform: translateY(1px);
+}

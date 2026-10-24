@@ -5,10 +5,14 @@ interface TrainerToolbarProps {
   isRunning: boolean;
   isLogging: boolean;
   isAuto: boolean;
+  isAutoDisabled?: boolean;
   isGraphHold: boolean;
   isConnected: boolean;
   isExperimentSelected: boolean;
+  isPaused?: boolean;
   onRun: () => void;
+  onPause?: () => void;
+  onSingleStep?: () => void;
   onStop: () => void;
   onToggleAuto: () => void;
   onToggleLog: () => void;
@@ -18,17 +22,24 @@ interface TrainerToolbarProps {
   onExportGraph: () => void;
   onUserGuide: () => void;
   onHome: () => void;
-  onExit: () => void;
+  onExit?: () => void;
+  showExit?: boolean;
+  speedMultiplier?: number;
+  onSpeedChange?: (speed: number) => void;
 }
 
 export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
   isRunning,
   isLogging,
   isAuto,
+  isAutoDisabled = false,
   isGraphHold,
   isConnected,
   isExperimentSelected,
+  isPaused = false,
   onRun,
+  onPause,
+  onSingleStep,
   onStop,
   onToggleAuto,
   onToggleLog,
@@ -39,21 +50,24 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
   onUserGuide,
   onHome,
   onExit,
+  showExit = true,
+  speedMultiplier,
+  onSpeedChange,
 }) => {
   return (
     <div className="trainer-toolbar" role="toolbar">
-      {/* Run Button (Enabled only when COM port connected AND experiment selected) */}
+      {/* Run Button */}
       <button
         type="button"
-        className={`tb-btn ${isRunning ? 'active-run' : ''}`}
-        disabled={!isConnected || !isExperimentSelected || isRunning}
+        className={`tb-btn ${isRunning && !isPaused ? 'active-run' : ''}`}
+        disabled={!isConnected || !isExperimentSelected || (isRunning && !isPaused)}
         onClick={onRun}
         title={
           !isConnected
             ? 'Connect to COM Port first'
             : !isExperimentSelected
             ? 'Select an Experiment from the menu first'
-            : isRunning
+            : isRunning && !isPaused
             ? 'Simulation is running'
             : 'Run Simulation / Acquisition'
         }
@@ -62,26 +76,56 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Run</span>
       </button>
 
-      {/* Stop Button (Enabled only while running) */}
+      {/* Pause Button (Figure 2) */}
+      {onPause && (
+        <button
+          type="button"
+          className={`tb-btn ${isPaused ? 'active-pause' : ''}`}
+          disabled={!isRunning && !isPaused}
+          onClick={onPause}
+          title={isPaused ? 'Resume Simulation' : 'Pause Simulation'}
+        >
+          <span className="tb-icon pause-icon">❚❚</span>
+          <span className="tb-label">Pause</span>
+        </button>
+      )}
+
+      {/* Single Step Button (Figure 2) */}
+      {onSingleStep && (
+        <button
+          type="button"
+          className="tb-btn"
+          disabled={!isConnected || !isExperimentSelected}
+          onClick={onSingleStep}
+          title="Single Step (advance simulation by 1s)"
+        >
+          <span className="tb-icon step-icon">▶▶</span>
+          <span className="tb-label">Single<br />Step</span>
+        </button>
+      )}
+
+      {/* Stop Button */}
       <button
         type="button"
-        className={`tb-btn ${!isRunning ? 'active-stop' : ''}`}
-        disabled={!isRunning}
+        className={`tb-btn ${!isRunning && !isPaused ? 'active-stop' : ''}`}
+        disabled={!isRunning && !isPaused}
         onClick={onStop}
-        title={!isRunning ? 'Click RUN to start' : 'Stop Experiment'}
+        title={!isRunning && !isPaused ? 'Click RUN to start' : 'Stop Simulation'}
       >
         <span className="tb-icon stop-icon">■</span>
         <span className="tb-label">Stop</span>
       </button>
 
-      {/* Auto / Manual Button (Enabled when Experiment is selected) */}
+      {/* Auto / Manual Button (Enabled when Experiment is selected and not fixed Manual) */}
       <button
         type="button"
         className={`tb-btn ${isAuto ? 'active' : 'mode-manual'}`}
-        disabled={!isConnected || !isExperimentSelected}
+        disabled={!isConnected || !isExperimentSelected || isAutoDisabled}
         onClick={onToggleAuto}
         title={
-          !isConnected
+          isAutoDisabled
+            ? 'Manual mode is fixed for this experiment'
+            : !isConnected
             ? 'Connect to COM Port first'
             : !isExperimentSelected
             ? 'Select an Experiment from the menu first'
@@ -154,6 +198,25 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Export<br />Graph</span>
       </button>
 
+      {/* Speed Multiplier Control (Simulation Mode) */}
+      {onSpeedChange && (
+        <div className="tb-speed-control" title="Simulation Time Acceleration">
+          <label htmlFor="tb-speed-select" className="tb-speed-label">Speed</label>
+          <select
+            id="tb-speed-select"
+            className="tb-speed-select"
+            value={speedMultiplier ?? 1}
+            onChange={(e) => onSpeedChange(Number(e.target.value))}
+            title="Simulation Speed Multiplier"
+          >
+            <option value={1}>1x</option>
+            <option value={2}>2x</option>
+            <option value={5}>5x</option>
+            <option value={10}>10x</option>
+          </select>
+        </div>
+      )}
+
       {/* User Guide (Enabled all the time) */}
       <button
         type="button"
@@ -176,16 +239,18 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         <span className="tb-label">Home</span>
       </button>
 
-      {/* Exit Button */}
-      <button
-        type="button"
-        className="tb-btn exit-btn"
-        onClick={onExit}
-        title="Exit Application"
-      >
-        <span className="tb-icon exit-icon">✕</span>
-        <span className="tb-label">Exit</span>
-      </button>
+      {/* Exit Button (Figure 3) */}
+      {showExit && onExit && (
+        <button
+          type="button"
+          className="tb-btn exit-btn"
+          onClick={onExit}
+          title="Exit Application"
+        >
+          <span className="tb-icon exit-icon">✕</span>
+          <span className="tb-label">Exit</span>
+        </button>
+      )}
     </div>
   );
 };

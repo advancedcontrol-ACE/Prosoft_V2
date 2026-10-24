@@ -1,0 +1,172 @@
+.sim404-inputs-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.sim404-input-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.sim404-card-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.sim404-select {
+  width: 100%;
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #f8fafc;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.sim404-card-title {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 4px;
+}
+
+.sim404-poly-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.poly-prefix {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.poly-inputs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.poly-term {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Cambria Math', Georgia, serif;
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+.sim404-coef-input {
+  width: 52px;
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 3px;
+  color: #f8fafc;
+  font-size: 12px;
+  padding: 3px 4px;
+  text-align: center;
+}
+
+.sim404-poly-divider {
+  height: 1px;
+  background: #334155;
+  margin: 8px 0;
+}
+
+.sim404-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sim404-param-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.sim404-num-field {
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  color: #f8fafc;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.sim404-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.sim404-toggle-btn {
+  flex: 1;
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  padding: 4px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim404-toggle-btn.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.sim404-pid-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #334155;
+}
+
+.sim404-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  width: 95px;
+}
+
+.sim404-range {
+  flex: 1;
+  accent-color: #38bdf8;
+  cursor: pointer;
+}
+
+.slider-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  width: 50px;
+  text-align: right;
+}

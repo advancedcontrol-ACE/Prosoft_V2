@@ -11,9 +11,19 @@ import { StopConfirmModal } from './StopConfirmModal';
 import { ExperimentNoticeModal } from './ExperimentNoticeModal';
 import { ConnectionNoticeModal } from './ConnectionNoticeModal';
 import { UserGuideModal } from './UserGuideModal';
+import { MLControlModal } from './MLControlModal';
 import { fetchAvailablePorts } from '../../services/modbus/serialPorts';
 import { DeltaDTBService } from '../../services/modbus/dtb9696Modbus';
 import type { ModbusLiveState } from '../../services/modbus/dtb9696Modbus';
+import {
+  mpcOptimize,
+  neuralPIDStep,
+  inverseDynamicsStep,
+  rlActorStep,
+  lstmPredictiveStep,
+  ML_LOGIC_OPTIONS,
+} from '../../services/ml/mlControlAlgorithms';
+import type { NNWeights, MLLogicType } from '../../services/ml/mlControlAlgorithms';
 import './TrainerACE101.css';
 
 interface TrainerACE101Props {
@@ -28,6 +38,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
   const [isStopModalOpen, setIsStopModalOpen] = useState<boolean>(false);
   const [isConnNoticeOpen, setIsConnNoticeOpen] = useState<boolean>(false);
   const [isUserGuideOpen, setIsUserGuideOpen] = useState<boolean>(false);
+  const [isMLModalOpen, setIsMLModalOpen] = useState<boolean>(false);
   const [selectedExpNotice, setSelectedExpNotice] = useState<string | null>(null);
   const [availablePorts, setAvailablePorts] = useState<string[]>([]);
   const [isScanningPorts, setIsScanningPorts] = useState<boolean>(false);
@@ -80,7 +91,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       sp: 50.0,
       pv: 0.0,
       op: 0.0,
-      bias: 73.0,
+      bias: 40.0,
       pb: 20,
       it: 30,
       dt: 1,
@@ -127,8 +138,27 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
 
   const lastOpRef = useRef<number>(0);
 
+  // Active ML Controller State for Real-Time Validation on Main Screen
+  interface ActiveMLModel {
+    weights: NNWeights;
+    logic: MLLogicType;
+    setpoint: number;
+    horizon: number;
+  }
+  const [activeMLModel, setActiveMLModel] = useState<ActiveMLModel | null>(null);
+  const activeMLModelRef = useRef<ActiveMLModel | null>(null);
+  activeMLModelRef.current = activeMLModel;
+
+  const mlPrevPVRef = useRef<number>(0);
+  const mlIntegralErrRef = useRef<number>(0);
+  const mlHistoryRef = useRef<{ pv: number; op: number }[]>([]);
+
   // Pending writes tracking to prevent poll jitter / old value flickering
   const pendingWritesRef = useRef<{ [param: string]: { value: number | string; expiresAt: number } }>({});
+
+  const normExp = (ctrlState.selectedExperiment || '').trim().toLowerCase();
+  const isManualExp = normExp === 'open loop' || normExp === 'on / off control' || normExp === 'on/off control';
+  const isCommunicationDisabled = isConnected || Boolean(ctrlState.selectedExperiment);
 
   // Handle Live Modbus Polling (1 second sampling time from hardware)
   useEffect(() => {
@@ -168,11 +198,12 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       const effBias = getEffective('bias', live.bias);
       const effAction = getEffective('action', live.action);
 
-      const normExp = (stateRef.current.selectedExperiment || '').trim().toLowerCase();
+      const pollNormExp = (stateRef.current.selectedExperiment || '').trim().toLowerCase();
+      const pollIsManual = pollNormExp === 'open loop' || pollNormExp === 'on / off control' || pollNormExp === 'on/off control';
 
       // In Hardware mode while running:
       // If On/Off Control: calculate out2 using Figure 1/2 and write to OP register (4114)
-      if (normExp === 'on / off control' || normExp === 'on/off control') {
+      if (pollNormExp === 'on / off control' || pollNormExp === 'on/off control') {
         const pv1 = live.pv;
         const sp1 = effSp;
         const hys = stateRef.current.hysteresis;
@@ -201,7 +232,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           };
           modbusService.writeRegister('op', out2, stateRef.current.deviceId);
         }
-      } else if (normExp === 'p mode' && !isAutoRef.current) {
+      } else if (pollNormExp === 'p mode' && !isAutoRef.current) {
         // If user switched to Manual in P mode: calculate out2 using Figure 3/4
         const pv1 = live.pv;
         const sp1 = effSp;
@@ -219,6 +250,52 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           };
           modbusService.writeRegister('op', out2, stateRef.current.deviceId);
         }
+      } else if (
+        (pollNormExp === 'machine learning control' || pollNormExp === 'ml control') &&
+        activeMLModelRef.current &&
+        isRunningRef.current
+      ) {
+        // Real-Time Machine Learning Control Running on Main Screen
+        const ml = activeMLModelRef.current;
+        const pv1 = live.pv;
+        const sp1 = effSp;
+        const u1 = lastOpRef.current;
+        let nextU = u1;
+
+        if (ml.logic === 'mpc') {
+          nextU = mpcOptimize(ml.weights, pv1, u1, sp1, ml.horizon);
+        } else if (ml.logic === 'pid_autotuning') {
+          const res = neuralPIDStep(
+            ml.weights,
+            pv1,
+            sp1,
+            mlPrevPVRef.current,
+            mlIntegralErrRef.current
+          );
+          nextU = res.op;
+          mlIntegralErrRef.current = res.newIntegral;
+        } else if (ml.logic === 'inverse_dynamics') {
+          nextU = inverseDynamicsStep(ml.weights, pv1, sp1, u1);
+        } else if (ml.logic === 'rl_ddpg') {
+          nextU = rlActorStep(ml.weights, pv1, sp1, u1);
+        } else if (ml.logic === 'lstm_predictive') {
+          const pvHist = mlHistoryRef.current.map((d) => d.pv);
+          const opHist = mlHistoryRef.current.map((d) => d.op);
+          nextU = lstmPredictiveStep(ml.weights, pvHist, opHist, sp1, u1);
+        }
+
+        mlPrevPVRef.current = pv1;
+        nextU = Math.max(0, Math.min(100, nextU));
+        effOp = nextU;
+
+        if (Math.abs(nextU - lastOpRef.current) > 0.5) {
+          lastOpRef.current = nextU;
+          pendingWritesRef.current['op'] = {
+            value: nextU,
+            expiresAt: Date.now() + 3000,
+          };
+          modbusService.writeRegister('op', nextU, stateRef.current.deviceId);
+        }
       }
 
       // Synchronize controller state from hardware with anti-reversion protection
@@ -235,7 +312,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       }));
 
       const effAutoMan = getEffective('autoMan', live.autoMan);
-      if (effAutoMan) {
+      if (effAutoMan && !pollIsManual) {
         setIsAuto(effAutoMan === 'Auto');
       }
 
@@ -249,13 +326,23 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           pv: live.pv,
           op: effOp,
         };
-        setTrendData((prev) => [...prev.slice(-999), newPoint]);
+        setTrendData((prev) => {
+          if (prev.length === 0) {
+            return [
+              { time: 0, sp: effSp, pv: live.pv, op: effOp },
+              newPoint,
+            ];
+          }
+          return [...prev.slice(-9999), newPoint];
+        });
+        mlHistoryRef.current.push({ pv: live.pv, op: effOp });
+        if (mlHistoryRef.current.length > 300) mlHistoryRef.current.shift();
 
         if (isLoggingRef.current) {
           const now = new Date();
           const timeStr = now.toTimeString().split(' ')[0];
           setLogEntries((prev) => [
-            ...prev.slice(-999),
+            ...prev.slice(-9999),
             {
               timeStr,
               timeSec: curTime,
@@ -402,13 +489,21 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           pv: Number(newPv.toFixed(1)),
           op: Number(calcOp.toFixed(1)),
         };
-        setTrendData((prev) => [...prev.slice(-999), newPoint]);
+        setTrendData((prev) => {
+          if (prev.length === 0) {
+            return [
+              { time: 0, sp: s.sp, pv: s.pv, op: s.op },
+              newPoint,
+            ];
+          }
+          return [...prev.slice(-9999), newPoint];
+        });
 
         if (isLoggingRef.current) {
           const now = new Date();
           const timeStr = now.toTimeString().split(' ')[0];
           setLogEntries((prev) => [
-            ...prev.slice(-999),
+            ...prev.slice(-9999),
             {
               timeStr,
               timeSec: curTime,
@@ -449,7 +544,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       sp: 50.0,
       pv: 0.0,
       op: 0.0,
-      bias: 73.0,
+      bias: 40.0,
       selectedExperiment: '', // Blank initially; must be selected from Experiment menu per SOP
     }));
     setTrendData([]);
@@ -491,9 +586,14 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
 
   const handleSelectExperiment = async (expName: string) => {
     setOpenTopMenu(null);
-    setSelectedExpNotice(expName); // Requirement 1: popup saying experiment is selected
     const modbusService = DeltaDTBService.getInstance();
     const norm = expName.trim().toLowerCase();
+
+    // Do NOT show popup notification on menu click for Machine Learning Control;
+    // it will be shown when "Start Realtime Model Validation on Main Screen" is clicked in Step 3.
+    if (norm !== 'machine learning control' && norm !== 'ml control' && norm !== 'ml control (mpc)') {
+      setSelectedExpNotice(expName);
+    }
 
     if (norm === 'open loop') {
       setIsAuto(false); // Requirement 1: Open loop automatically goes to Manual
@@ -548,12 +648,12 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       };
       await modbusService.writeRegister('autoMan', 0, ctrlState.deviceId);
 
-      // Default SP: 50, Bias: 73.0, PB: 100, IT: 0, DT: 0
+      // Default SP: 50, Bias: 40.0, PB: 100, IT: 0, DT: 0
       pendingWritesRef.current['sp'] = { value: 50.0, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('sp', 50.0, ctrlState.deviceId);
 
-      pendingWritesRef.current['bias'] = { value: 73.0, expiresAt: Date.now() + 6000 };
-      await modbusService.writeRegister('bias', 73.0, ctrlState.deviceId);
+      pendingWritesRef.current['bias'] = { value: 40.0, expiresAt: Date.now() + 6000 };
+      await modbusService.writeRegister('bias', 40.0, ctrlState.deviceId);
 
       pendingWritesRef.current['pb'] = { value: 100, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('pb', 100, ctrlState.deviceId);
@@ -568,7 +668,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         ...prev,
         selectedExperiment: expName,
         sp: 50.0,
-        bias: 73.0,
+        bias: 40.0,
         pb: 100,
         it: 0,
         dt: 0,
@@ -581,12 +681,12 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       };
       await modbusService.writeRegister('autoMan', 0, ctrlState.deviceId);
 
-      // Default SP: 50, Bias: 73.0, PB: 20, IT: 30, DT: 0
+      // Default SP: 50, Bias: 40.0, PB: 20, IT: 30, DT: 0
       pendingWritesRef.current['sp'] = { value: 50.0, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('sp', 50.0, ctrlState.deviceId);
 
-      pendingWritesRef.current['bias'] = { value: 73.0, expiresAt: Date.now() + 6000 };
-      await modbusService.writeRegister('bias', 73.0, ctrlState.deviceId);
+      pendingWritesRef.current['bias'] = { value: 40.0, expiresAt: Date.now() + 6000 };
+      await modbusService.writeRegister('bias', 40.0, ctrlState.deviceId);
 
       pendingWritesRef.current['pb'] = { value: 20, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('pb', 20, ctrlState.deviceId);
@@ -601,7 +701,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         ...prev,
         selectedExperiment: expName,
         sp: 50.0,
-        bias: 73.0,
+        bias: 40.0,
         pb: 20,
         it: 30,
         dt: 0,
@@ -614,12 +714,12 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       };
       await modbusService.writeRegister('autoMan', 0, ctrlState.deviceId);
 
-      // Default SP: 50, Bias: 73.0, PB: 20, IT: 0, DT: 1
+      // Default SP: 50, Bias: 40.0, PB: 20, IT: 0, DT: 1
       pendingWritesRef.current['sp'] = { value: 50.0, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('sp', 50.0, ctrlState.deviceId);
 
-      pendingWritesRef.current['bias'] = { value: 73.0, expiresAt: Date.now() + 6000 };
-      await modbusService.writeRegister('bias', 73.0, ctrlState.deviceId);
+      pendingWritesRef.current['bias'] = { value: 40.0, expiresAt: Date.now() + 6000 };
+      await modbusService.writeRegister('bias', 40.0, ctrlState.deviceId);
 
       pendingWritesRef.current['pb'] = { value: 20, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('pb', 20, ctrlState.deviceId);
@@ -634,7 +734,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         ...prev,
         selectedExperiment: expName,
         sp: 50.0,
-        bias: 73.0,
+        bias: 40.0,
         pb: 20,
         it: 0,
         dt: 1,
@@ -647,12 +747,12 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       };
       await modbusService.writeRegister('autoMan', 0, ctrlState.deviceId);
 
-      // Default SP: 50, Bias: 73.0, PB: 20, IT: 30, DT: 1
+      // Default SP: 50, Bias: 40.0, PB: 20, IT: 30, DT: 1
       pendingWritesRef.current['sp'] = { value: 50.0, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('sp', 50.0, ctrlState.deviceId);
 
-      pendingWritesRef.current['bias'] = { value: 73.0, expiresAt: Date.now() + 6000 };
-      await modbusService.writeRegister('bias', 73.0, ctrlState.deviceId);
+      pendingWritesRef.current['bias'] = { value: 40.0, expiresAt: Date.now() + 6000 };
+      await modbusService.writeRegister('bias', 40.0, ctrlState.deviceId);
 
       pendingWritesRef.current['pb'] = { value: 20, expiresAt: Date.now() + 6000 };
       await modbusService.writeRegister('pb', 20, ctrlState.deviceId);
@@ -667,7 +767,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         ...prev,
         selectedExperiment: expName,
         sp: 50.0,
-        bias: 73.0,
+        bias: 40.0,
         pb: 20,
         it: 30,
         dt: 1,
@@ -705,7 +805,47 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         it: 0,
         dt: 0,
       }));
+    } else if (norm === 'process reaction' || norm === 'two point method' || norm === 'classical method') {
+      setIsAuto(false);
+      pendingWritesRef.current['autoMan'] = {
+        value: 'Manual',
+        expiresAt: Date.now() + 6000,
+      };
+      await modbusService.writeRegister('autoMan', 2, ctrlState.deviceId);
+
+      pendingWritesRef.current['op'] = {
+        value: ctrlState.op,
+        expiresAt: Date.now() + 6000,
+      };
+      await modbusService.writeRegister('op', ctrlState.op, ctrlState.deviceId);
+
+      setCtrlState((prev) => ({
+        ...prev,
+        selectedExperiment: expName,
+      }));
+    } else if (norm === 'machine learning control' || norm === 'ml control' || norm === 'ml control (mpc)') {
+      // Once ML control is selected, switch to Manual mode and open dedicated window
+      setIsAuto(false);
+      setIsMLModalOpen(true);
+      pendingWritesRef.current['autoMan'] = {
+        value: 'Manual',
+        expiresAt: Date.now() + 6000,
+      };
+      await modbusService.writeRegister('autoMan', 2, ctrlState.deviceId);
+
+      pendingWritesRef.current['op'] = {
+        value: ctrlState.op,
+        expiresAt: Date.now() + 6000,
+      };
+      await modbusService.writeRegister('op', ctrlState.op, ctrlState.deviceId);
+
+      setCtrlState((prev) => ({
+        ...prev,
+        selectedExperiment: 'Machine Learning Control',
+      }));
     } else {
+      setActiveMLModel(null);
+      activeMLModelRef.current = null;
       setCtrlState((prev) => ({
         ...prev,
         selectedExperiment: expName,
@@ -713,8 +853,57 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     }
   };
 
+  const handleStartMLValidationOnMainScreen = async (params: {
+    weights: NNWeights;
+    logic: MLLogicType;
+    setpoint: number;
+    horizon: number;
+  }) => {
+    setIsMLModalOpen(false);
+    setIsAuto(false);
+    setActiveMLModel(params);
+    activeMLModelRef.current = params;
+    mlPrevPVRef.current = ctrlState.pv;
+    mlIntegralErrRef.current = 0;
+
+    // Show experiment notice popup on Main Screen upon starting validation
+    setSelectedExpNotice('Machine Learning Control');
+
+    const modbusService = DeltaDTBService.getInstance();
+    pendingWritesRef.current['autoMan'] = {
+      value: 'Manual',
+      expiresAt: Date.now() + 6000,
+    };
+    await modbusService.writeRegister('autoMan', 2, ctrlState.deviceId);
+
+    pendingWritesRef.current['sp'] = {
+      value: params.setpoint,
+      expiresAt: Date.now() + 6000,
+    };
+    await modbusService.writeRegister('sp', params.setpoint, ctrlState.deviceId);
+
+    setCtrlState((prev) => ({
+      ...prev,
+      selectedExperiment: 'Machine Learning Control',
+      sp: params.setpoint,
+    }));
+  };
+
   const handleRun = useCallback(() => {
     setIsRunning(true);
+    setTrendData((prev) => {
+      if (prev.length === 0) {
+        return [
+          {
+            time: 0,
+            sp: stateRef.current.sp,
+            pv: stateRef.current.pv,
+            op: stateRef.current.op,
+          },
+        ];
+      }
+      return prev;
+    });
     DeltaDTBService.getInstance().startPolling();
   }, []);
 
@@ -725,8 +914,10 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
   const handleConfirmStop = useCallback(() => {
     // 1. Immediately halt Modbus hardware polling
     DeltaDTBService.getInstance().stopPolling();
-    // 2. Halt running state
+    // 2. Halt running state and clear active ML controller
     setIsRunning(false);
+    setActiveMLModel(null);
+    activeMLModelRef.current = null;
     // 3. Reset Waveform Graph and Log table
     setTrendData([]);
     setLogEntries([]);
@@ -903,14 +1094,14 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     <div className="trainer-ace101-page">
       {/* ── Top-Level Menu Bar (Communication | Remote Lab | Experiment) ── */}
       <nav className="trainer-menubar" onClick={(e) => e.stopPropagation()}>
-        {/* Communication Menu: Enabled before connect; disabled once connected per SOP */}
+        {/* Communication Menu: Disabled once experiment is selected or connected per SOP */}
         <div className="trainer-menu-group">
           <button
             type="button"
-            className={`trainer-menu-trigger ${openTopMenu === 'com' ? 'active' : ''} ${isConnected ? 'disabled' : ''}`}
-            disabled={isConnected}
+            className={`trainer-menu-trigger ${openTopMenu === 'com' ? 'active' : ''} ${isCommunicationDisabled ? 'disabled' : ''}`}
+            disabled={isCommunicationDisabled}
             onClick={async () => {
-              if (isConnected) return;
+              if (isCommunicationDisabled) return;
               setOpenTopMenu('com');
               if (availablePorts.length === 0 && !isScanningPorts) {
                 setIsScanningPorts(true);
@@ -922,11 +1113,17 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
                 }
               }
             }}
-            title={isConnected ? `Connected to ${comPort || 'Port'} (Disabled while connected)` : 'Select Communication Port and connect'}
+            title={
+              Boolean(ctrlState.selectedExperiment)
+                ? 'Communication is disabled while experiment is selected'
+                : isConnected
+                ? `Connected to ${comPort || 'Port'} (Disabled while connected)`
+                : 'Select Communication Port and connect'
+            }
           >
             Communication {isConnected && comPort ? `(${comPort})` : ''}
           </button>
-          {!isConnected && openTopMenu === 'com' && (
+          {!isCommunicationDisabled && openTopMenu === 'com' && (
             <div className="trainer-menu-dropdown">
               {isScanningPorts ? (
                 <div className="dropdown-no-device">Scanning ports...</div>
@@ -971,62 +1168,101 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         <div className="trainer-menu-group">
           <button
             type="button"
-            className="trainer-menu-trigger"
+            className={`trainer-menu-trigger ${isCommunicationDisabled ? 'disabled' : ''}`}
+            disabled={isCommunicationDisabled}
             onClick={() => {
+              if (isCommunicationDisabled) return;
               setOpenTopMenu(null);
               setIsComModalOpen(true);
             }}
-            title="Remote Lab Setup & Cloud Gateway"
+            title={isCommunicationDisabled ? 'Remote Lab is disabled while experiment is selected' : 'Remote Lab Setup & Cloud Gateway'}
           >
             Remote Lab
           </button>
         </div>
 
-        {/* Experiment Menu: Enabled only after COM Port connection and when not running */}
+        {/* Experiment Menu: Enabled for testing */}
         <div className="trainer-menu-group">
           <button
             type="button"
-            className={`trainer-menu-trigger ${openTopMenu === 'exp' ? 'active' : ''} ${!isConnected || isRunning ? 'disabled' : ''}`}
-            disabled={!isConnected || isRunning}
-            onClick={() => isConnected && !isRunning && setOpenTopMenu('exp')}
-            title={
-              !isConnected
-                ? 'Connect to COM Port first to enable Experiment menu'
-                : isRunning
-                ? 'Stop experiment to change experiment'
-                : 'Select Experiment'
-            }
+            className={`trainer-menu-trigger ${openTopMenu === 'exp' ? 'active' : ''}`}
+            onClick={() => setOpenTopMenu(openTopMenu === 'exp' ? null : 'exp')}
+            title="Select Experiment"
           >
             Experiment
           </button>
-          {openTopMenu === 'exp' && isConnected && !isRunning && (
+          {openTopMenu === 'exp' && (
             <div className="trainer-menu-dropdown">
               {[
-                { name: 'Open Loop', enabled: true },
-                { name: 'On / Off Control', enabled: true },
-                { name: 'P Mode', enabled: true },
-                { name: 'PI Mode', enabled: true },
-                { name: 'PD Mode', enabled: true },
-                { name: 'PID Mode', enabled: true },
-                { name: 'Closed Loop', enabled: true },
-                { name: 'Auto Tuning', enabled: false, note: 'Will be informed later' },
-                { name: 'Stability Analysis', enabled: false, note: 'Will be informed later' },
-              ].map((item) => (
-                <button
-                  key={item.name}
-                  type="button"
-                  className={`dropdown-action-btn ${!item.enabled ? 'disabled' : ''}`}
-                  disabled={!item.enabled}
-                  title={item.note || item.name}
-                  onClick={() => {
-                    if (item.enabled) {
-                      handleSelectExperiment(item.name);
-                    }
-                  }}
-                >
-                  <span>{item.name}</span>
-                  {ctrlState.selectedExperiment === item.name && <span className="check-mark">✓</span>}
-                </button>
+                {
+                  category: 'Manual Control',
+                  items: [
+                    { name: 'Open Loop', enabled: true },
+                    { name: 'On/Off Control', enabled: true },
+                  ],
+                },
+                {
+                  category: 'PID Control',
+                  items: [
+                    { name: 'P Mode', enabled: true },
+                    { name: 'PI Mode', enabled: true },
+                    { name: 'PD Mode', enabled: true },
+                    { name: 'PID Mode', enabled: true },
+                  ],
+                },
+                {
+                  category: 'Tuning',
+                  items: [
+                    { name: 'Process Reaction', enabled: true },
+                    { name: 'Closed Loop', enabled: true },
+                    { name: 'Auto Tuning', enabled: false, note: 'Will be informed later' },
+                  ],
+                },
+                {
+                  category: 'Model Estimation',
+                  items: [
+                    { name: 'Process Reaction', enabled: true },
+                    { name: 'Two Point Method', enabled: true },
+                    { name: 'Classical Method', enabled: true },
+                  ],
+                },
+                {
+                  category: 'Modern Control',
+                  items: [
+                    { name: 'Fuzzy Logic Control', enabled: false, note: 'Will be informed later' },
+                    { name: 'Machine Learning Control', enabled: true },
+                  ],
+                },
+              ].map((group) => (
+                <div key={group.category} className="dropdown-submenu-item">
+                  <div className="dropdown-submenu-trigger">
+                    <span>{group.category}</span>
+                    <span className="submenu-arrow">▶</span>
+                  </div>
+                  <div className="dropdown-submenu-panel">
+                    {group.items.map((item) => (
+                      <button
+                        key={`${group.category}-${item.name}`}
+                        type="button"
+                        className={`dropdown-action-btn ${!item.enabled ? 'disabled' : ''}`}
+                        disabled={!item.enabled}
+                        title={item.note || item.name}
+                        onClick={() => {
+                          if (item.enabled) {
+                            handleSelectExperiment(item.name);
+                          }
+                        }}
+                      >
+                        <span>{item.name}</span>
+                        {(ctrlState.selectedExperiment === item.name ||
+                          (item.name === 'Machine Learning Control' && ctrlState.selectedExperiment === 'ML Control') ||
+                          (item.name === 'On/Off Control' && ctrlState.selectedExperiment === 'On / Off Control')) && (
+                          <span className="check-mark">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -1040,13 +1276,15 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       <TrainerToolbar
         isRunning={isRunning}
         isLogging={isLogging}
-        isAuto={isAuto}
+        isAuto={!isManualExp && isAuto}
+        isAutoDisabled={isManualExp}
         isGraphHold={isGraphHold}
         isConnected={isConnected}
         isExperimentSelected={Boolean(ctrlState.selectedExperiment)}
         onRun={handleRun}
         onStop={handleStopClick}
         onToggleAuto={async () => {
+          if (isManualExp) return;
           const nextAuto = !isAuto;
           setIsAuto(nextAuto);
           const modbusService = DeltaDTBService.getInstance();
@@ -1086,6 +1324,30 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           onHome();
         }}
       />
+
+      {/* ── Real-Time ML Control Status Ribbon ──────────────── */}
+      {activeMLModel && (
+        <div className="trainer-ml-status-ribbon">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="ribbon-icon">🤖</span>
+            <span className="ribbon-text">
+              <strong>Real-Time ML Control Active:</strong>{' '}
+              {ML_LOGIC_OPTIONS.find((l) => l.id === activeMLModel.logic)?.label} | Setpoint:{' '}
+              <strong>{activeMLModel.setpoint}%</strong> | Plant Commanded by Neural Network
+            </span>
+          </div>
+          <button
+            type="button"
+            className="ribbon-stop-btn"
+            onClick={() => {
+              setActiveMLModel(null);
+              activeMLModelRef.current = null;
+            }}
+          >
+            ■ Stop ML Validation
+          </button>
+        </div>
+      )}
 
       {/* ── Main Dashboard Content Grid ──────────────────────── */}
       <div className="trainer-main-layout">
@@ -1165,6 +1427,32 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       <UserGuideModal
         isOpen={isUserGuideOpen}
         onClose={() => setIsUserGuideOpen(false)}
+      />
+
+      {/* ── ML Control Window Modal ───────────────────────────────── */}
+      <MLControlModal
+        isOpen={isMLModalOpen}
+        onClose={() => setIsMLModalOpen(false)}
+        isConnected={isConnected}
+        isRunning={isRunning}
+        currentPV={ctrlState.pv}
+        currentOP={ctrlState.op}
+        deviceId={ctrlState.deviceId}
+        onSetManual={async () => {
+          setIsAuto(false);
+          const modbusService = DeltaDTBService.getInstance();
+          pendingWritesRef.current['autoMan'] = {
+            value: 'Manual',
+            expiresAt: Date.now() + 6000,
+          };
+          await modbusService.writeRegister('autoMan', 2, ctrlState.deviceId);
+          pendingWritesRef.current['op'] = {
+            value: ctrlState.op,
+            expiresAt: Date.now() + 6000,
+          };
+          await modbusService.writeRegister('op', ctrlState.op, ctrlState.deviceId);
+        }}
+        onStartValidationOnMainScreen={handleStartMLValidationOnMainScreen}
       />
     </div>
   );

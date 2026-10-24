@@ -1,0 +1,112 @@
+.sim405-comp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.sim405-chart-box {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim405-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 6px;
+}
+
+.sim405-chart-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c084fc;
+}
+
+.sim405-legend-toggles {
+  display: flex;
+  gap: 12px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggle-label.orange {
+  color: #f97316;
+}
+
+.toggle-label.green {
+  color: #22c55e;
+}
+
+.toggle-label.cyan {
+  color: #06b6d4;
+}
+
+.sim405-comp-canvas {
+  width: 100%;
+  border-radius: 4px;
+  background: #0f172a;
+  border: 1px solid #334155;
+}
+
+.sim405-metrics-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.sim405-metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.sim405-metrics-table th,
+.sim405-metrics-table td {
+  padding: 6px 12px;
+  text-align: center;
+  border-bottom: 1px solid #334155;
+}
+
+.sim405-metrics-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.th-p {
+  color: #f97316 !important;
+}
+
+.th-pi {
+  color: #22c55e !important;
+}
+
+.th-pid {
+  color: #06b6d4 !important;
+}
+
+.metric-name {
+  font-weight: 600;
+  color: #cbd5e1;
+  text-align: left !important;
+}
+
+.highlight-cell {
+  color: #38bdf8;
+  font-weight: bold;
+}

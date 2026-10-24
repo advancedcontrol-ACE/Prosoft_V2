@@ -190,6 +190,94 @@ function createApiServer(distPath) {
       return;
     }
 
+    // 7. /api/entitlements - Return installed customer profile and allowed modules
+    if (pathname === '/api/entitlements' && req.method === 'GET') {
+      res.setHeader('Content-Type', 'application/json');
+      const candidates = [
+        path.join(process.env.LOCALAPPDATA || '', 'ACE_Prosoft_V2', 'installed_modules.json'),
+        path.join(os.homedir(), 'Downloads', 'installed_modules.json'),
+        path.join(os.homedir(), '.ace_prosoft', 'installed_modules.json'),
+        path.join(distPath, 'installed_modules.json'),
+        path.join(process.resourcesPath || '', 'installed_modules.json'),
+        path.join(distPath, '../installed_modules.json'),
+      ];
+      for (const p of candidates) {
+        if (p && fs.existsSync(p)) {
+          try {
+            const raw = fs.readFileSync(p, 'utf8');
+            const data = JSON.parse(raw);
+            res.end(JSON.stringify({ success: true, profile: data }));
+            return;
+          } catch {}
+        }
+      }
+      res.end(JSON.stringify({ success: false, profile: null }));
+      return;
+    }
+
+    // 7b. /api/entitlements/activate - In-app license activation
+    if (pathname === '/api/entitlements/activate' && req.method === 'POST') {
+      res.setHeader('Content-Type', 'application/json');
+      try {
+        const body = await parseJsonBody(req);
+        const { email, password } = body;
+        if (!email || !password) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ success: false, error: 'Email and password are required' }));
+          return;
+        }
+
+        const authUrl = 'https://ace-processtrainers.vercel.app/api/auth-install';
+        const payload = JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+          machineName: os.hostname(),
+        });
+
+        const authReq = require('https').request(authUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload),
+          },
+        }, (authRes) => {
+          let respBody = '';
+          authRes.on('data', (d) => { respBody += d; });
+          authRes.on('end', () => {
+            try {
+              const authData = JSON.parse(respBody);
+              if (authData.success) {
+                // Save to LOCALAPPDATA
+                const targetDir = path.join(process.env.LOCALAPPDATA || '', 'ACE_Prosoft_V2');
+                if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+                fs.writeFileSync(path.join(targetDir, 'installed_modules.json'), respBody, 'utf8');
+
+                res.end(JSON.stringify({ success: true, profile: authData }));
+              } else {
+                res.statusCode = 401;
+                res.end(JSON.stringify({ success: false, error: authData.error || 'Authentication failed' }));
+              }
+            } catch (err) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ success: false, error: 'Error parsing auth response' }));
+            }
+          });
+        });
+
+        authReq.on('error', (err) => {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ success: false, error: 'Network connection error: ' + err.message }));
+        });
+
+        authReq.write(payload);
+        authReq.end();
+      } catch (err) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+      return;
+    }
+
     // 6d. /api/remote/tunnel/test - Test tunnel connectivity and latency
     if (pathname === '/api/remote/tunnel/test' && req.method === 'POST') {
       const testResult = await remoteLabManager.testTunnel();

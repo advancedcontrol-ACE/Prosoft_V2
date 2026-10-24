@@ -1,0 +1,68 @@
+/* ============================================================
+   ACE 401 Simulator Header Styling
+   ============================================================ */
+
+.sim401-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 6px 16px;
+  border-top: none;
+  border-bottom: 2.5px solid #0047ba;
+  height: 58px;
+  flex-shrink: 0;
+  user-select: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.sim401-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sim401-header-logo {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.sim401-header-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim401-brand-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0b4ea2;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sim401-brand-subtitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 1px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sim401-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.sim401-header-model {
+  font-size: 20px;
+  font-weight: 800;
+  color: #e65100;
+  letter-spacing: -0.2px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}

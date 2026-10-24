@@ -345,7 +345,13 @@ export const TrendGraph: React.FC<TrendGraphProps> = ({
         const yPos = padT + plotH - (val / 100) * plotH;
 
         if (!started) {
-          ctx.moveTo(xPos, yPos);
+          // If first point starts after xMin (e.g. t > 0 when xMin is 0), anchor to left edge so line starts flush at 0
+          if (t > xMin && i === 0) {
+            ctx.moveTo(padL, yPos);
+            ctx.lineTo(xPos, yPos);
+          } else {
+            ctx.moveTo(xPos, yPos);
+          }
           started = true;
         } else {
           ctx.lineTo(xPos, yPos);

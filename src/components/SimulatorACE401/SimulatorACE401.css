@@ -1,0 +1,63 @@
+/* ============================================================
+   ACE 401 Main Page Layout (Figure 4 Architecture)
+   ============================================================ */
+
+.sim401-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: #425c77;
+  overflow: hidden;
+  user-select: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ── Main Layout: Left Column (4fr) and Right Column (6fr) ── */
+.sim401-main-layout {
+  display: grid;
+  grid-template-columns: 4.2fr 5.8fr;
+  flex: 1 1 auto;
+  gap: 8px;
+  padding: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Left Column: Figure 5 + IoT Bar + Shrunk Schematic ────── */
+.sim401-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Right Column: Upper Tabs Card + Lower Trend Graph ─────── */
+.sim401-right-column {
+  display: grid;
+  grid-template-rows: 290px 1fr;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sim401-right-upper-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sim401-right-lower-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  height: 100%;
+  overflow: hidden;
+}

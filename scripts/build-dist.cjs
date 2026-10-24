@@ -9,6 +9,26 @@ const rootDir = path.resolve(__dirname, '..');
 const tempOut = path.join(os.tmpdir(), 'prosoft-release');
 console.log(`[Build] Temporary build staging directory: ${tempOut}`);
 
+// Parse optional customer-tailored offline flags:
+// e.g. node scripts/build-dist.cjs --customer="National Institute of Technology" --email="hod@nit.edu" --modules="ace101,sim-ace401"
+let targetCustomer = '';
+let targetEmail = '';
+let targetModules = null;
+
+for (const arg of process.argv.slice(2)) {
+  if (arg.startsWith('--customer=')) targetCustomer = arg.split('=')[1].replace(/^["']|["']$/g, '');
+  if (arg.startsWith('--email=')) targetEmail = arg.split('=')[1].replace(/^["']|["']$/g, '');
+  if (arg.startsWith('--modules=')) {
+    targetModules = arg.split('=')[1].replace(/^["']|["']$/g, '').split(',').map((m) => m.trim().toLowerCase());
+  }
+}
+
+if (targetModules) {
+  console.log(`\n>>> [OFFLINE TAILORED BUILD DETECTED] <<<`);
+  console.log(`Target Customer: ${targetCustomer || 'Offline Customer'}`);
+  console.log(`Licensed Modules (${targetModules.length}): ${targetModules.join(', ')}\n`);
+}
+
 // Obfuscation configuration for anti-reverse-engineering & anti-cracking
 const obfuscatorOptions = {
   compact: true,
@@ -107,6 +127,19 @@ try {
   console.log('\n[Build 1/4] Compiling React frontend with Vite & TypeScript...');
   execSync('npm run build', { stdio: 'inherit', cwd: rootDir });
 
+  // Bake entitlement file into dist/ (unrestricted master by default, or tailored if flags passed)
+  const masterProfile = {
+    collegeName: targetCustomer || 'ACE Prosoft V2 — Master Edition',
+    department: targetCustomer ? 'Customer Installation' : 'All Modules Unlocked',
+    email: targetEmail || 'master@ace-instruments.com',
+    allowedModules: targetModules || ['*'],
+    isUnrestricted: !targetModules,
+    issuedAt: new Date().toISOString(),
+  };
+  const distTarget = path.join(rootDir, 'dist/installed_modules.json');
+  fs.writeFileSync(distTarget, JSON.stringify(masterProfile, null, 2), 'utf8');
+  console.log(`\n  -> [Package License] Baked profile into dist/installed_modules.json (Unrestricted: ${!targetModules})\n`);
+
   // 2. Obfuscate frontend assets
   console.log('\n[Build 2/4] Obfuscating React frontend bundle...');
   const assetsDir = path.join(rootDir, 'dist/assets');
@@ -147,8 +180,13 @@ if (fs.existsSync(tempOut)) {
   for (const file of files) {
     if (file.endsWith('.exe')) {
       const src = path.join(tempOut, file);
-      const dst = path.join(targetDir, file);
-      console.log(`[Build] Output created: dist-installer/${file}`);
+      let outName = file;
+      if (targetCustomer) {
+        const cleanName = targetCustomer.replace(/[^a-zA-Z0-9]/g, '_');
+        outName = `ACE_Prosoft_Setup_${cleanName}.exe`;
+      }
+      const dst = path.join(targetDir, outName);
+      console.log(`[Build] Output created: dist-installer/${outName}`);
       fs.copyFileSync(src, dst);
     }
   }

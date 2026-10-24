@@ -12,6 +12,7 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
   pv,
   sp,
   op,
+  isRunning = false,
 }) => {
   // Clamp values for safety
   const safePv = Math.max(0, Math.min(100, pv));
@@ -24,6 +25,33 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
   const tankWaterHeight = (safePv / 100) * tankTotalHeight;
   const tankBaseY = 630;
   const tankWaterTopY = tankBaseY - tankWaterHeight;
+
+  // ── 3 Disconnected Supply Pipe Segments (Skipping Control Valve, Rotameter, and Table Platform) ──
+  // Segment 1: Above table edge (Y=625) up to Control Valve inlet (stops before CV body at X=896)
+  const pipePath1 = 'M 954,625 L 954,422 Q 954,412 944,412 L 896,412';
+
+  // Segment 2: Control Valve outlet (starts after CV body at X=806) to Rotameter bottom fitting (stops at Y=395)
+  const pipePath2 = 'M 806,412 L 694,412 Q 684,412 684,402 L 684,395';
+
+  // Segment 3: Rotameter top fitting (starts above rotameter at Y=215) to Process Tank top flange (Y=335)
+  const pipePath3 = 'M 684,215 L 684,198 Q 684,188 674,188 L 487,188 Q 477,188 477,198 L 477,335';
+
+  const pipeSegments = [pipePath1, pipePath2, pipePath3];
+
+  // ── 3 Drain Line Segments (Process Tank to Supply Tank through Drain Valve - Green Boarded) ──
+  // Drain 1: Process tank bottom outlet (X=600) to Drain Valve inlet (X=646)
+  const drainPath1 = 'M 600,625 L 646,625';
+
+  // Drain 2: Drain Valve outlet (X=674) to elbow, down to table top (Y=645)
+  const drainPath2 = 'M 674,625 L 714,625 Q 722,625 722,633 L 722,645';
+
+  // Drain 3: Below table (Y=665) down to drain discharge nozzle (Y=752)
+  const drainPath3 = 'M 722,665 L 722,752';
+
+  const drainSegments = [drainPath1, drainPath2, drainPath3];
+
+  // Responsive flow animation duration based on OP (faster when valve is further open)
+  const flowSpeed = `${Math.max(0.45, 1.25 - (safeOp / 100) * 0.8).toFixed(2)}s`;
 
   return (
     <svg
@@ -41,6 +69,239 @@ export const ProcessSchematicSvg: React.FC<ProcessSchematicSvgProps> = ({
         height="844"
         preserveAspectRatio="xMidYMid meet"
       />
+
+      {/* ── Volumetric Fluid Flow Animation (Active when Start/isRunning is high) ── */}
+      {/* Disconnected over Control Valve, Rotameter, and Table Platform; Active on Supply & Drain */}
+      {isRunning && (
+        <g className="pump-to-tank-water-flow-group">
+          {/* Subtle water glow filter defs */}
+          <defs>
+            <filter id="fluid-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2.2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* 2. Disconnected Pipe Fluid Segments */}
+          {pipeSegments.map((pathD, idx) => (
+            <g key={`pipe-segment-${idx}`} className="pipe-fluid-subsegment">
+              {/* Outer Translucent Water Column (liquid body in pipe lumen) */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#0284c7"
+                strokeWidth="7"
+                strokeOpacity="0.42"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* Moving Rounded Fluid Slugs (Capsule-shaped liquid pulses) */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="4.5"
+                strokeOpacity="0.88"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#fluid-glow)"
+                className="fluid-slugs"
+                style={{ animationDuration: flowSpeed }}
+              />
+
+              {/* Luminous Core Stream Highlights */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#bae6fd"
+                strokeWidth="2.5"
+                strokeOpacity="0.95"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="fluid-slugs"
+                style={{ animationDuration: flowSpeed }}
+              />
+
+              {/* Gliding Micro-Bubbles / Sparkling Highlight Droplets */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="2.2"
+                strokeOpacity="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="fluid-bubbles"
+                style={{ animationDuration: flowSpeed }}
+              />
+            </g>
+          ))}
+
+          {/* 3. Drain Line Fluid Segments (Green Boarded Paths) */}
+          {drainSegments.map((pathD, idx) => (
+            <g key={`drain-segment-${idx}`} className="pipe-fluid-subsegment">
+              {/* Outer Translucent Water Column */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#0284c7"
+                strokeWidth="7"
+                strokeOpacity="0.42"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* Moving Fluid Slugs */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="4.5"
+                strokeOpacity="0.88"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#fluid-glow)"
+                className="fluid-slugs"
+                style={{ animationDuration: '0.85s' }}
+              />
+
+              {/* Luminous Core Stream Highlights */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#bae6fd"
+                strokeWidth="2.5"
+                strokeOpacity="0.95"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="fluid-slugs"
+                style={{ animationDuration: '0.85s' }}
+              />
+
+              {/* Sparkling Droplets */}
+              <path
+                d={pathD}
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="2.2"
+                strokeOpacity="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="fluid-bubbles"
+                style={{ animationDuration: '0.85s' }}
+              />
+            </g>
+          ))}
+
+          {/* 4. Drain Discharging into Supply Tank Nozzle (X=722, Y=752 to 780) */}
+          <g className="drain-outlet-stream">
+            <line
+              x1="722"
+              y1="752"
+              x2="722"
+              y2="780"
+              stroke="#0284c7"
+              strokeWidth="5"
+              strokeOpacity="0.45"
+              strokeLinecap="round"
+            />
+            <line
+              x1="722"
+              y1="752"
+              x2="722"
+              y2="780"
+              stroke="#38bdf8"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              className="fluid-jet-flow"
+            />
+            <line
+              x1="722"
+              y1="752"
+              x2="722"
+              y2="780"
+              stroke="#ffffff"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              className="fluid-jet-bubbles"
+            />
+            <ellipse
+              cx="722"
+              cy="780"
+              rx="11"
+              ry="3.5"
+              fill="none"
+              stroke="#7dd3fc"
+              strokeWidth="1.8"
+              className="fluid-ripple-1"
+            />
+          </g>
+
+          {/* 5. Water Stream Pouring into Process Tank from Top Flange (Y=335) to Water Surface */}
+          {tankWaterTopY > 340 && (
+            <g className="tank-inlet-stream">
+              {/* Base falling fluid column */}
+              <line
+                x1="477"
+                y1="335"
+                x2="477"
+                y2={tankWaterTopY}
+                stroke="#0284c7"
+                strokeWidth="6"
+                strokeOpacity="0.48"
+                strokeLinecap="round"
+              />
+              {/* Falling fluid pulses */}
+              <line
+                x1="477"
+                y1="335"
+                x2="477"
+                y2={tankWaterTopY}
+                stroke="#38bdf8"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="fluid-jet-flow"
+              />
+              {/* Sparkling droplet beads */}
+              <line
+                x1="477"
+                y1="335"
+                x2="477"
+                y2={tankWaterTopY}
+                stroke="#ffffff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="fluid-jet-bubbles"
+              />
+              {/* Dual Concentric Surface Ripples at impact */}
+              <ellipse
+                cx="477"
+                cy={tankWaterTopY}
+                rx="14"
+                ry="4"
+                fill="none"
+                stroke="#7dd3fc"
+                strokeWidth="2"
+                className="fluid-ripple-1"
+              />
+              <ellipse
+                cx="477"
+                cy={tankWaterTopY}
+                rx="14"
+                ry="4"
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="1.8"
+                className="fluid-ripple-2"
+              />
+            </g>
+          )}
+        </g>
+      )}
 
       {/* ── 1. Level Tank: 25% Transparent Blue Rectangular Bar (Linked with PV) ── */}
       {safePv > 0 && (

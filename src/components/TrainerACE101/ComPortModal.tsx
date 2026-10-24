@@ -613,7 +613,7 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
   "registers": {
     "pv": 50.0,
     "sp": 50.0,
-    "op": 73.0,
+    "op": 40.0,
     "pb": 100,
     "it": 0,
     "dt": 0,
@@ -904,7 +904,7 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
   "device": "DELTA_DTB9696",
   "pv": 50.0,
   "sp": 50.0,
-  "op": 73.0,
+  "op": 40.0,
   "mode": "PID",
   "status": "Running",
   "timestamp": ${Date.now()}

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>ACE Prosoft V2 — Online Setup & Activation</title>
+  <HTA:APPLICATION
+    ID="oACE"
+    APPLICATIONNAME="ACE Prosoft V2 Setup"
+    BORDER="thin"
+    BORDERSTYLE="normal"
+    CAPTION="yes"
+    MAXIMIZEBUTTON="no"
+    MINIMIZEBUTTON="yes"
+    SHOWINTASKBAR="yes"
+    SINGLEINSTANCE="yes"
+    SYSMENU="yes"
+    WINDOWSTATE="normal"
+    SCROLL="no"
+  />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+    .container {
+      padding: 28px 30px;
+      box-sizing: border-box;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.05em;
+      margin: 0 0 4px 0;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #94a3b8;
+      margin: 0;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 5px;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 13px;
+      outline: none;
+    }
+    input:focus {
+      border-color: #38bdf8;
+    }
+    .btn {
+      width: 100%;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn:hover {
+      background: #3b82f6;
+    }
+    .btn:disabled {
+      background: #475569;
+      cursor: wait;
+    }
+    .status {
+      margin-top: 16px;
+      font-size: 12px;
+      text-align: center;
+      min-height: 24px;
+      line-height: 1.4;
+    }
+    .error {
+      color: #f87171;
+    }
+    .success {
+      color: #34d399;
+    }
+    .info {
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body onload="window.resizeTo(480, 500);">
+  <div class="container">
+    <div class="header">
+      <div class="title">ADVANCED CONTROL EQUIPMENTS</div>
+      <div class="subtitle">ACE Prosoft V2 — Online Client Setup</div>
+    </div>
+
+    <div class="form-group">
+      <label>College Email ID (Login ID)</label>
+      <input type="text" id="email" value="" placeholder="Enter College Email ID" />
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" value="" placeholder="Enter Password" />
+    </div>
+
+    <button id="btnSubmit" class="btn" onclick="startSetup();">Install ACE Prosoft V2</button>
+
+    <div id="statusBox" class="status"></div>
+  </div>
+
+  <script type="text/javascript">
+    function startSetup() {
+      var emailInput = document.getElementById("email");
+      var passInput = document.getElementById("password");
+      var email = emailInput ? emailInput.value : "";
+      var pass = passInput ? passInput.value : "";
+
+      if (!email.replace(/^\s+|\s+$/g, '') || !pass.replace(/^\s+|\s+$/g, '')) {
+        document.getElementById("statusBox").className = "status error";
+        document.getElementById("statusBox").innerText = "Please enter both College Email ID and Password.";
+        return;
+      }
+
+      document.getElementById("btnSubmit").disabled = true;
+      document.getElementById("statusBox").className = "status info";
+      document.getElementById("statusBox").innerText = "Authenticating with ACE Cloud Server...";
+
+      var shell = new ActiveXObject("WScript.Shell");
+      var fso = new ActiveXObject("Scripting.FileSystemObject");
+
+      var url = "https://ace-processtrainers.vercel.app/api/auth-install";
+      var payload = JSON.stringify({
+        email: email.replace(/^\s+|\s+$/g, ''),
+        password: pass.replace(/^\s+|\s+$/g, ''),
+        machineName: shell.ExpandEnvironmentStrings("%COMPUTERNAME%")
+      });
+
+      var http;
+      try {
+        http = new ActiveXObject("MSXML2.ServerXMLHTTP.6.0");
+      } catch (e1) {
+        try {
+          http = new ActiveXObject("MSXML2.ServerXMLHTTP");
+        } catch (e2) {
+          http = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+      }
+
+      http.open("POST", url, false);
+      http.setRequestHeader("Content-Type", "application/json");
+
+      try {
+        http.send(payload);
+      } catch (err) {
+        document.getElementById("btnSubmit").disabled = false;
+        document.getElementById("statusBox").className = "status error";
+        document.getElementById("statusBox").innerText = "Connection error. Please check your internet connection.";
+        return;
+      }
+
+      var resp = http.responseText;
+
+      if (resp.indexOf('"success":true') > -1) {
+        document.getElementById("statusBox").className = "status success";
+        document.getElementById("statusBox").innerText = "Authentication Successful! Preparing installation...";
+
+        // Save license to AppData
+        var appData = shell.ExpandEnvironmentStrings("%LOCALAPPDATA%");
+        var configDir = appData + "\\ACE_Prosoft_V2";
+        if (!fso.FolderExists(configDir)) fso.CreateFolder(configDir);
+        var stream = fso.CreateTextFile(configDir + "\\installed_modules.json", true);
+        stream.Write(resp);
+        stream.Close();
+
+        // Also save license to User Profile Downloads
+        var userDownloads = shell.ExpandEnvironmentStrings("%USERPROFILE%") + "\\Downloads";
+        if (fso.FolderExists(userDownloads)) {
+          var stream2 = fso.CreateTextFile(userDownloads + "\\installed_modules.json", true);
+          stream2.Write(resp);
+          stream2.Close();
+        }
+
+        var tempExe = shell.ExpandEnvironmentStrings("%TEMP%") + "\\ACE.Prosoft.V2.Setup.2.0.0.exe";
+        var downloadUrl = "https://github.com/meenasundaratgmaildotcom/ACE-Prosoft-Releases/releases/download/v2.0.0/ACE.Prosoft.V2.Setup.2.0.0.exe";
+
+        if (fso.FileExists(tempExe)) {
+          document.getElementById("statusBox").innerText = "Starting installation wizard...";
+          shell.Run('"' + tempExe + '"', 1, false);
+          window.setTimeout(function() { window.close(); }, 1500);
+        } else {
+          document.getElementById("statusBox").className = "status info";
+          document.getElementById("statusBox").innerText = "Starting installation directly from online... Please wait.";
+
+          var cmd = 'cmd.exe /c title ACE Prosoft V2.0 Installer && ' +
+                    'echo =================================================== && ' +
+                    'echo   Starting ACE Prosoft V2.0 Installation... && ' +
+                    'echo =================================================== && ' +
+                    '(curl.exe -# -L -o "' + tempExe + '" "' + downloadUrl + '" || ' +
+                    'bitsadmin.exe /transfer ACEJob /download /priority FOREGROUND "' + downloadUrl + '" "' + tempExe + '") && ' +
+                    'start "" "' + tempExe + '"';
+
+          shell.Run(cmd, 1, false);
+          window.setTimeout(function() { window.close(); }, 2500);
+        }
+      } else {
+        document.getElementById("btnSubmit").disabled = false;
+        document.getElementById("statusBox").className = "status error";
+        document.getElementById("statusBox").innerText = "Authentication failed! Check Email & Password.";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+/* ============================================================
+   ACE 403 ML Based Control Page Layout
+   ============================================================ */
+
+.sim403-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: #425c77;
+  overflow: hidden;
+  user-select: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ── Main Layout: Left Column (Schematic & Model, 4.2fr) and Right Column (Sliders & Graph, 5.8fr) ── */
+.sim403-main-layout {
+  display: grid;
+  grid-template-columns: 4.2fr 5.8fr;
+  flex: 1 1 auto;
+  gap: 8px;
+  padding: 8px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Left Column: Process Schematic / Model Parameters Container ────── */
+.sim403-left-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #425c77;
+  border: 2px solid #58738e;
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Left Tabs Bar (Process Schematic vs Model Parameters) ── */
+.sim403-left-tabs-bar {
+  display: flex;
+  background: #425c77;
+  border-bottom: 2px solid #58738e;
+  height: 38px;
+  flex-shrink: 0;
+}
+
+.sim403-left-tab {
+  flex: 1;
+  background: #344a60;
+  color: #a8bccf;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-right: 1px solid #58738e;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sim403-left-tab:last-child {
+  border-right: none;
+}
+
+.sim403-left-tab:hover:not(:disabled) {
+  background: #3d5670;
+  color: #ffffff;
+}
+
+.sim403-left-tab.active {
+  background: #425c77;
+  color: #ffffff;
+  font-weight: 700;
+  border-bottom: 3px solid #38bdf8;
+}
+
+.sim403-left-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: #64748b;
+  background: #2a3c4e;
+}
+
+/* ── Left Content Area ── */
+.sim403-left-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Process Schematic View on Left ── */
+.sim403-schematic-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sim403-schematic-svg-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.sim403-schematic-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: #33485d;
+  border-top: 1px solid #4a637d;
+  padding: 6px 14px;
+  flex-shrink: 0;
+}
+
+.sim403-footer-timestamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Consolas', 'Roboto Mono', 'Courier New', monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  background: #1e293b;
+  border: 1.5px solid #64748b;
+  border-radius: 4px;
+  padding: 4px 16px;
+  letter-spacing: 0.8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(255, 255, 255, 0.08);
+  user-select: none;
+}
+
+.sim403-clock-icon {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.sim403-clock-text {
+  line-height: 1;
+}
+
+/* ── Model Parameters Pane on Left ── */
+.sim403-model-pane {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Right Column: Two Frames (Upper: Sliders, Lower: Graph 1fr) ────── */
+.sim403-right-column {
+  display: grid;
+  grid-template-rows: 285px 1fr;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sim403-right-column.tab-plant {
+  grid-template-rows: 215px 1fr;
+}
+
+.sim403-right-column.tab-controller,
+.sim403-right-column.tab-log {
+  grid-template-rows: 285px 1fr;
+}
+
+/* Upper Right: SimACE403Parameters */
+.sim403-right-upper-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Lower Right: TrendGraph or SimACE403TrainingGraphs */
+.sim403-right-lower-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 200px;
+  overflow: hidden;
+}

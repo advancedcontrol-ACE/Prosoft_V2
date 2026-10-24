@@ -1,0 +1,53 @@
+.sim412-schematic-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.sim412-schematic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 4px;
+}
+
+.schematic-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8b5cf6;
+}
+
+.schematic-note {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.sim412-schematic-canvas-box {
+  background: #0b1120;
+  border-radius: 4px;
+  border: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sim412-svg {
+  width: 100%;
+  max-height: 360px;
+}
+
+@keyframes dashFlow412 {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.sim412-flow-dash {
+  animation: dashFlow412 0.8s linear infinite;
+}

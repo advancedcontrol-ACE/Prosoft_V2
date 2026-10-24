@@ -1,0 +1,145 @@
+/* ActivationModal.css — In-app License Activation */
+
+.activation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activation-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  padding: 26px 28px;
+  color: #f8fafc;
+  box-sizing: border-box;
+}
+
+.activation-modal-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.activation-modal-logo {
+  height: 44px;
+  width: auto;
+  margin-bottom: 8px;
+  object-fit: contain;
+}
+
+.activation-modal-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.04em;
+}
+
+.activation-modal-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.activation-modal-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  margin-bottom: 16px;
+}
+
+.activation-modal-alert.error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.activation-modal-alert.success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.activation-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.activation-modal-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.activation-modal-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.activation-modal-group input {
+  padding: 10px 12px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.activation-modal-group input:focus {
+  border-color: #38bdf8;
+}
+
+.activation-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.activation-btn-cancel {
+  background: transparent;
+  border: 1px solid #475569;
+  color: #94a3b8;
+  padding: 9px 14px;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.activation-btn-submit {
+  background: #2563eb;
+  border: none;
+  color: #ffffff;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.activation-btn-submit:hover:not(:disabled) {
+  background: #3b82f6;
+}
+
+.activation-btn-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

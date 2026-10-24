@@ -1,0 +1,194 @@
+.sim407-params-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.sim407-tabs-header {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 6px;
+}
+
+.sim407-tab-btn {
+  padding: 6px 14px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim407-tab-btn.active {
+  background: #059669;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.sim407-content-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sim407-top-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.control-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.sim407-mode-block {
+  display: flex;
+  align-items: center;
+}
+
+.sim407-auto-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.sim407-auto-btn.auto {
+  background: #15803d;
+  border: 1px solid #22c55e;
+  color: #ffffff;
+}
+
+.sim407-auto-btn.man {
+  background: #b45309;
+  border: 1px solid #f59e0b;
+  color: #ffffff;
+}
+
+.sim407-ff-block,
+.sim407-dist-block {
+  display: flex;
+  align-items: center;
+}
+
+.sim407-btn-group {
+  display: flex;
+  gap: 4px;
+}
+
+.sim407-fac-btn,
+.sim407-dist-step-btn {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.sim407-fac-btn.active,
+.sim407-dist-step-btn.active {
+  background: #059669;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.sim407-sliders-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.sim407-load-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+
+.load-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.sim407-load-input {
+  width: 55px;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 3px;
+  color: #f8fafc;
+  padding: 3px 6px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.sim407-add-load-btn {
+  background: #ea580c;
+  border: 1px solid #f97316;
+  color: #ffffff;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.sim407-pv-tag {
+  margin-left: auto;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.sim407-pv-tag strong {
+  color: #38bdf8;
+}
+
+.sim407-log-panel {
+  overflow-y: auto;
+  max-height: 250px;
+}
+
+.sim407-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.sim407-log-table th,
+.sim407-log-table td {
+  padding: 5px 8px;
+  text-align: center;
+  border-bottom: 1px solid #334155;
+}
+
+.sim407-log-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}

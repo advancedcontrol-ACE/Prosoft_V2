@@ -92,15 +92,15 @@ const basicProcessTrainers: MenuItem[] = [
 ];
 
 const advancedProcessTrainers: MenuItem[] = [
-  { id: 'adv-placeholder', label: 'Advanced Trainer (Coming Soon)', enabled: false },
+  { id: 'adv-placeholder', label: 'Advanced Trainer', enabled: false, action: 'adv-trainer' },
 ];
 
 const nonLinearProcessTrainers: MenuItem[] = [
-  { id: 'nl-placeholder', label: 'Non-Linear Trainer (Coming Soon)', enabled: false },
+  { id: 'nl-placeholder', label: 'Non-Linear Trainer', enabled: false, action: 'nl-trainer' },
 ];
 
 const commonExperiments: MenuItem[] = [
-  { id: 'exp-placeholder', label: 'Common Experiments (Coming Soon)', enabled: false },
+  { id: 'exp-placeholder', label: 'Common Experiments', enabled: false, action: 'common-exp' },
 ];
 
 const processTrainers: TopLevelMenu = {
@@ -118,25 +118,55 @@ const processTrainers: TopLevelMenu = {
 };
 
 // ──────────────────────────────────────────────────────────────
-// Process Simulators
+// Process Simulators (ACE 401 to ACE 414)
 // ──────────────────────────────────────────────────────────────
+const blockDiagramSubmenu: MenuItem[] = [
+  { id: 'sim-ace404-fopdt',            label: 'FOPDT Model',                          enabled: true, action: 'sim-ace404-fopdt' },
+  sep('bd-s1'),
+  { id: 'sim-ace404-two-interacting',   label: 'Two Tank Interacting',                 enabled: true, action: 'sim-ace404-two-interacting' },
+  sep('bd-s2'),
+  { id: 'sim-ace404-three-interacting', label: 'Three Tank Interacting',               enabled: true, action: 'sim-ace404-three-interacting' },
+  sep('bd-s3'),
+  { id: 'sim-ace404-two-non-inter',    label: 'Two Tank Non-Interacting',             enabled: true, action: 'sim-ace404-two-non-interacting' },
+  sep('bd-s4'),
+  { id: 'sim-ace404-cascade',          label: 'Cascade Control',                      enabled: true, action: 'sim-ace404-cascade' },
+  sep('bd-s5'),
+  { id: 'sim-ace404-feedforward',      label: 'Feed Forward + Feedback Control',      enabled: true, action: 'sim-ace404-feedforward' },
+  sep('bd-s6'),
+  { id: 'sim-ace404-smith',            label: 'Dead Time Compensator (Smith Predictor)', enabled: true, action: 'sim-ace404-smith' },
+];
+
 const processSimulators: TopLevelMenu = {
   id: 'process-simulators',
   label: 'Process Simulators',
   items: [
-    { id: 'sim-two-pos',     label: 'Two Position & PID Simulator',   enabled: true },
+    { id: 'sim-ace401', label: 'Two Position & PID Simulator (ACE 401)',                         enabled: true, action: 'sim-ace401' },
     sep('sim-s1'),
-    { id: 'sim-model',       label: 'Model Based Simulator',           enabled: true },
+    { id: 'sim-ace402', label: 'Model Based Closed Loop Simulator with PID Controller (ACE 402)', enabled: true, action: 'sim-ace402' },
     sep('sim-s2'),
-    { id: 'sim-pid-design',  label: 'Model Analysis & PID Design',     enabled: true },
+    { id: 'sim-ace403', label: 'ML Based Control (ACE 403)',                                     enabled: true, action: 'sim-ace403' },
     sep('sim-s3'),
-    { id: 'sim-tuning',      label: 'Tuning of PID Controller',        enabled: true },
+    { id: 'sim-ace404', label: 'Block Diagram Analysis (ACE 404)',                                enabled: true, children: blockDiagramSubmenu },
     sep('sim-s4'),
-    { id: 'sim-math-model',  label: 'Mathematical Model Extraction',   enabled: false },
+    { id: 'sim-ace405', label: 'Model Analysis & PID Controller Design (ACE 405)',               enabled: true, action: 'sim-ace405' },
     sep('sim-s5'),
-    { id: 'sim-cascade',     label: 'Cascade Control Simulator',       enabled: false },
+    { id: 'sim-ace406', label: 'PID Tuning Techniques (ACE 406)',                                 enabled: true, action: 'sim-ace406' },
     sep('sim-s6'),
-    { id: 'sim-feedforward', label: 'Feedforward, Ratio Simulator',    enabled: false },
+    { id: 'sim-ace407', label: 'Cascade Process Simulator (ACE 407)',                             enabled: true, action: 'sim-ace407' },
+    sep('sim-s7'),
+    { id: 'sim-ace408', label: 'Feedforward + Feedback Process Simulator (ACE 408)',              enabled: true, action: 'sim-ace408' },
+    sep('sim-s8'),
+    { id: 'sim-ace409', label: 'Ratio Control Process Simulator (ACE 409)',                       enabled: true, action: 'sim-ace409' },
+    sep('sim-s9'),
+    { id: 'sim-ace410', label: 'Non-Interacting Level Tank Process Simulator (ACE 410)',          enabled: true, action: 'sim-ace410' },
+    sep('sim-s10'),
+    { id: 'sim-ace411', label: 'Fuzzy Logic Controller Design & Simulator (ACE 411)',             enabled: true, action: 'sim-ace411' },
+    sep('sim-s11'),
+    { id: 'sim-ace412', label: 'Non-Interacting Level Tank Simulator with Smith Predictor (ACE 412)', enabled: true, action: 'sim-ace412' },
+    sep('sim-s12'),
+    { id: 'sim-ace413', label: 'Internal Model Control Design & Simulator (ACE 413)',             enabled: true, action: 'sim-ace413' },
+    sep('sim-s13'),
+    { id: 'sim-ace414', label: 'Empirical Model Estimator (ACE 414)',                             enabled: true, action: 'sim-ace414' },
   ],
 };
 
@@ -147,7 +177,7 @@ const instrumentationSystems: TopLevelMenu = {
   id: 'instrumentation-systems',
   label: 'Instrumentation Systems',
   items: [
-    { id: 'inst-placeholder', label: 'Instrumentation Modules (Coming Soon)', enabled: false },
+    { id: 'inst-placeholder', label: 'Instrumentation Modules (Coming Soon)', enabled: false, action: 'inst-modules' },
   ],
 };
 
@@ -158,7 +188,7 @@ const mechanicalSystems: TopLevelMenu = {
   id: 'mechanical-systems',
   label: 'Mechanical Systems',
   items: [
-    { id: 'mech-placeholder', label: 'Mechanical Modules (Coming Soon)', enabled: false },
+    { id: 'mech-placeholder', label: 'Mechanical Modules (Coming Soon)', enabled: false, action: 'mech-modules' },
   ],
 };
 
@@ -169,7 +199,7 @@ const plcBasedSystems: TopLevelMenu = {
   id: 'plc-based-systems',
   label: 'PLC Based Systems',
   items: [
-    { id: 'plc-placeholder', label: 'PLC Modules (Coming Soon)', enabled: false },
+    { id: 'plc-placeholder', label: 'PLC Modules (Coming Soon)', enabled: false, action: 'plc-modules' },
   ],
 };
 

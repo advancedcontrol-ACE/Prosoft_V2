@@ -1,0 +1,208 @@
+.sim403-schematic-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.sim403-method-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+}
+
+.sim403-method-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-right: 4px;
+}
+
+.sim403-method-btn {
+  padding: 6px 14px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim403-method-btn:hover:not(:disabled) {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.sim403-method-btn.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+.sim403-method-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sim403-schematic-body {
+  display: grid;
+  grid-template-columns: 540px 1fr;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.sim403-schematic-visual {
+  background: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sim403-svg-canvas {
+  width: 100%;
+  height: 100%;
+  max-height: 480px;
+}
+
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.sim403-flow-anim {
+  animation: flowDash 0.8s linear infinite;
+}
+
+.sim403-controls-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.sim403-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.sim403-card-title {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #60a5fa;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 4px;
+}
+
+.sim403-instruction-text {
+  margin: 0 0 12px 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.sim403-step-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sim403-step-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim403-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.sim403-input-with-btn {
+  display: flex;
+  gap: 6px;
+}
+
+.sim403-num-input {
+  width: 70px;
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.sim403-btn-apply {
+  flex: 1;
+  background: #0284c7;
+  border: 1px solid #0369a1;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: all 0.15s ease;
+}
+
+.sim403-btn-apply:hover:not(:disabled) {
+  background: #0369a1;
+}
+
+.sim403-btn-apply:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sim403-status-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.sim403-status-label {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.sim403-status-val {
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.sim403-status-val.final_steady {
+  color: #10b981;
+}
+
+.sim403-sliders-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}

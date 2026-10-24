@@ -1,0 +1,179 @@
+/* ============================================================
+   ACE 403 ML Training Graphs (3 Tabs for Plant Parameters)
+   ============================================================ */
+
+.sim403-graphs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #1e293b;
+  border: 1.5px solid #334155;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* ── 3 Tabs Bar for Plant Parameters (Figure 1 Matching) ── */
+.sim403-plant-tabs-bar {
+  display: flex;
+  background: #1e293b;
+  border-bottom: 2px solid #334155;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.sim403-plant-tab-btn {
+  flex: 1;
+  background: #1e293b;
+  color: #94a3b8;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-right: 1px solid #334155;
+  cursor: pointer;
+  transition: all 0.12s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.sim403-plant-tab-btn:last-child {
+  border-right: none;
+}
+
+.sim403-plant-tab-btn:hover:not(:disabled) {
+  background: #2a3a4f;
+  color: #f1f5f9;
+}
+
+.sim403-plant-tab-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: #64748b;
+  background: #192330;
+}
+
+.sim403-plant-tab-btn.active {
+  background: #0f172a;
+  color: #38bdf8;
+  font-weight: 700;
+  border-bottom: 3px solid #38bdf8;
+}
+
+.sim403-plant-tab-icon {
+  font-size: 12px;
+}
+
+/* ── Graph Card Area ── */
+.sim403-graph-card {
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+}
+
+.sim403-graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #162032;
+  border-bottom: 1px solid #233549;
+  padding: 6px 14px;
+  flex-shrink: 0;
+}
+
+.sim403-graph-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim403-graph-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.sim403-graph-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sim403-badge-op {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sim403-badge-pv {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sim403-badge-duration,
+.sim403-badge-samples {
+  background: #0f172a;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sim403-badge-training {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sim403-canvas-wrapper {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  background: #0f172a;
+}
+
+.sim403-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Workflow Banner matching Figure 1 ── */
+.sim403-workflow-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #090d16;
+  border-top: 1px solid #1e293b;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.sim403-workflow-icon {
+  font-size: 0.95rem;
+}
+
+.sim403-workflow-text strong {
+  color: #f59e0b;
+}

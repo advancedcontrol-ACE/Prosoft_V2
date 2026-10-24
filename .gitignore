@@ -16,6 +16,10 @@ cloudflared.exe
 active_tunnel_url.txt
 *.local
 *.mp4
+/col*.png
+/f*.png
+/im*.png
+supabase/.temp/
 
 # Editor directories and files
 .vscode/*

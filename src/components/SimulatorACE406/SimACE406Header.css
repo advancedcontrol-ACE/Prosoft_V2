@@ -1,0 +1,91 @@
+.sim406-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  border-bottom: 2px solid #374151;
+  color: #f3f4f6;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.sim406-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sim406-home-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: #f9fafb;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim406-home-btn:hover {
+  background: #4b5563;
+}
+
+.sim406-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim406-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}
+
+.sim406-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.sim406-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim406-badge {
+  padding: 4px 10px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #7dd3fc;
+  border-radius: 4px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sim406-badge.running {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #6ee7b7;
+}
+
+.sim406-badge.stopped {
+  background: rgba(107, 114, 128, 0.2);
+  border-color: #6b7280;
+  color: #d1d5db;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}

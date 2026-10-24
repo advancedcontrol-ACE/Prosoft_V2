@@ -1,0 +1,166 @@
+.sim405-inputs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.sim405-family-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.sim405-family-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim405-family-btn:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.sim405-family-btn.active {
+  background: #7c3aed;
+  border-color: #a855f7;
+  color: #ffffff;
+}
+
+.sim405-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.sim405-card-title {
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 4px;
+}
+
+.sim405-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sim405-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.sim405-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim405-field label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.sim405-input {
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  color: #f8fafc;
+  font-size: 12px;
+  padding: 5px 8px;
+}
+
+.sim405-alg-selector {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sim405-alg-selector label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.sim405-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sim405-alg-btn {
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim405-alg-btn:hover {
+  background: #334155;
+}
+
+.sim405-alg-btn.active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.sim405-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.sim405-table th,
+.sim405-table td {
+  padding: 6px 10px;
+  text-align: center;
+  border-bottom: 1px solid #334155;
+}
+
+.sim405-table th {
+  background: #0f172a;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.mode-col {
+  font-weight: bold;
+}
+
+.mode-col.p {
+  color: #f97316;
+}
+
+.mode-col.pi {
+  color: #22c55e;
+}
+
+.mode-col.pd {
+  color: #eab308;
+}
+
+.mode-col.pid {
+  color: #06b6d4;
+}

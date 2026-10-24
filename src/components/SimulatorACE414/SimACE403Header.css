@@ -1,0 +1,97 @@
+.sim403-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  border-bottom: 2px solid #374151;
+  color: #f3f4f6;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.sim403-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sim403-home-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: #f9fafb;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim403-home-btn:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.sim403-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim403-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #60a5fa;
+}
+
+.sim403-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.sim403-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim403-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.sim403-method-badge {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.sim403-badge.running {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #10b981;
+  color: #6ee7b7;
+}
+
+.sim403-badge.stopped {
+  background: rgba(107, 114, 128, 0.2);
+  border: 1px solid #6b7280;
+  color: #d1d5db;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}

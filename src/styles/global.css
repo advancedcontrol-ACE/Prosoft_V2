@@ -10,15 +10,15 @@
   --color-menu-active-bg: #0078d4;   /* Windows blue highlight */
   --color-menu-active-fg: #ffffff;
   --color-menu-hover-bg:  #dce8f5;
-  --color-menu-fg:        #1e293b;
+  --color-menu-fg:        #1e293b;   /* Solid dark charcoal / black matching Figure 2 */
   --color-menu-sep:       #b8c4d0;
 
   /* Dropdown / cascading menus */
-  --color-dropdown-bg:    #ffffff;
-  --color-dropdown-border: #94a3b8;
-  --color-dropdown-hover-bg: #0078d4;
+  --color-dropdown-bg:    #ececec;   /* Classic Windows light grey matching figure */
+  --color-dropdown-border: #7c838d;
+  --color-dropdown-hover-bg: #0078d7;
   --color-dropdown-hover-fg: #ffffff;
-  --color-dropdown-disabled: #94a3b8;
+  --color-dropdown-disabled: #94a3b8; /* Muted grey for disabled items */
 
   /* Panels */
   --color-panel-bg:       rgba(255, 255, 255, 0.92);

@@ -1,0 +1,86 @@
+.sim413-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  border-bottom: 2px solid #374151;
+  color: #f3f4f6;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.sim413-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sim413-home-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: #374151;
+  border: 1px solid #4b5563;
+  color: #f9fafb;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim413-home-btn:hover {
+  background: #4b5563;
+}
+
+.sim413-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim413-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #3b82f6;
+  letter-spacing: 0.5px;
+}
+
+.sim413-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.sim413-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim413-select-label {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.sim413-dropdown {
+  background: #0f172a;
+  border: 1px solid #3b82f6;
+  color: #ffffff;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sim413-badge {
+  padding: 4px 10px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+  border-radius: 4px;
+  font-size: 11px;
+}

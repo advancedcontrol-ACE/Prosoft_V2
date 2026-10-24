@@ -104,9 +104,70 @@ public class WindowLocker {
     public const int WM_NCRBUTTONDOWN = 0x00A4;
     public const int WM_NCRBUTTONUP = 0x00A5;
 
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint GetCurrentThreadId();
+
+    [DllImport("user32.dll")]
+    public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+    [DllImport("user32.dll")]
+    public static extern bool BringWindowToTop(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern void SwitchToThisWindow(IntPtr hWnd, bool fAltTab);
+
+    [DllImport("user32.dll")]
+    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, IntPtr pvParam, uint fWinIni);
+
+    public const uint SPI_SETFOREGROUNDLOCKTIMEOUT = 0x2001;
+    public const uint SPIF_SENDCHANGE = 0x02;
+
     public static IntPtr TargetHWnd = IntPtr.Zero;
     private static IntPtr _hookId = IntPtr.Zero;
     private static LowLevelMouseProc _proc = HookCallback;
+
+    public static void ForceForegroundWindow(IntPtr hWnd) {
+        if (hWnd == IntPtr.Zero) return;
+        try {
+            SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, IntPtr.Zero, SPIF_SENDCHANGE);
+            IntPtr foreHWnd = GetForegroundWindow();
+            uint dummyProcId;
+            uint foreThread = GetWindowThreadProcessId(foreHWnd, out dummyProcId);
+            uint currentThread = GetCurrentThreadId();
+            uint targetThread = GetWindowThreadProcessId(hWnd, out dummyProcId);
+
+            if (foreThread != 0 && foreThread != currentThread) {
+                AttachThreadInput(currentThread, foreThread, true);
+            }
+            if (foreThread != 0 && foreThread != targetThread) {
+                AttachThreadInput(targetThread, foreThread, true);
+            }
+
+            keybd_event(0x12, 0, 0, 0); // Alt down
+            keybd_event(0x12, 0, 2, 0); // Alt up
+
+            ShowWindow(hWnd, SW_MAXIMIZE);
+            BringWindowToTop(hWnd);
+            SetForegroundWindow(hWnd);
+            SwitchToThisWindow(hWnd, true);
+
+            if (foreThread != 0 && foreThread != currentThread) {
+                AttachThreadInput(currentThread, foreThread, false);
+            }
+            if (foreThread != 0 && foreThread != targetThread) {
+                AttachThreadInput(targetThread, foreThread, false);
+            }
+        } catch { }
+    }
 
     public static bool LockTargetWindow(string targetTitle) {
         bool locked = false;
@@ -117,8 +178,7 @@ public class WindowLocker {
                 string title = sb.ToString();
                 if (!string.IsNullOrEmpty(title) && title.IndexOf(targetTitle, StringComparison.OrdinalIgnoreCase) >= 0) {
                     TargetHWnd = hWnd;
-                    ShowWindow(hWnd, SW_MAXIMIZE);
-                    SetForegroundWindow(hWnd);
+                    ForceForegroundWindow(hWnd);
                     int style = GetWindowLong(hWnd, GWL_STYLE);
                     style &= ~WS_THICKFRAME;
                     style &= ~WS_MAXIMIZEBOX;

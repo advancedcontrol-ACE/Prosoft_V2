@@ -1,0 +1,554 @@
+/* ============================================================
+   ACE 403 ML Data Collection & Model Generation (Figure 1 UI)
+   ============================================================ */
+
+.sim403-dc-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+/* ── Card Containers ── */
+.sim403-dc-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #f1f5f9;
+}
+
+.sim403-dc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 6px;
+}
+
+.sim403-dc-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim403-dc-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.sim403-dc-card-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.sim403-dc-status-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.sim403-dc-status-badge.idle {
+  background: #334155;
+  color: #94a3b8;
+  border-color: #475569;
+}
+
+.sim403-dc-status-badge.active {
+  background: #0284c7;
+  color: #ffffff;
+  animation: pulse-active 1.5s infinite;
+}
+
+.sim403-dc-status-badge.done {
+  background: #166534;
+  color: #4ade80;
+  border-color: #22c55e;
+}
+
+@keyframes pulse-active {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+/* ── Input Profile Subtabs ── */
+.sim403-dc-tab-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  background: #0f172a;
+  padding: 3px;
+  border-radius: 4px;
+  border: 1px solid #334155;
+}
+
+.sim403-dc-tab-btn {
+  padding: 5px 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim403-dc-tab-btn:hover:not(:disabled) {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.sim403-dc-tab-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.sim403-dc-tab-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Parameters Area ── */
+.sim403-dc-params-area {
+  background: #0f172a;
+  border: 1px solid #293548;
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.sim403-inputs-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim403-dc-field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sim403-dc-label {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Beveled Numeric Input Spinner (Figure 1 Style) ── */
+.sim403-beveled-input {
+  width: 90px;
+  height: 26px;
+  background: #ffffff;
+  border: 1.5px solid #a8adb5;
+  border-radius: 3px;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #8c939d,
+    0 1px 2px rgba(0, 0, 0, 0.2);
+  padding: 1px 2px;
+  gap: 2px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.sim403-beveled-input.disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sim403-spinners {
+  width: 15px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sim403-spin-btn {
+  flex: 1;
+  background: linear-gradient(180deg, #ffffff, #dcdfe3);
+  border: 1px solid #9aa0a6;
+  box-shadow: inset 1px 1px 0 #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 7px;
+  color: #1f2937;
+  padding: 0;
+  line-height: 1;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.sim403-spin-btn:hover:not(:disabled) {
+  background: #cbd5e1;
+}
+
+.sim403-spin-btn:active:not(:disabled) {
+  background: #94a3b8;
+}
+
+.sim403-spin-btn.spin-up {
+  border-radius: 1px 1px 0 0;
+  border-bottom: 0.5px solid #9aa0a6;
+}
+
+.sim403-spin-btn.spin-down {
+  border-radius: 0 0 1px 1px;
+  border-top: 0.5px solid #9aa0a6;
+}
+
+.sim403-input-val {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: right;
+  font-weight: 700;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  padding: 0 4px 0 0;
+  font-family: inherit;
+}
+
+/* ── Multi-Step Container & Table Box ── */
+.sim403-multistep-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim403-multistep-table-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  border-top: 1px solid #1e293b;
+  padding-top: 6px;
+}
+
+.sim403-multistep-header {
+  display: grid;
+  grid-template-columns: 32px 1fr 1fr 32px;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0 2px;
+  text-align: center;
+}
+
+.sim403-multistep-header .col-time,
+.sim403-multistep-header .col-amp {
+  text-align: center;
+}
+
+.sim403-multistep-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.sim403-multistep-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 1fr 32px;
+  gap: 6px;
+  align-items: center;
+}
+
+.sim403-multistep-row .row-idx {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.sim403-multistep-input {
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid #94a3b8;
+  border-radius: 3px;
+  padding: 3px 6px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sim403-multistep-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.sim403-multistep-btn-del {
+  background: #991b1b;
+  color: #ffffff;
+  border: 1px solid #7f1d1d;
+  border-radius: 3px;
+  height: 26px;
+  width: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 12px;
+  transition: background 0.12s;
+  justify-self: center;
+}
+
+.sim403-multistep-btn-del:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.sim403-multistep-btn-del:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sim403-multistep-btn-add {
+  align-self: flex-start;
+  background: transparent;
+  border: 1.5px solid #2563eb;
+  color: #60a5fa;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.15s ease;
+}
+
+.sim403-multistep-btn-add:hover:not(:disabled) {
+  background: #1e3a8a;
+  color: #ffffff;
+}
+
+/* ── Button Row ── */
+.sim403-dc-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.sim403-btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sim403-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sim403-btn-start {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #166534;
+}
+
+.sim403-btn-start:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.sim403-btn-stop {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #b91c1c;
+}
+
+.sim403-btn-stop:hover:not(:disabled) {
+  background: #ef4444;
+}
+
+.sim403-btn-reset {
+  background: #1e293b;
+  color: #ffffff;
+  border: 1.5px solid #ffffff;
+}
+
+.sim403-btn-reset:hover:not(:disabled) {
+  background: #334155;
+}
+
+.sim403-btn-import {
+  background: transparent;
+  border: 1.5px solid #0d9488;
+  color: #2dd4bf;
+  font-weight: 600;
+}
+
+.sim403-btn-import:hover:not(:disabled) {
+  background: #134e4a;
+  color: #ffffff;
+}
+
+.sim403-btn-excel {
+  background: #0f766e;
+  color: #ffffff;
+  border-color: #115e59;
+  margin-left: auto;
+}
+
+.sim403-btn-excel:hover:not(:disabled) {
+  background: #0d9488;
+}
+
+.sim403-btn-generate {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  flex: 1;
+}
+
+.sim403-btn-generate:hover:not(:disabled) {
+  background: #3b82f6;
+}
+
+.sim403-btn-validation {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #475569;
+  font-weight: 700;
+  transition: all 0.25s ease;
+}
+
+.sim403-btn-validation.ready {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  border-color: #047857;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+  animation: validation-glow 2s infinite ease-in-out;
+}
+
+.sim403-btn-validation.ready:hover {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.65);
+}
+
+@keyframes validation-glow {
+  0%, 100% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 14px rgba(16, 185, 129, 0.8); }
+}
+
+.sim403-btn-export {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: #475569;
+}
+
+.sim403-btn-export:hover:not(:disabled) {
+  background: #334155;
+  color: #ffffff;
+}
+
+/* ── Frame 2: Model Generation Specifics ── */
+.sim403-dc-logic-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f172a;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #293548;
+}
+
+.sim403-dc-label-inline {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.sim403-dc-select {
+  flex: 1;
+  background: #1e293b;
+  color: #ffffff;
+  border: 1px solid #475569;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.sim403-dc-section-subhead {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sim403-dc-hyper-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: #0f172a;
+  border: 1px solid #293548;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.sim403-dc-hyper-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sim403-dc-label-sm {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.sim403-dc-select-sm,
+.sim403-dc-input-sm {
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 3px;
+  color: #ffffff;
+  padding: 3px 5px;
+  font-size: 0.78rem;
+}

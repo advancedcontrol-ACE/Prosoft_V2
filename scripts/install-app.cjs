@@ -8,7 +8,19 @@ const { spawn } = require('child_process');
 console.log('====================================================');
 console.log('  Advanced Control Equipments — ACE Prosoft V2.0    ');
 console.log('====================================================');
-console.log('Preparing ACE Prosoft V2 desktop installer...\n');
+console.log('Starting interactive product activation wizard...\n');
+
+// On Windows, launch the interactive GUI popup dialog
+if (process.platform === 'win32') {
+  const psScript = path.resolve(__dirname, 'install.ps1');
+  if (fs.existsSync(psScript)) {
+    const { spawnSync } = require('child_process');
+    const result = spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psScript], {
+      stdio: 'inherit',
+    });
+    process.exit(result.status || 0);
+  }
+}
 
 const releaseUrl = 'https://github.com/meenasundaratgmaildotcom/Prosoft_V2/releases/download/v2.0.0/ACE.Prosoft.V2.Setup.2.0.0.exe';
 const localFallback = path.resolve(__dirname, '../dist-installer/ACE Prosoft V2 Setup 2.0.0.exe');

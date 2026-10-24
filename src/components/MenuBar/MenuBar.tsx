@@ -1,6 +1,7 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { menuConfig } from '../../config/menuData';
 import type { MenuItem, TopLevelMenu } from '../../config/menuData';
+import { entitlementService } from '../../services/entitlementService';
 import './MenuBar.css';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -22,6 +23,12 @@ const CascadeMenu: React.FC<CascadeMenuProps> = ({ items, depth, onAction, onClo
 
   const handleMouseEnter = (item: MenuItem) => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (!item.enabled) {
+      timerRef.current = setTimeout(() => {
+        setActiveChild(null);
+      }, 150);
+      return;
+    }
     if (item.children) {
       setActiveChild(item.id);
     } else {
@@ -64,9 +71,9 @@ const CascadeMenu: React.FC<CascadeMenuProps> = ({ items, depth, onAction, onClo
             key={item.id}
             className={[
               'cascade-item',
-              !item.enabled ? 'disabled' : '',
+              item.enabled ? 'enabled' : 'disabled',
               activeChild === item.id ? 'open' : '',
-            ].join(' ')}
+            ].filter(Boolean).join(' ')}
             role="menuitem"
             aria-disabled={!item.enabled}
             onMouseEnter={() => handleMouseEnter(item)}
@@ -143,6 +150,17 @@ const TopLevelItem: React.FC<TopLevelItemProps> = ({
 const MenuBar: React.FC<MenuBarProps> = ({ onAction }) => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
+  const [entitlementVersion, setEntitlementVersion] = useState(0);
+
+  useEffect(() => {
+    return entitlementService.subscribe(() => {
+      setEntitlementVersion((v) => v + 1);
+    });
+  }, []);
+
+  const activeMenuConfig = useMemo(() => {
+    return entitlementService.filterMenu(menuConfig);
+  }, [entitlementVersion]);
 
   const close = useCallback(() => setOpenMenu(null), []);
 
@@ -165,9 +183,11 @@ const MenuBar: React.FC<MenuBarProps> = ({ onAction }) => {
     };
   }, [openMenu, close]);
 
+  const currentProfile = entitlementService.getProfile();
+
   return (
     <nav className="menu-bar" ref={barRef} role="menubar">
-      {menuConfig.map((menu) => (
+      {activeMenuConfig.map((menu) => (
         <TopLevelItem
           key={menu.id}
           menu={menu}
@@ -177,6 +197,16 @@ const MenuBar: React.FC<MenuBarProps> = ({ onAction }) => {
           onAction={onAction}
         />
       ))}
+
+      <div className="menu-bar-right">
+        <div
+          className="menu-bar-license-badge"
+          title={currentProfile?.collegeName ? `Licensed to ${currentProfile.collegeName}` : 'All Modules Unlocked'}
+        >
+          <span className="license-dot"></span>
+          <span>{currentProfile?.collegeName || 'ACE Prosoft V2 — Master Edition'}</span>
+        </div>
+      </div>
     </nav>
   );
 };

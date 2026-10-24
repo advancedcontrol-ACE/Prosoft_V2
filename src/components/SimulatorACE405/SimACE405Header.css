@@ -1,0 +1,68 @@
+.sim405-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 2px solid #334155;
+  color: #f8fafc;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.sim405-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sim405-home-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: #334155;
+  border: 1px solid #475569;
+  color: #f8fafc;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim405-home-btn:hover {
+  background: #475569;
+}
+
+.sim405-title-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim405-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #a855f7;
+  letter-spacing: 0.5px;
+}
+
+.sim405-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.sim405-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.sim405-badge {
+  padding: 4px 10px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+  border-radius: 4px;
+  font-size: 11px;
+}
