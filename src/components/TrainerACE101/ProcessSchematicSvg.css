@@ -104,13 +104,13 @@
 }
 
 /* ── Pump Impeller Rotation Animation ──────────────────────── */
-.pump-impeller-spin {
+.pump-impeller-spin,
+.sim401-pump-impeller {
   transform-box: fill-box;
-  transform-origin: center;
-  animation: pumpSpin 0.7s linear infinite;
+  animation: simPumpRotate 0.6s linear infinite;
 }
 
-@keyframes pumpSpin {
+@keyframes simPumpRotate {
   from {
     transform: rotate(0deg);
   }
@@ -118,6 +118,105 @@
     transform: rotate(360deg);
   }
 }
+
+/* ── Inward Water Suction Vortex Ripples ── */
+.sim401-suction-ripple-1 {
+  transform-box: fill-box;
+  transform-origin: 841px 774px;
+  animation: suctionRippleInward 1.2s ease-out infinite;
+}
+
+.sim401-suction-ripple-2 {
+  transform-box: fill-box;
+  transform-origin: 841px 774px;
+  animation: suctionRippleInward 1.2s ease-out infinite 0.6s;
+}
+
+@keyframes suctionRippleInward {
+  0% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ── Cavitation Micro-Bubbles Entering Pump Suction ── */
+.sim401-suction-bubble-1 {
+  animation: suctionBubbleDraw1 0.8s ease-in infinite;
+}
+
+.sim401-suction-bubble-2 {
+  animation: suctionBubbleDraw2 0.95s ease-in infinite 0.3s;
+}
+
+.sim401-suction-bubble-3 {
+  animation: suctionBubbleDraw3 0.75s ease-in infinite 0.15s;
+}
+
+@keyframes suctionBubbleDraw1 {
+  0% {
+    transform: translate(-10px, -8px) scale(0.4);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(12px, 9px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes suctionBubbleDraw2 {
+  0% {
+    transform: translate(12px, -6px) scale(0.4);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-11px, 6px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes suctionBubbleDraw3 {
+  0% {
+    transform: translate(-6px, 12px) scale(0.4);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(5px, -11px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* ── Electric Motor Operating Beacon ── */
+.sim401-motor-status-beacon {
+  animation: motorBeaconPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes motorBeaconPulse {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
 
 /* ── Water Meniscus Waves ──────────────────────────────────── */
 .tank-meniscus-wave {

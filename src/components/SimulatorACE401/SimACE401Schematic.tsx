@@ -27,7 +27,10 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
   const tankBaseY = 630;
   const tankWaterTopY = tankBaseY - tankWaterHeight;
 
-  // ── 3 Disconnected Supply Pipe Segments (Skipping Control Valve, Rotameter, and Table Platform) ──
+  // ── Supply Pipe Segments (Skipping Control Valve, Rotameter, and Table Platform) ──
+  // Segment 0: Pump discharge nozzle (X=866, Y=740) through horizontal pipe, elbow, and up through table bottom (Y=660)
+  const pipePath0 = 'M 866,740 L 942,740 Q 954,740 954,728 L 954,660';
+
   // Segment 1: Above table edge (Y=625) up to Control Valve inlet (stops before CV body at X=896)
   const pipePath1 = 'M 954,625 L 954,422 Q 954,412 944,412 L 896,412';
 
@@ -37,7 +40,7 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
   // Segment 3: Rotameter top fitting (starts above rotameter at Y=215) to Process Tank top flange (Y=335)
   const pipePath3 = 'M 684,215 L 684,198 Q 684,188 674,188 L 487,188 Q 477,188 477,198 L 477,335';
 
-  const pipeSegments = [pipePath1, pipePath2, pipePath3];
+  const pipeSegments = [pipePath0, pipePath1, pipePath2, pipePath3];
 
   // ── 3 Drain Line Segments (Process Tank to Supply Tank through Drain Valve - Green Boarded) ──
   // Drain 1: Process tank bottom outlet (X=600) to Drain Valve inlet (X=646)
@@ -84,6 +87,103 @@ export const SimACE401Schematic: React.FC<SimACE401SchematicProps> = ({
                   </feMerge>
                 </filter>
               </defs>
+
+              {/* ── Active Submersible Pump Dynamic Animation in Supply Tank ── */}
+              <g className="sim401-active-pump-group">
+                {/* 1. Volute Internal Kinetic Fluid Vortex (Suction Eye to Discharge Flange) */}
+                <path
+                  d="M 841,774 C 825,752 838,730 866,740"
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth="3.5"
+                  strokeOpacity="0.75"
+                  strokeLinecap="round"
+                  filter="url(#fluid-glow-401)"
+                  className="fluid-slugs"
+                  style={{ animationDuration: flowSpeed }}
+                />
+
+                {/* 2. Suction Vortex Inward Ripples at Impeller Eye */}
+                <ellipse
+                  cx="841"
+                  cy="774"
+                  rx="15"
+                  ry="15"
+                  fill="none"
+                  stroke="#7dd3fc"
+                  strokeWidth="1.6"
+                  className="sim401-suction-ripple-1"
+                />
+                <ellipse
+                  cx="841"
+                  cy="774"
+                  rx="15"
+                  ry="15"
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth="1.4"
+                  className="sim401-suction-ripple-2"
+                />
+
+                {/* 3. Swirling Inflow Cavitation Micro-Bubbles into Suction Eye */}
+                <circle cx="828" cy="764" r="1.6" fill="#ffffff" className="sim401-suction-bubble-1" />
+                <circle cx="853" cy="768" r="1.4" fill="#e0f2fe" className="sim401-suction-bubble-2" />
+                <circle cx="836" cy="786" r="1.5" fill="#ffffff" className="sim401-suction-bubble-3" />
+
+                {/* 4. High-Precision Centrifugal Impeller (Rotating at exact center 841, 774) */}
+                <g
+                  className="sim401-pump-impeller"
+                  style={{
+                    transformOrigin: '841px 774px',
+                    animationDuration: flowSpeed,
+                  }}
+                >
+                  {/* Impeller Backplate disc */}
+                  <circle cx="841" cy="774" r="13" fill="#0284c7" fillOpacity="0.3" />
+
+                  {/* 6 Curved Impeller Vanes */}
+                  {[0, 60, 120, 180, 240, 300].map((deg) => (
+                    <g key={`sim401-vane-${deg}`} transform={`rotate(${deg} 841 774)`}>
+                      <path
+                        d="M 841,774 Q 848,767 853,770"
+                        fill="none"
+                        stroke="#38bdf8"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        filter="url(#fluid-glow-401)"
+                      />
+                      <path
+                        d="M 841,774 Q 848,767 853,770"
+                        fill="none"
+                        stroke="#ffffff"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                      />
+                    </g>
+                  ))}
+
+                  {/* Center Hub & Shaft Nut */}
+                  <circle
+                    cx="841"
+                    cy="774"
+                    r="4.5"
+                    fill="#0f172a"
+                    stroke="#38bdf8"
+                    strokeWidth="1.2"
+                  />
+                  <circle cx="841" cy="774" r="2.2" fill="#e2e8f0" />
+                </g>
+
+                {/* 5. Electric Motor Operating Status Indicator */}
+                <circle
+                  cx="928"
+                  cy="798"
+                  r="2.8"
+                  fill="#22c55e"
+                  filter="drop-shadow(0 0 4px #22c55e)"
+                  className="sim401-motor-status-beacon"
+                />
+              </g>
 
               {/* Supply Pipe Fluid Segments */}
               {pipeSegments.map((pathD, idx) => (
