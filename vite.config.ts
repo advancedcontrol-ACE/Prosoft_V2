@@ -5,6 +5,8 @@ import { exec } from 'child_process'
 const { bridgeInstance } = require('./src/services/modbus/modbusServerBridge.cjs')
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { remoteLabManager } = require('./src/services/modbus/remoteLabManager.cjs')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { tcpBridgeInstance } = require('./src/services/tcp/ace2007TcpBridge.cjs')
 
 function serialPortPlugin(): Plugin {
   return {
@@ -311,6 +313,50 @@ function serialPortPlugin(): Plugin {
           await bridgeInstance.disconnect()
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify({ success: true, message: 'Disconnected' }))
+          return
+        }
+
+        // ── ACE 2007 TCP DAQ Endpoints ──────────────────────────
+        // /api/tcp/connect
+        if (pathname === '/api/tcp/connect' && req.method === 'POST') {
+          const body = await parseJsonBody()
+          const host = body.host || '192.168.0.1'
+          const port = Number(body.port) || 8080
+          try {
+            const result = await tcpBridgeInstance.connect(host, port)
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(result))
+          } catch (err: unknown) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ success: false, error: String(err) }))
+          }
+          return
+        }
+
+        // /api/tcp/poll
+        if (pathname === '/api/tcp/poll' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(tcpBridgeInstance.latestData))
+          return
+        }
+
+        // /api/tcp/write
+        if (pathname === '/api/tcp/write' && req.method === 'POST') {
+          const body = await parseJsonBody()
+          const op0 = body.op !== undefined ? body.op : (body.op0 !== undefined ? body.op0 : 0)
+          const op1 = body.op1 !== undefined ? body.op1 : 0
+          tcpBridgeInstance.sendOutput(op0, op1)
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ success: true, op0: tcpBridgeInstance.op0, op1: tcpBridgeInstance.op1 }))
+          return
+        }
+
+        // /api/tcp/disconnect
+        if (pathname === '/api/tcp/disconnect' && req.method === 'POST') {
+          const result = tcpBridgeInstance.disconnect()
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(result))
           return
         }
 

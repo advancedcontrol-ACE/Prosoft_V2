@@ -58,6 +58,7 @@ const backendFilesToProtect = [
   path.join(rootDir, 'electron/apiServer.cjs'),
   path.join(rootDir, 'src/services/modbus/modbusServerBridge.cjs'),
   path.join(rootDir, 'src/services/modbus/remoteLabManager.cjs'),
+  path.join(rootDir, 'src/services/tcp/ace2007TcpBridge.cjs'),
 ];
 
 const psScriptToProtect = path.join(rootDir, 'src/services/modbus/modbus_daemon.ps1');

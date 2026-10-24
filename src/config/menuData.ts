@@ -59,7 +59,7 @@ const ace106Controllers: MenuItem[] = [
   sep('s106-1'),
   { id: 'ace2002', label: 'ACE 2002',     enabled: true, children: cascadeControlModes.map(m => ({ ...m, id: `ace2002-${m.id}` })) },
   sep('s106-2'),
-  { id: 'ace2007', label: 'ACE 2007',     enabled: true, children: cascadeControlModes.map(m => ({ ...m, id: `ace2007-${m.id}` })) },
+  { id: 'ace2007', label: 'ACE 2007',     enabled: true, children: cascadeControlModes.map(m => ({ ...m, id: `ace2007-${m.id}`, action: m.id === 'level-ctrl' ? 'ace106-ace2007-level-ctrl' : `ace106-ace2007-${m.id}` })) },
   sep('s106-3'),
   { id: 'sr20plc', label: 'SR20 PLC',     enabled: true, children: cascadeControlModes.map(m => ({ ...m, id: `sr20-${m.id}` })) },
 ];
