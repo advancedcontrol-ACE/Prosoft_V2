@@ -18,7 +18,7 @@ export const TrainerHeader106: React.FC = () => {
 
       <div className="header-right">
         <span className="header-trainer-category">Level Control</span>
-        <span className="header-trainer-model">Cascade Process Trainer (ACE 106) — ACE 2007</span>
+        <span className="header-trainer-model">Cascade Process Trainer (ACE 106)</span>
       </div>
     </header>
   );

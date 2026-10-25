@@ -159,39 +159,40 @@ class EntitlementService {
 
   /**
    * Enables ONLY the permitted trainer/simulator modules and disables all other packages.
-   * Keeps menu structure intact so unpurchased products are displayed greyed-out (disabled).
+   * Respects module-level configuration (enabled: false) and entitlement license restrictions.
+   * Keeps menu structure intact so unpurchased/disabled products are displayed greyed-out.
    */
   public filterMenu(menuList: TopLevelMenu[]): TopLevelMenu[] {
     const applyToItems = (items: MenuItem[]): MenuItem[] => {
       return items.map((item) => {
         if (item.type === 'separator') return { ...item };
 
+        // If explicitly disabled in configuration, enforce disabled state
+        if (item.enabled === false) {
+          if (item.children && item.children.length > 0) {
+            return {
+              ...item,
+              enabled: false,
+              children: applyToItems(item.children).map((c) => ({ ...c, enabled: false })),
+            };
+          }
+          return { ...item, enabled: false };
+        }
+
         if (item.children && item.children.length > 0) {
           const updatedChildren = applyToItems(item.children);
-          // Check if parent product itself is allowed OR if any child is allowed
-          const target = item.action || item.id;
-          const isParentAllowed = this.isModuleAllowed(target);
           const hasAnyEnabledChild = updatedChildren.some(
             (c) => c.enabled && c.type !== 'separator'
           );
-          const isEnabled = isParentAllowed || hasAnyEnabledChild;
-
-          // If the parent trainer is allowed (e.g. ace101), ensure its sub-controllers are enabled too
-          const finalChildren = updatedChildren.map((child) => {
-            if (isParentAllowed && child.type !== 'separator') {
-              return { ...child, enabled: true };
-            }
-            return child;
-          });
 
           return {
             ...item,
-            children: finalChildren,
-            enabled: isEnabled,
+            children: updatedChildren,
+            enabled: hasAnyEnabledChild,
           };
         }
 
-        // Leaf item
+        // Leaf item: must be allowed by entitlement license
         const target = item.action || item.id;
         const isAllowed = this.isModuleAllowed(target);
         return {

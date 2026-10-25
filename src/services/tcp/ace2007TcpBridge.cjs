@@ -1,4 +1,5 @@
 const net = require('net');
+const { exec } = require('child_process');
 
 /**
  * ACE 2007 TCP DAQ Bridge
@@ -16,6 +17,7 @@ const net = require('net');
  * Input frame (from DAQ):
  *   1<4digit IP0>2<4digit IP1>3<4digit IP2>4<4digit IP3>...
  *   IP0..IP3: 0-4095 ADC counts mapped to 0.0 - 100.0 % (or 4-20 mA)
+ *   Channel 3 (IP2) is configured for Level PV.
  *   Value 9999 indicates open circuit.
  */
 class Ace2007TcpBridge {
@@ -24,11 +26,13 @@ class Ace2007TcpBridge {
     this.isConnected = false;
     this.host = '192.168.0.1';
     this.port = 8080;
+    this.moduleName = 'ACE2007-2';
+    this.currentSsid = '';
     this.op0 = 0.0; // 0 to 100%
     this.op1 = 0.0; // 0 to 100%
-    this.ip0 = 0.0; // PV (0 to 100%)
+    this.ip0 = 0.0;
     this.ip1 = 0.0;
-    this.ip2 = 0.0;
+    this.ip2 = 0.0; // Channel 3: Level PV (0 to 100%)
     this.ip3 = 0.0;
     this.rawIp0 = 0;
     this.rawIp1 = 0;
@@ -41,6 +45,7 @@ class Ace2007TcpBridge {
       timestamp: Date.now(),
       host: '192.168.0.1',
       port: 8080,
+      moduleName: 'ACE2007-2',
       pv: 0.0,
       sp: 50.0,
       pb: 20.0,
@@ -58,6 +63,29 @@ class Ace2007TcpBridge {
       autoMan: 'Auto',
       raw: {},
     };
+
+    this.detectSsid();
+    setInterval(() => this.detectSsid(), 3000);
+  }
+
+  detectSsid() {
+    try {
+      exec('netsh wlan show interfaces', (err, stdout) => {
+        if (!err && stdout) {
+          const match = stdout.match(/^\s*SSID\s*:\s*(.+)$/m);
+          if (match && match[1]) {
+            const ssid = match[1].trim();
+            if (ssid) {
+              this.currentSsid = ssid;
+              if (/^ACE/i.test(ssid)) {
+                this.moduleName = ssid;
+                this.latestData.moduleName = ssid;
+              }
+            }
+          }
+        }
+      });
+    } catch (_) {}
   }
 
   connect(host = '192.168.0.1', port = 8080) {
@@ -165,11 +193,13 @@ class Ace2007TcpBridge {
       this.ip2 = raw2 !== 9999 ? Number(((raw2 / 4095) * 100).toFixed(2)) : 0;
       this.ip3 = raw3 !== 9999 ? Number(((raw3 / 4095) * 100).toFixed(2)) : 0;
 
-      this.latestData.pv = this.ip0;
+      // Channel 3 is level PV (IP2) per hardware specification
+      this.latestData.pv = this.ip2;
       this.latestData.ip0 = this.ip0;
       this.latestData.ip1 = this.ip1;
       this.latestData.ip2 = this.ip2;
       this.latestData.ip3 = this.ip3;
+      this.latestData.moduleName = this.moduleName;
       this.latestData.raw = { raw0, raw1, raw2, raw3 };
       this.latestData.timestamp = Date.now();
 

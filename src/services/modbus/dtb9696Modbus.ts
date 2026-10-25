@@ -5,9 +5,11 @@
 // 1. Local Hardware communication via local Modbus RTU daemon
 // 2. Remote Lab Client over Internet (via Host URL & Session Token)
 // 3. Virtual Simulation fallback
+// 4. Hardware Simulator (Ctrl+Shift+S) — no physical hardware needed
 // ============================================================
 
 import { RemoteLabClient } from '../remoteLab/remoteLabService';
+import { hardwareSimulator } from '../hardwareSimulator';
 
 export interface ModbusConnectionResult {
   success: boolean;
@@ -87,13 +89,30 @@ export class DeltaDTBService {
   }
 
   /**
-   * Connects to Local Serial Port via local Modbus daemon and verifies Action register handshake
+   * Connects to Local Serial Port via local Modbus daemon and verifies Action register handshake.
+   * If Hardware Simulator is active, skips real hardware and returns a virtual success.
    */
   public async connect(
     portName: string,
     slaveId = 1,
     action: 'Direct' | 'Reverse' = 'Direct'
   ): Promise<ModbusConnectionResult> {
+    // ── Hardware Simulator bypass ──────────────────────────────────────────
+    if (hardwareSimulator.isActive) {
+      this.isConnected = true;
+      this.currentPort = portName;
+      this.isHardwareConnected = true;
+      const result = hardwareSimulator.simulateModbusConnect(portName);
+      return {
+        success: true,
+        portName,
+        isRemote: false,
+        message: result.message,
+        txFrame: 'SIM 01 06 10 06 00 01',
+        rxFrame: 'SIM 01 06 10 06 00 01',
+      };
+    }
+
     this.baseUrl = '';
     this.sessionToken = '';
     this.isRemoteMode = false;
@@ -200,6 +219,22 @@ export class DeltaDTBService {
   public startPolling() {
     if (this.pollIntervalId) return;
 
+    // ── Hardware Simulator polling path ────────────────────────────────────
+    if (hardwareSimulator.isActive) {
+      // Register to receive simulated poll events from the simulator engine
+      const unsubSim = hardwareSimulator.onModbusPoll((rawState: object) => {
+        const state = rawState as ModbusLiveState;
+        for (const cb of this.onPollCallbacks) {
+          cb(state);
+        }
+      });
+      // Store unsubscribe fn in pollIntervalId slot via a shim (set a dummy id)
+      this.pollIntervalId = window.setInterval(() => {}, 86400000);
+      // Keep the unsubscribe fn accessible
+      (this as unknown as { _simUnsub?: () => void })._simUnsub = unsubSim;
+      return;
+    }
+
     this.pollIntervalId = window.setInterval(async () => {
       if (!this.isConnected) return;
 
@@ -230,6 +265,11 @@ export class DeltaDTBService {
   }
 
   public stopPolling() {
+    const simUnsub = (this as unknown as { _simUnsub?: () => void })._simUnsub;
+    if (simUnsub) {
+      simUnsub();
+      (this as unknown as { _simUnsub?: () => void })._simUnsub = undefined;
+    }
     if (this.pollIntervalId) {
       window.clearInterval(this.pollIntervalId);
       this.pollIntervalId = null;
@@ -253,6 +293,12 @@ export class DeltaDTBService {
     slaveId = 1
   ): Promise<boolean> {
     if (!this.isConnected) return false;
+
+    // ── Hardware Simulator write bypass ───────────────────────────────────
+    if (hardwareSimulator.isActive) {
+      hardwareSimulator.writeRegister(register, value);
+      return true;
+    }
 
     try {
       const url = this.baseUrl ? `${this.baseUrl}/api/modbus/write` : '/api/modbus/write';

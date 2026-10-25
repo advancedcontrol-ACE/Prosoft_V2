@@ -20,6 +20,7 @@ import { SimulatorACE413 } from './components/SimulatorACE413/SimulatorACE413';
 import { SimulatorACE414 } from './components/SimulatorACE414/SimulatorACE403';
 import type { BlockDiagramModel } from './components/SimulatorACE413/SimACE413Header';
 import { ActivationModal } from './components/common/ActivationModal';
+import { hardwareSimulator } from './services/hardwareSimulator';
 import './styles/global.css';
 import './App.css';
 
@@ -29,6 +30,16 @@ import './App.css';
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<{ action: string; label: string } | null>(null);
   const [isActivationOpen, setIsActivationOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const currentPageRef = React.useRef(currentPage);
+  currentPageRef.current = currentPage;
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => setToastMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
 
   useEffect(() => {
     const lockMaximized = () => {
@@ -67,6 +78,118 @@ const App: React.FC = () => {
       window.removeEventListener('contextmenu', handleContextMenu, true);
       document.removeEventListener('contextmenu', handleContextMenu, true);
     };
+  }, []);
+
+  // Disable all other Chrome / browser shortcuts other than Ctrl+Shift+C across the entire project
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCtrl = e.ctrlKey || e.metaKey;
+      const isShift = e.shiftKey;
+      const isAlt = e.altKey;
+      const key = (e.key || '').toLowerCase();
+
+      // 1. Explicitly ALLOW Ctrl + Shift + C for the Calibration tab toggle
+      if (isCtrl && isShift && key === 'c') {
+        return;
+      }
+
+      // Handle Ctrl + Shift + S for Hardware Simulator on landing page
+      if (isCtrl && isShift && key === 's') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentPageRef.current === null) {
+          const active = hardwareSimulator.toggle();
+          setToastMessage(active ? 'Hardware Simulator ON' : 'Hardware Simulator OFF');
+        }
+        return;
+      }
+
+      // 2. Disable all Function keys F1 - F12 (Help, Reload, DevTools, Fullscreen, etc.)
+      if (/^f(1[0-2]|[1-9])$/i.test(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      // 3. Disable Alt navigation (Alt+Left, Alt+Right, Alt+Home)
+      if (isAlt && (key === 'arrowleft' || key === 'arrowright' || key === 'home')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      // 4. Disable Backspace outside of text inputs (prevents browser back navigation)
+      if (key === 'backspace') {
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isInput =
+          activeEl &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.isContentEditable);
+        if (!isInput) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+      }
+
+      // 5. Disable all Ctrl/Cmd shortcuts except essential text editing operations
+      if (isCtrl && !isAlt) {
+        // Standard text editing allowed: Ctrl+C (Copy), Ctrl+V (Paste), Ctrl+X (Cut), Ctrl+A (Select All), Ctrl+Z (Undo), Ctrl+Y (Redo), Ctrl+Shift+Z (Redo)
+        const isStandardEditing = !isShift && ['c', 'v', 'x', 'a', 'z', 'y'].includes(key);
+        const isRedoShift = isShift && key === 'z';
+        if (isStandardEditing || isRedoShift) {
+          return; // Allow typing & clipboard in inputs
+        }
+
+        // Block all other Chrome shortcuts:
+        // Ctrl+R (Reload), Ctrl+P (Print), Ctrl+S (Save), Ctrl+O (Open), Ctrl+U (Source),
+        // Ctrl+F/G (Find), Ctrl+H (History), Ctrl+J (Downloads), Ctrl+N/T/W (Windows/Tabs),
+        // Ctrl+D (Bookmark), Ctrl+Shift+I/J/M/P (DevTools), Ctrl+=/-/0 (Zoom), etc.
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    // Block Ctrl + MouseWheel browser zooming
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    document.addEventListener('keydown', handleKeyDown, { capture: true });
+    window.addEventListener('wheel', handleWheel, { passive: false, capture: true });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      document.removeEventListener('keydown', handleKeyDown, { capture: true });
+      window.removeEventListener('wheel', handleWheel, { capture: true });
+    };
+  }, []);
+
+  // Dynamic uniform scaling based on 1366x768 reference resolution
+  const [browserScale, setBrowserScale] = useState<number>(1);
+  const [isElectronEnv, setIsElectronEnv] = useState<boolean>(true);
+
+  useEffect(() => {
+    const isElectron = Boolean(
+      (window as unknown as { process?: { type?: string } }).process?.type === 'renderer' ||
+      navigator.userAgent.toLowerCase().includes('electron')
+    );
+    setIsElectronEnv(isElectron);
+
+    if (isElectron) return; // In Electron, main process handles native webContents.setZoomFactor
+
+    const updateScale = () => {
+      const scale = Math.max(0.2, window.innerHeight / 768);
+      setBrowserScale(scale);
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
   }, []);
 
   const handleAction = (action: string, label: string) => {
@@ -125,55 +248,67 @@ const App: React.FC = () => {
     isSimACE414;
 
   return (
-    <div className="app-shell">
+    <div className="app-container">
+      <div
+        className="app-shell"
+        style={!isElectronEnv && browserScale !== 1 ? { zoom: browserScale } : undefined}
+      >
+        {/* When in the Level Trainer screen or Simulator screen, menu bar is hidden */}
+        {!isFullScreenApp && <MenuBar onAction={handleAction} />}
 
-      {/* When in the Level Trainer screen or Simulator screen, menu bar is hidden */}
-      {!isFullScreenApp && <MenuBar onAction={handleAction} />}
+        {/* Main content area — directly rendered without any overlays */}
+        {currentPage === null ? (
+          <HomePage />
+        ) : isTrainerScreen ? (
+          <TrainerACE101 onHome={() => setCurrentPage(null)} />
+        ) : isTrainer106Level ? (
+          <TrainerACE106Level onHome={() => setCurrentPage(null)} />
+        ) : isSimACE401 ? (
+          <SimulatorACE401 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE402 ? (
+          <SimulatorACE402 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE403 ? (
+          <SimulatorACE403 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE404 ? (
+          <SimulatorACE413
+            initialModel={getSim404Model(currentPage?.action)}
+            onHome={() => setCurrentPage(null)}
+          />
+        ) : isSimACE405 ? (
+          <SimulatorACE404 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE406 ? (
+          <SimulatorACE405 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE407 ? (
+          <SimulatorACE406 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE408 ? (
+          <SimulatorACE407 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE409 ? (
+          <SimulatorACE408 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE410 ? (
+          <SimulatorACE409 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE411 ? (
+          <SimulatorACE410 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE412 ? (
+          <SimulatorACE411 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE413 ? (
+          <SimulatorACE412 onHome={() => setCurrentPage(null)} />
+        ) : isSimACE414 ? (
+          <SimulatorACE414 onHome={() => setCurrentPage(null)} />
+        ) : (
+          <PlaceholderPage label={currentPage.label} />
+        )}
 
-      {/* Main content area — directly rendered without any overlays */}
-      {currentPage === null ? (
-        <HomePage />
-      ) : isTrainerScreen ? (
-        <TrainerACE101 onHome={() => setCurrentPage(null)} />
-      ) : isTrainer106Level ? (
-        <TrainerACE106Level onHome={() => setCurrentPage(null)} />
-      ) : isSimACE401 ? (
-        <SimulatorACE401 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE402 ? (
-        <SimulatorACE402 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE403 ? (
-        <SimulatorACE403 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE404 ? (
-        <SimulatorACE413
-          initialModel={getSim404Model(currentPage?.action)}
-          onHome={() => setCurrentPage(null)}
-        />
-      ) : isSimACE405 ? (
-        <SimulatorACE404 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE406 ? (
-        <SimulatorACE405 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE407 ? (
-        <SimulatorACE406 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE408 ? (
-        <SimulatorACE407 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE409 ? (
-        <SimulatorACE408 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE410 ? (
-        <SimulatorACE409 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE411 ? (
-        <SimulatorACE410 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE412 ? (
-        <SimulatorACE411 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE413 ? (
-        <SimulatorACE412 onHome={() => setCurrentPage(null)} />
-      ) : isSimACE414 ? (
-        <SimulatorACE414 onHome={() => setCurrentPage(null)} />
-      ) : (
-        <PlaceholderPage label={currentPage.label} />
-      )}
+        {/* Hardware Simulator Toast Notification */}
+        {toastMessage && (
+          <div className="hw-sim-toast">
+            <span className="toast-dot"></span>
+            <span>{toastMessage}</span>
+          </div>
+        )}
 
-      {/* In-app License Activation Modal */}
-      <ActivationModal isOpen={isActivationOpen} onClose={() => setIsActivationOpen(false)} />
+        {/* In-app License Activation Modal */}
+        <ActivationModal isOpen={isActivationOpen} onClose={() => setIsActivationOpen(false)} />
+      </div>
     </div>
   );
 };

@@ -33,6 +33,7 @@ interface ControllerParametersPanelProps {
   isConnected: boolean;
   isAuto?: boolean;
   tcpHost: string;
+  moduleName?: string;
   logEntries?: LogEntry[];
   onOpenTcpModal: () => void;
   onStateChange: (updater: (prev: ControllerState) => ControllerState) => void;
@@ -155,6 +156,7 @@ export const ControllerParametersPanel106: React.FC<ControllerParametersPanelPro
   isConnected,
   isAuto = true,
   tcpHost,
+  moduleName,
   logEntries,
   onOpenTcpModal,
   onStateChange,
@@ -172,12 +174,16 @@ export const ControllerParametersPanel106: React.FC<ControllerParametersPanelPro
   }, [logEntries?.length, activeTab]);
 
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const repeatRef = useRef<number | null>(null);
 
   const enabledParams = getEnabledParameters(state.selectedExperiment);
   const normExp = (state.selectedExperiment || '').trim().toLowerCase();
-  // Controller Output is editable ONLY in Open Loop when in Manual mode (!isAuto)
-  const isOpEditable = normExp === 'open loop' && !isAuto;
+  const isPidMode =
+    normExp === 'p mode' ||
+    normExp === 'pi mode' ||
+    normExp === 'pd mode' ||
+    normExp === 'pid mode';
+  // Controller Output is editable in Open Loop and in P, PI, PD, PID modes when in Manual mode (!isAuto)
+  const isOpEditable = (normExp === 'open loop' || isPidMode) && !isAuto;
 
   const handleSaveSettings = async () => {
     if (isRunning) return;
@@ -211,40 +217,6 @@ export const ControllerParametersPanel106: React.FC<ControllerParametersPanelPro
     setSaveSuccess(true);
     window.setTimeout(() => setSaveSuccess(false), 2000);
     onSaveSettings?.({ deviceId: devId, action: act });
-  };
-
-  const startRepeat = (action: () => void) => {
-    if (isRunning) return;
-    action();
-    const timeout = window.setTimeout(() => {
-      repeatRef.current = window.setInterval(action, 75);
-    }, 280);
-
-    const stopRepeat = () => {
-      window.clearTimeout(timeout);
-      if (repeatRef.current) window.clearInterval(repeatRef.current);
-      window.removeEventListener('mouseup', stopRepeat);
-      window.removeEventListener('pointerup', stopRepeat);
-    };
-
-    window.addEventListener('mouseup', stopRepeat);
-    window.addEventListener('pointerup', stopRepeat);
-  };
-
-  const handleDeviceIncrement = () => {
-    if (isRunning) return;
-    onStateChange((prev) => ({
-      ...prev,
-      deviceId: Math.min(247, ((Number(prev.deviceId) || 1) + 1)),
-    }));
-  };
-
-  const handleDeviceDecrement = () => {
-    if (isRunning) return;
-    onStateChange((prev) => ({
-      ...prev,
-      deviceId: Math.max(1, ((Number(prev.deviceId) || 1) - 1)),
-    }));
   };
 
   return (
@@ -310,92 +282,20 @@ export const ControllerParametersPanel106: React.FC<ControllerParametersPanelPro
 
             <div className="setting-row">
               <span className="setting-label">Device ID</span>
-              <div className={`device-id-spinner-box ${isRunning ? 'disabled' : ''}`}>
-                <div className="device-id-spinners">
-                  <button
-                    type="button"
-                    className="device-id-spin-btn spin-up"
-                    disabled={isRunning}
-                    onMouseDown={(e) => {
-                      if (isRunning) return;
-                      e.preventDefault();
-                      startRepeat(handleDeviceIncrement);
-                    }}
-                    title="Increment Device ID"
-                    aria-label="Increment Device ID"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    type="button"
-                    className="device-id-spin-btn spin-down"
-                    disabled={isRunning}
-                    onMouseDown={(e) => {
-                      if (isRunning) return;
-                      e.preventDefault();
-                      startRepeat(handleDeviceDecrement);
-                    }}
-                    title="Decrement Device ID"
-                    aria-label="Decrement Device ID"
-                  >
-                    ▼
-                  </button>
+              <div className="setting-frame-box" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div
+                  className="setting-readonly-val"
+                  title={isConnected && moduleName ? `Connected ACE DAQ: ${moduleName}` : 'No ACE DAQ Detected'}
+                  style={{
+                    fontWeight: 700,
+                    color: isConnected && moduleName ? '#0f172a' : '#64748b',
+                    letterSpacing: '0.3px',
+                    textAlign: 'center',
+                    width: '100%',
+                  }}
+                >
+                  {isConnected && moduleName ? moduleName : 'No Device'}
                 </div>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="device-id-input"
-                  disabled={isRunning}
-                  value={
-                    state.deviceId === ('' as any)
-                      ? ''
-                      : (Number(state.deviceId) || 1)
-                  }
-                  title={isRunning ? 'Locked while running' : 'Device ID (Numeric only, 1-247)'}
-                  onChange={(e) => {
-                    if (isRunning) return;
-                    const cleaned = e.target.value.replace(/\D/g, '');
-                    if (cleaned === '') {
-                      onStateChange((prev) => ({ ...prev, deviceId: '' as any }));
-                    } else {
-                      const val = Math.min(247, Math.max(1, parseInt(cleaned, 10)));
-                      onStateChange((prev) => ({ ...prev, deviceId: val }));
-                    }
-                  }}
-                  onBlur={() => {
-                    if (state.deviceId === ('' as any) || !state.deviceId || isNaN(Number(state.deviceId))) {
-                      onStateChange((prev) => ({ ...prev, deviceId: 1 }));
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (isRunning) return;
-                    if (
-                      [
-                        'Backspace',
-                        'Delete',
-                        'Tab',
-                        'Escape',
-                        'Enter',
-                        'ArrowLeft',
-                        'ArrowRight',
-                        'ArrowUp',
-                        'ArrowDown',
-                      ].includes(e.key)
-                    ) {
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        handleDeviceIncrement();
-                      } else if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        handleDeviceDecrement();
-                      }
-                      return;
-                    }
-                    if (!/^\d$/.test(e.key)) {
-                      e.preventDefault();
-                    }
-                  }}
-                />
               </div>
             </div>
 
@@ -486,7 +386,7 @@ export const ControllerParametersPanel106: React.FC<ControllerParametersPanelPro
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.op}
                 decimals={1}
-                enabled={isRunning && isOpEditable}
+                enabled={isOpEditable}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, op: val }));
                   onParamWrite?.('op', val);

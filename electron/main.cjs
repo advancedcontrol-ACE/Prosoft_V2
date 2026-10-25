@@ -61,13 +61,84 @@ async function createWindow(targetUrl) {
   mainWindow.hookWindowMessage(WM_NCRBUTTONUP, () => {});
   mainWindow.hookWindowMessage(WM_CONTEXTMENU, () => {});
 
+  // Disable all Chrome / browser shortcuts other than Ctrl+Shift+C
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    const isCtrlOrCmd = Boolean(input.control || input.meta);
+    const isShift = Boolean(input.shift);
+    const isAlt = Boolean(input.alt);
+    const key = (input.key || '').toLowerCase();
+
+    // 1. Explicitly ALLOW Ctrl + Shift + C (Project Calibration Toggle)
+    if (isCtrlOrCmd && isShift && key === 'c') {
+      return;
+    }
+
+    // 2. Block Function keys F1 - F12 (Help, Reload, DevTools, Fullscreen, etc.)
+    if (/^f(1[0-2]|[1-9])$/i.test(input.key)) {
+      event.preventDefault();
+      return;
+    }
+
+    // 3. Block Browser Navigation via Alt (Alt+Left, Alt+Right, Alt+Home)
+    if (isAlt && ['arrowleft', 'arrowright', 'home'].includes(key)) {
+      event.preventDefault();
+      return;
+    }
+
+    // 4. Block Chrome Zoom keys: Ctrl+=, Ctrl+-, Ctrl+0, NumpadAdd, NumpadSubtract
+    if (isCtrlOrCmd && ['=', '+', '-', '_', '0', 'numpadadd', 'numpadsubtract'].includes(key)) {
+      event.preventDefault();
+      return;
+    }
+
+    // 5. Block all other Ctrl combinations except essential text editing operations
+    if (isCtrlOrCmd && !isAlt) {
+      const isStandardEditing = !isShift && ['c', 'v', 'x', 'a', 'z', 'y'].includes(key);
+      const isRedoShift = isShift && key === 'z';
+      if (isStandardEditing || isRedoShift) {
+        return; // Allow copy, paste, cut, select all, undo, redo in inputs
+      }
+
+      event.preventDefault();
+    }
+  });
+
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
   // Maximize and prevent resize per user requirement
   mainWindow.maximize();
   mainWindow.setResizable(false);
 
+  // Dynamic Full-Screen Scaling based on 768px vertical baseline (entire screen length utilized)
+  const applyUniformZoom = () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const [width, height] = mainWindow.getContentSize();
+    if (height > 0) {
+      const scale = Math.max(0.2, height / 768);
+      mainWindow.webContents.setZoomFactor(scale);
+    }
+  };
+
   mainWindow.once('ready-to-show', () => {
+    applyUniformZoom();
     mainWindow.show();
     mainWindow.focus();
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    applyUniformZoom();
+  });
+
+  mainWindow.on('resize', () => {
+    applyUniformZoom();
+  });
+
+  mainWindow.on('maximize', () => {
+    applyUniformZoom();
+  });
+
+  mainWindow.on('restore', () => {
+    applyUniformZoom();
   });
 
   await mainWindow.loadURL(targetUrl);

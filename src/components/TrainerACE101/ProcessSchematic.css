@@ -94,6 +94,20 @@
   -webkit-user-drag: none;
 }
 
+/* Calibration Tab Content Area */
+.calibration-content-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #425c77;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 /* ── Footer Status Bar: Live System Clock ──────────────────── */
 .schematic-footer {
   display: flex;

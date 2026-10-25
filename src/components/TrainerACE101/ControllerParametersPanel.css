@@ -55,9 +55,9 @@
 .controller-content {
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: flex-start;
   flex: 1 1 auto;
-  padding: 6px 10px 8px 6px;
+  padding: 6px 8px 8px 8px;
   gap: 10px;
   align-items: stretch;
   background: #425c77;
@@ -435,16 +435,16 @@
 .sliders-grid {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  width: fit-content;
+  flex: 1 1 auto;
+  width: auto;
   height: 254px;
   gap: 6px;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   background: #425c77;
   border: 1.5px solid #5a7591;
   border-radius: 3px;
-  padding: 6px 10px;
+  padding: 6px 14px;
   box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15), 0 1px 3px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
   overflow: hidden;
@@ -453,10 +453,10 @@
 .sliders-row {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-evenly;
   align-items: flex-start;
-  gap: 14px;
-  width: auto;
+  gap: 18px;
+  width: 100%;
   min-width: 0;
 }
 

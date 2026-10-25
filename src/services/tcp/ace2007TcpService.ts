@@ -5,6 +5,7 @@
 // Protocol from ACE2007.pdf & ACE2007.py:
 //   Output: 1<OP0_3digit>2<OP1_3digit>.
 //   Input:  1<IP0_4digit>2<IP1_4digit>3<IP2_4digit>4<IP3_4digit>...
+// Also supports Hardware Simulator mode (Ctrl+Shift+S).
 // ============================================================
 
 export interface TcpConnectionResult {
@@ -33,16 +34,25 @@ export interface TcpLiveState {
   ip1: number;
   ip2: number;
   ip3: number;
+  moduleName?: string;
   action: 'Direct' | 'Reverse';
   autoMan: 'Auto' | 'Manual';
   raw?: Record<string, number>;
 }
+
+import { RemoteLabClient } from '../remoteLab/remoteLabService';
+import { hardwareSimulator } from '../hardwareSimulator';
 
 export class Ace2007TcpService {
   private static instance: Ace2007TcpService;
   private isConnected = false;
   private host = '192.168.0.1';
   private port = 8080;
+  private currentPort = '';
+  private isRemoteMode = false;
+  private baseUrl = '';
+  private sessionToken = '';
+  private onRevokedCallback: (() => void) | null = null;
   private pollIntervalId: number | null = null;
   private onPollCallbacks: Array<(state: TcpLiveState) => void> = [];
 
@@ -79,10 +89,51 @@ export class Ace2007TcpService {
     return this.isConnected;
   }
 
+  public isRemote(): boolean {
+    return this.isRemoteMode;
+  }
+
+  public getActivePort(): string {
+    return this.currentPort || (this.isConnected ? `${this.host}:${this.port} (TCP)` : '');
+  }
+
+  public setOnRevoked(cb: () => void) {
+    this.onRevokedCallback = cb;
+  }
+
+  public triggerRevoked() {
+    this.stopPolling();
+    this.isConnected = false;
+    this.isRemoteMode = false;
+    this.sessionToken = '';
+    this.baseUrl = '';
+    this.currentPort = '';
+    if (this.onRevokedCallback) {
+      this.onRevokedCallback();
+    }
+  }
+
   /**
-   * Connect to ACE 2007 DAQ via TCP
+   * Connect to ACE 2007 DAQ via TCP.
+   * If Hardware Simulator is active, skips real network and returns virtual success.
    */
   public async connect(host = '192.168.0.1', port = 8080): Promise<TcpConnectionResult> {
+    // ── Hardware Simulator bypass ──────────────────────────────────────────
+    if (hardwareSimulator.isActive) {
+      this.isConnected = true;
+      this.host = host;
+      this.port = port;
+      this.currentPort = `SIM:${host}:${port}`;
+      const result = hardwareSimulator.simulateTcpConnect();
+      this.startPolling(250);
+      return {
+        success: true,
+        host,
+        port,
+        message: result.message,
+      };
+    }
+
     try {
       const res = await fetch('/api/tcp/connect', {
         method: 'POST',
@@ -125,9 +176,63 @@ export class Ace2007TcpService {
     }
   }
 
+  /**
+   * Connect to Remote Lab Host over Local Network or Cloudflare Tunnel (Student Mode)
+   */
+  public async connectRemote(
+    targetUrl: string,
+    passkey: string,
+    studentName = 'Student'
+  ): Promise<{ success: boolean; portName: string; isRemote?: boolean; message: string; error?: string }> {
+    try {
+      const cleanUrl = targetUrl.trim().replace(/\/+$/, '');
+      const client = RemoteLabClient.getInstance();
+      const auth = await client.login(cleanUrl, passkey, studentName);
+      if (!auth.success || !auth.token) {
+        return {
+          success: false,
+          portName: '',
+          message: auth.error || 'Authentication failed. Check passkey or host status.',
+        };
+      }
+
+      this.baseUrl = cleanUrl;
+      this.sessionToken = auth.token;
+      this.isRemoteMode = true;
+      this.isConnected = true;
+      this.host = cleanUrl.replace(/^https?:\/\//, '');
+      this.currentPort = `Remote Lab (${this.host})`;
+
+      // Listen for remote revocation
+      client.setOnRevoked(() => {
+        this.triggerRevoked();
+      });
+
+      this.startPolling(250);
+
+      return {
+        success: true,
+        portName: this.currentPort,
+        isRemote: true,
+        message: `Connected to Remote Lab Host at ${cleanUrl}. Student: ${studentName}. Live hardware stream active!`,
+      };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        portName: '',
+        message: `Cannot reach Remote Lab Host at ${targetUrl}. Ensure host is online. (${String(err)})`,
+        error: String(err),
+      };
+    }
+  }
+
   public async disconnect(): Promise<void> {
     this.stopPolling();
     this.isConnected = false;
+    this.isRemoteMode = false;
+    this.sessionToken = '';
+    this.baseUrl = '';
+    this.currentPort = '';
     try {
       await fetch('/api/tcp/disconnect', { method: 'POST' });
     } catch {
@@ -137,10 +242,60 @@ export class Ace2007TcpService {
 
   public startPolling(intervalMs = 250) {
     this.stopPolling();
+
+    // ── Hardware Simulator polling path ────────────────────────────────────
+    if (hardwareSimulator.isActive) {
+      const unsubSim = hardwareSimulator.onTcpPoll((rawState: object) => {
+        const data = rawState as TcpLiveState;
+        const liveState: TcpLiveState = {
+          connected: true,
+          timestamp: data.timestamp || Date.now(),
+          host: this.host,
+          port: this.port,
+          pv: data.ip2 ?? data.pv ?? 0,
+          sp: this.sp,
+          pb: this.pb,
+          it: this.it,
+          dt: this.dt,
+          bias: this.bias,
+          op: data.op ?? this.op,
+          op0: data.op0 ?? this.op,
+          op1: data.op1 ?? 0,
+          ip0: data.ip0 ?? 0,
+          ip1: data.ip1 ?? 0,
+          ip2: data.ip2 ?? 0,
+          ip3: data.ip3 ?? 0,
+          moduleName: data.moduleName ?? 'SIM-ACE2007-1',
+          action: this.action,
+          autoMan: this.autoMan,
+          raw: (data as TcpLiveState).raw,
+        };
+        for (const cb of this.onPollCallbacks) {
+          cb(liveState);
+        }
+      });
+      // Store dummy interval to indicate polling is active
+      this.pollIntervalId = window.setInterval(() => {}, 86400000);
+      (this as unknown as { _simUnsub?: () => void })._simUnsub = unsubSim;
+      return;
+    }
+
     this.pollIntervalId = window.setInterval(async () => {
       if (!this.isConnected) return;
       try {
-        const res = await fetch('/api/tcp/poll');
+        const url = this.baseUrl ? `${this.baseUrl}/api/tcp/poll` : '/api/tcp/poll';
+        const headers: Record<string, string> = {};
+        if (this.sessionToken) {
+          headers['x-session-token'] = this.sessionToken;
+        }
+
+        const res = await fetch(url, { headers });
+        if (res.status === 401) {
+          // Access revoked by host
+          this.triggerRevoked();
+          return;
+        }
+
         if (res.ok) {
           const data = await res.json();
           if (data && typeof data === 'object') {
@@ -150,7 +305,7 @@ export class Ace2007TcpService {
               timestamp: data.timestamp || Date.now(),
               host: this.host,
               port: this.port,
-              pv: typeof data.pv === 'number' ? data.pv : 0.0,
+              pv: typeof data.pv === 'number' ? data.pv : (typeof data.ip2 === 'number' ? data.ip2 : 0.0),
               sp: this.sp,
               pb: this.pb,
               it: this.it,
@@ -163,6 +318,7 @@ export class Ace2007TcpService {
               ip1: typeof data.ip1 === 'number' ? data.ip1 : 0.0,
               ip2: typeof data.ip2 === 'number' ? data.ip2 : 0.0,
               ip3: typeof data.ip3 === 'number' ? data.ip3 : 0.0,
+              moduleName: typeof data.moduleName === 'string' ? data.moduleName : 'ACE2007-2',
               action: this.action,
               autoMan: this.autoMan,
               raw: data.raw,
@@ -180,6 +336,11 @@ export class Ace2007TcpService {
   }
 
   public stopPolling() {
+    const simUnsub = (this as unknown as { _simUnsub?: () => void })._simUnsub;
+    if (simUnsub) {
+      simUnsub();
+      (this as unknown as { _simUnsub?: () => void })._simUnsub = undefined;
+    }
     if (this.pollIntervalId !== null) {
       clearInterval(this.pollIntervalId);
       this.pollIntervalId = null;
@@ -198,10 +359,22 @@ export class Ace2007TcpService {
    */
   public async writeOutput(op0: number, op1 = 0): Promise<void> {
     this.op = Math.max(0, Math.min(100, op0));
+
+    // ── Hardware Simulator write bypass ───────────────────────────────────
+    if (hardwareSimulator.isActive) {
+      hardwareSimulator.writeOutput(this.op, op1);
+      return;
+    }
+
     try {
-      await fetch('/api/tcp/write', {
+      const url = this.baseUrl ? `${this.baseUrl}/api/tcp/write` : '/api/tcp/write';
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (this.sessionToken) {
+        headers['x-session-token'] = this.sessionToken;
+      }
+      await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ op: this.op, op0: this.op, op1 }),
       });
     } catch {
@@ -231,6 +404,11 @@ export class Ace2007TcpService {
     } else if (key === 'op') {
       this.op = Number(value) || 0;
       await this.writeOutput(this.op);
+    }
+
+    // ── Hardware Simulator write bypass ───────────────────────────────────
+    if (hardwareSimulator.isActive) {
+      hardwareSimulator.writeRegister(param, value as number | string);
     }
   }
 }

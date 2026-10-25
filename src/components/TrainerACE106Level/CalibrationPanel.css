@@ -1,0 +1,511 @@
+/* ============================================================
+   ACE 2007 Calibration Panel Styling
+   3 x 1 Cell Frame Structure (Figure 1 & Figure 2 Layout)
+   Fit 100% within Process Schematic Frame Width (No Horizontal Overflow)
+   Adjusted Text Box Widths, Cell 1x1, and Cell 3x1
+   ============================================================ */
+
+.calibration-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: #425c77;
+  color: #f1f5f9;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  overflow-y: auto; /* Vertical scroll bar enabled */
+  overflow-x: hidden; /* Remains within Process Schematic frame width */
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+/* Styled scrollbar */
+.calibration-container::-webkit-scrollbar {
+  width: 7px;
+}
+.calibration-container::-webkit-scrollbar-track {
+  background: #253648;
+  border-radius: 3px;
+}
+.calibration-container::-webkit-scrollbar-thumb {
+  background: #58738e;
+  border-radius: 3px;
+  border: 1px solid #64748b;
+}
+.calibration-container::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
+}
+
+/* ============================================================
+   CELL 1 x 1: Top Frame with Transmitter and Channel Map
+   Adjusted proportionally to fit Process Schematic frame
+   ============================================================ */
+.cal-cell-1x1 {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  width: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.cal-subframe {
+  flex: 1;
+  min-width: 0;
+  background: #344a60;
+  border: 1.5px solid #58738e;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-frame-header {
+  background: #2b3e52;
+  border-bottom: 1.5px solid #58738e;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.cal-frame-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cal-frame-badge {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #1e293b;
+  padding: 1px 5px;
+  border-radius: 2px;
+  border: 1px solid #475569;
+}
+
+.cal-table-wrap {
+  padding: 5px 6px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.cal-table td {
+  padding: 2.5px 3px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cal-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ch-badge {
+  display: inline-block;
+  background: #1e293b;
+  color: #38bdf8;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #475569;
+  text-align: center;
+  width: 38px;
+  box-sizing: border-box;
+}
+
+/* Dropdown sizes adjusted to frame */
+.cal-select {
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1.5px solid #64748b;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Consolas', 'Courier New', monospace;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  height: 22px;
+  box-sizing: border-box;
+  padding: 1px 6px;
+  width: 100%;
+}
+
+.cal-select-range {
+  max-width: 115px;
+}
+
+.cal-select-pv,
+.cal-select-ip {
+  max-width: 80px;
+}
+
+.cal-select:hover,
+.cal-select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+/* ============================================================
+   CELL 2 x 1: Calibration Tables (Figure 2 Layout)
+   Slightly reduced text box widths to fit frame precisely
+   ============================================================ */
+.cal-cell-2x1 {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex-shrink: 0;
+  background: #344a60;
+  border: 1.5px solid #58738e;
+  border-radius: 4px;
+  padding: 5px 6px 6px 6px;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.25);
+  gap: 4px;
+}
+
+.cal-cell-2x1-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #48637e;
+  padding-bottom: 3px;
+  flex-shrink: 0;
+}
+
+.cal-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  width: 100%;
+  min-width: 0; /* Allows fitting 100% within Process Schematic frame */
+  box-sizing: border-box;
+}
+
+/* Individual IP column cards (matching Figure 2) */
+.cal-col-card {
+  background: #425c77;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 4px 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.cal-col-header {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  padding-bottom: 3px;
+  border-bottom: 1.5px solid #64748b;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.cal-col-header-tag {
+  font-size: 9px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: #1e293b;
+  padding: 1px 4px;
+  border-radius: 2px;
+  border: 1px solid #475569;
+}
+
+.cal-col-subtitles {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #e2e8f0;
+  padding: 1px 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+/* 11 rows list */
+.cal-points-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: visible;
+  max-height: none;
+  width: 100%;
+}
+
+.cal-point-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Slightly reduced text box width to fit Process Schematic frame */
+.lv-true-box {
+  flex: 1;
+  min-width: 0;
+  max-width: 50px;
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1.5px solid #94a3b8;
+  border-radius: 2px;
+  padding: 1px 2px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: 'Consolas', 'Courier New', monospace;
+  text-align: center;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.15);
+  user-select: none;
+  height: 20px;
+  box-sizing: border-box;
+  line-height: 18px;
+}
+
+.lv-measured-input {
+  flex: 1;
+  min-width: 0;
+  max-width: 50px;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1.5px solid #64748b;
+  border-radius: 2px;
+  padding: 1px 2px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: 'Consolas', 'Courier New', monospace;
+  text-align: center;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.2);
+  outline: none;
+  transition: all 0.15s ease;
+  height: 20px;
+  box-sizing: border-box;
+  line-height: 18px;
+}
+
+/* Hide default spinner buttons for clean input */
+.lv-measured-input::-webkit-outer-spin-button,
+.lv-measured-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.lv-measured-input {
+  -moz-appearance: textfield;
+}
+
+.lv-measured-input:focus {
+  border-color: #0284c7;
+  background: #f0f9ff;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.2), 0 0 0 1.5px rgba(2, 132, 199, 0.35);
+}
+
+/* Statistics at bottom of column card (Figure 2) */
+.cal-col-stats {
+  margin-top: 3px;
+  padding-top: 4px;
+  border-top: 1.5px dashed #64748b;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  font-size: 10px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: #cbd5e1;
+}
+
+.cal-stat-line {
+  display: flex;
+  justify-content: space-between;
+  line-height: 12px;
+}
+
+.stat-val {
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+/* ============================================================
+   CELL 3 x 1 (1 x 3): Action Buttons & Live Raw ADC & % Readouts
+   Equal sized buttons side by side, Live ADC on next line,
+   and Input % values on the third line.
+   ============================================================ */
+.cal-cell-3x1 {
+  display: flex;
+  flex-direction: column;
+  background: #2b3e52;
+  border: 1.5px solid #58738e;
+  border-radius: 4px;
+  padding: 6px 8px;
+  flex-shrink: 0;
+  gap: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Line 1: All buttons aligned side by side, of equal size */
+.cal-buttons-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.cal-buttons-row .cal-btn {
+  flex: 1; /* Strictly equal size across all 3 buttons */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  letter-spacing: 0.2px;
+  transition: all 0.15s ease-in-out;
+  height: 32px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.cal-btn-primary {
+  background: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.4);
+}
+
+.cal-btn-primary:hover {
+  background: #0369a1;
+}
+
+.cal-btn-success {
+  background: #059669;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.4);
+}
+
+.cal-btn-success:hover {
+  background: #047857;
+}
+
+.cal-btn-secondary {
+  background: #475569;
+  color: #f1f5f9;
+}
+
+.cal-btn-secondary:hover {
+  background: #334155;
+}
+
+/* Lines 2 & 3: Live Readout Bars */
+.cal-live-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: #cbd5e1;
+  width: 100%;
+  box-sizing: border-box;
+  height: 22px;
+}
+
+.cal-live-label {
+  color: #94a3b8;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  min-width: 65px;
+  text-transform: uppercase;
+  font-size: 9.5px;
+}
+
+.cal-live-ch {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.cal-live-ch strong {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.cal-live-ch strong.pct-val {
+  color: #34d399; /* Green for % values */
+}
+
+.cal-live-ch strong.ma-val {
+  color: #38bdf8; /* Cyan for mA values */
+}
+
+.cal-live-ch .ch-range-tag {
+  color: #64748b;
+  font-size: 8.5px;
+}
+
+.cal-feedback {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-align: center;
+  animation: fadeIn 0.15s ease-in;
+}
+
+.cal-feedback-success {
+  background: #064e3b;
+  color: #34d399;
+  border: 1px solid #059669;
+}
+
+.cal-feedback-info {
+  background: #0c4a6e;
+  color: #38bdf8;
+  border: 1px solid #0284c7;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

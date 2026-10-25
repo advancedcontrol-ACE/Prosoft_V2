@@ -176,8 +176,13 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
 
   const enabledParams = getEnabledParameters(state.selectedExperiment);
   const normExp = (state.selectedExperiment || '').trim().toLowerCase();
-  // Controller Output is editable ONLY in Open Loop when in Manual mode (!isAuto)
-  const isOpEditable = normExp === 'open loop' && !isAuto;
+  const isPidMode =
+    normExp === 'p mode' ||
+    normExp === 'pi mode' ||
+    normExp === 'pd mode' ||
+    normExp === 'pid mode';
+  // Controller Output is editable in Open Loop and in P, PI, PD, PID modes when in Manual mode (!isAuto)
+  const isOpEditable = (normExp === 'open loop' || isPidMode) && !isAuto;
 
   const handleSaveSettings = async () => {
     if (isRunning) return;
@@ -486,7 +491,7 @@ export const ControllerParametersPanel: React.FC<ControllerParametersPanelProps>
                 ticks={[0, 25, 50, 75, 100]}
                 value={state.op}
                 decimals={1}
-                enabled={isRunning && isOpEditable}
+                enabled={isOpEditable}
                 onChange={(val) => {
                   onStateChange((prev) => ({ ...prev, op: val }));
                   onParamWrite?.('op', val);

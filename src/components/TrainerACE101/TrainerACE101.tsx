@@ -15,6 +15,7 @@ import { MLControlModal } from './MLControlModal';
 import { fetchAvailablePorts } from '../../services/modbus/serialPorts';
 import { DeltaDTBService } from '../../services/modbus/dtb9696Modbus';
 import type { ModbusLiveState } from '../../services/modbus/dtb9696Modbus';
+import { hardwareSimulator } from '../../services/hardwareSimulator';
 import {
   mpcOptimize,
   neuralPIDStep,
@@ -232,23 +233,17 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           };
           modbusService.writeRegister('op', out2, stateRef.current.deviceId);
         }
-      } else if (pollNormExp === 'p mode' && !isAutoRef.current) {
-        // If user switched to Manual in P mode: calculate out2 using Figure 3/4
-        const pv1 = live.pv;
-        const sp1 = effSp;
-        const pb = Math.max(stateRef.current.pb, 0.001);
-        const kp = 100 / pb;
-        const err = stateRef.current.action === 'Direct' ? (pv1 - sp1) : (sp1 - pv1);
-        let out2 = kp * err + stateRef.current.bias;
-        out2 = Math.max(0, Math.min(100, out2));
-        effOp = out2;
-        if (Math.abs(out2 - lastOpRef.current) > 0.5) {
-          lastOpRef.current = out2;
+      } else if (!isAutoRef.current) {
+        // If user switched to Manual in P, PI, PD, PID or Open loop: output OP from user setting
+        const userOp = stateRef.current.op;
+        effOp = userOp;
+        if (Math.abs(userOp - lastOpRef.current) > 0.5) {
+          lastOpRef.current = userOp;
           pendingWritesRef.current['op'] = {
-            value: out2,
+            value: userOp,
             expiresAt: Date.now() + 3000,
           };
-          modbusService.writeRegister('op', out2, stateRef.current.deviceId);
+          modbusService.writeRegister('op', userOp, stateRef.current.deviceId);
         }
       } else if (
         (pollNormExp === 'machine learning control' || pollNormExp === 'ml control') &&
@@ -403,6 +398,9 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         out2 = Math.max(0, Math.min(100, out2));
         lastOpRef.current = out2;
         calcOp = out2;
+      } else if (!isAutoRef.current) {
+        // In Manual mode across P, PI, PD, PID, Closed loop: use user-commanded Controller Output (%)
+        calcOp = s.op;
       } else if (normExp === 'p mode') {
         const pv1 = s.pv;
         const sp1 = s.sp;
@@ -552,6 +550,18 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     simTimeRef.current = 0;
     setIsConnNoticeOpen(true); // Popup: Connection Established!
   };
+
+  // Auto-connect to Virtual Delta DTB9696 if Hardware Simulator is active
+  useEffect(() => {
+    if (hardwareSimulator.isActive && !isConnected) {
+      const modbusService = DeltaDTBService.getInstance();
+      modbusService.connect('COM1 (Simulator)', ctrlState.deviceId, ctrlState.action).then((res) => {
+        if (res.success) {
+          handlePortConnected('COM1 (Simulator)', false);
+        }
+      });
+    }
+  }, [ctrlState.deviceId, ctrlState.action, isConnected]);
 
   const handleSaveSettings = useCallback((settings: { deviceId: number; action: 'Direct' | 'Reverse' }) => {
     setCtrlState((prev) => ({

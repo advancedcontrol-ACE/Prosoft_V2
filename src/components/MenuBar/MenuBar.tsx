@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { menuConfig } from '../../config/menuData';
 import type { MenuItem, TopLevelMenu } from '../../config/menuData';
 import { entitlementService } from '../../services/entitlementService';
+import { hardwareSimulator } from '../../services/hardwareSimulator';
 import './MenuBar.css';
 
 // ── Types ──────────────────────────────────────────────────────
@@ -151,6 +152,11 @@ const MenuBar: React.FC<MenuBarProps> = ({ onAction }) => {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const [entitlementVersion, setEntitlementVersion] = useState(0);
+  const [isSimActive, setIsSimActive] = useState<boolean>(() => hardwareSimulator.isActive);
+
+  useEffect(() => {
+    return hardwareSimulator.subscribe(setIsSimActive);
+  }, []);
 
   useEffect(() => {
     return entitlementService.subscribe(() => {
@@ -199,6 +205,12 @@ const MenuBar: React.FC<MenuBarProps> = ({ onAction }) => {
       ))}
 
       <div className="menu-bar-right">
+        {isSimActive && (
+          <div className="menu-bar-sim-badge" title="Hardware Simulator ON (Ctrl+Shift+S on landing page to toggle)">
+            <span className="sim-pulse-dot"></span>
+            <span>Hardware Simulator ON</span>
+          </div>
+        )}
         <div
           className="menu-bar-license-badge"
           title={currentProfile?.collegeName ? `Licensed to ${currentProfile.collegeName}` : 'All Modules Unlocked'}

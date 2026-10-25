@@ -76,13 +76,15 @@ function serialPortPlugin(): Plugin {
         }
 
         if (pathname === '/api/remote/status' && req.method === 'GET') {
+          const isHw = bridgeInstance.isConnected || tcpBridgeInstance.isConnected
+          const activePort = bridgeInstance.currentPort || (tcpBridgeInstance.isConnected ? `${tcpBridgeInstance.host}:${tcpBridgeInstance.port} (TCP)` : 'None')
           res.setHeader('Content-Type', 'application/json')
           res.end(
             JSON.stringify({
               success: true,
               serverName: 'ACE Prosoft V2 Lab Host',
-              hardwareConnected: bridgeInstance.isConnected,
-              activePort: bridgeInstance.currentPort || 'None',
+              hardwareConnected: isHw,
+              activePort: activePort,
               passkeyRequired: true,
             })
           )
@@ -94,11 +96,13 @@ function serialPortPlugin(): Plugin {
           const authResult = remoteLabManager.authenticate(body.passkey, body.studentName, clientIp)
           res.setHeader('Content-Type', 'application/json')
           if (authResult.success) {
+            const isHw = bridgeInstance.isConnected || tcpBridgeInstance.isConnected
+            const activePort = bridgeInstance.currentPort || (tcpBridgeInstance.isConnected ? `${tcpBridgeInstance.host}:${tcpBridgeInstance.port} (TCP)` : 'None')
             res.end(
               JSON.stringify({
                 ...authResult,
-                hardwareConnected: bridgeInstance.isConnected,
-                activePort: bridgeInstance.currentPort || 'None',
+                hardwareConnected: isHw,
+                activePort: activePort,
               })
             )
           } else {
@@ -336,6 +340,15 @@ function serialPortPlugin(): Plugin {
 
         // /api/tcp/poll
         if (pathname === '/api/tcp/poll' && req.method === 'GET') {
+          if (sessionToken) {
+            const check = remoteLabManager.validateSession(sessionToken)
+            if (!check.valid) {
+              res.statusCode = 401
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: check.error, revoked: true }))
+              return
+            }
+          }
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify(tcpBridgeInstance.latestData))
           return
@@ -343,9 +356,21 @@ function serialPortPlugin(): Plugin {
 
         // /api/tcp/write
         if (pathname === '/api/tcp/write' && req.method === 'POST') {
+          if (sessionToken) {
+            const check = remoteLabManager.validateSession(sessionToken)
+            if (!check.valid) {
+              res.statusCode = 401
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: check.error, revoked: true }))
+              return
+            }
+          }
           const body = await parseJsonBody()
           const op0 = body.op !== undefined ? body.op : (body.op0 !== undefined ? body.op0 : 0)
           const op1 = body.op1 !== undefined ? body.op1 : 0
+          if (sessionToken) {
+            remoteLabManager.validateSession(sessionToken, `Wrote OP=${op0}`)
+          }
           tcpBridgeInstance.sendOutput(op0, op1)
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify({ success: true, op0: tcpBridgeInstance.op0, op1: tcpBridgeInstance.op1 }))
@@ -357,6 +382,31 @@ function serialPortPlugin(): Plugin {
           const result = tcpBridgeInstance.disconnect()
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify(result))
+          return
+        }
+
+        // /api/tcp/wifi-ssid
+        if (pathname === '/api/tcp/wifi-ssid' && req.method === 'GET') {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { exec } = require('child_process')
+          exec('netsh wlan show interfaces', (err: unknown, stdout: string) => {
+            let ssid = ''
+            if (!err && stdout) {
+              const match = stdout.match(/^\s*SSID\s*:\s*(.+)$/m)
+              if (match && match[1]) {
+                ssid = match[1].trim()
+              }
+            }
+            res.setHeader('Content-Type', 'application/json')
+            res.end(
+              JSON.stringify({
+                success: true,
+                ssid: ssid || 'ACE2007-2',
+                isAce: /^ACE/i.test(ssid),
+                moduleName: /^ACE/i.test(ssid) ? ssid : (tcpBridgeInstance.moduleName || 'ACE2007-2'),
+              })
+            )
+          })
           return
         }
 

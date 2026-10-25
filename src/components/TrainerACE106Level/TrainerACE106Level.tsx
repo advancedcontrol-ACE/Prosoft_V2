@@ -1,12 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TrainerHeader106 } from './TrainerHeader106';
 import { TrainerToolbar } from '../TrainerACE101/TrainerToolbar';
-import { ProcessSchematic } from '../TrainerACE101/ProcessSchematic';
+import { ProcessSchematic106 } from './ProcessSchematic106';
+import {
+  type CalibrationConfig,
+  DEFAULT_CALIBRATION_CONFIG,
+  rawAdcToCalibrated,
+  getChannelForPv,
+} from '../../services/tcp/calibrationUtils';
 import { ControllerParametersPanel106 } from './ControllerParametersPanel106';
 import type { ControllerState, LogEntry } from './ControllerParametersPanel106';
 import { TrendGraph } from '../TrainerACE101/TrendGraph';
 import type { TrendDataPoint } from '../TrainerACE101/TrendGraph';
 import { TcpConnectModal } from './TcpConnectModal';
+import { RemoteLabModal106 } from './RemoteLabModal106';
 import { StopConfirmModal } from '../TrainerACE101/StopConfirmModal';
 import { ExperimentNoticeModal } from '../TrainerACE101/ExperimentNoticeModal';
 import { ConnectionNoticeModal } from '../TrainerACE101/ConnectionNoticeModal';
@@ -32,16 +39,124 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
   // Connection and Port State
   const [tcpHost, setTcpHost] = useState<string>('192.168.0.1:8080');
   const comPort = tcpHost;
+  const [moduleName, setModuleName] = useState<string>('');
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isTcpModalOpen, setIsTcpModalOpen] = useState<boolean>(false);
+  const [isRemoteLabModalOpen, setIsRemoteLabModalOpen] = useState<boolean>(false);
   const [isStopModalOpen, setIsStopModalOpen] = useState<boolean>(false);
   const [isConnNoticeOpen, setIsConnNoticeOpen] = useState<boolean>(false);
   const [isUserGuideOpen, setIsUserGuideOpen] = useState<boolean>(false);
   const [isMLModalOpen, setIsMLModalOpen] = useState<boolean>(false);
   const [selectedExpNotice, setSelectedExpNotice] = useState<string | null>(null);
 
-  // Top Menu States in this Trainer Screen (Figure 1: COM Port | Experiment)
-  const [openTopMenu, setOpenTopMenu] = useState<'com' | 'exp' | null>(null);
+  // Top Menu States in this Trainer Screen (Experiment)
+  const [openTopMenu, setOpenTopMenu] = useState<'exp' | null>(null);
+
+  // Auto-connect and Alert Popup states
+  interface DaqPopupState {
+    type: 'connected' | 'not-detected';
+    title: string;
+    message: string;
+  }
+  const [daqPopup, setDaqPopup] = useState<DaqPopupState | null>(null);
+  const [isAutoConnecting, setIsAutoConnecting] = useState<boolean>(false);
+
+  const attemptAutoConnect = useCallback(async () => {
+    setIsAutoConnecting(true);
+    setDaqPopup(null);
+
+    let detectedSsid = '';
+    try {
+      const sRes = await fetch('/api/tcp/wifi-ssid');
+      if (sRes.ok) {
+        const sData = await sRes.json();
+        if (sData.success && sData.moduleName) {
+          detectedSsid = sData.moduleName;
+        } else if (sData.ssid && /^ACE/i.test(sData.ssid)) {
+          detectedSsid = sData.ssid;
+        }
+      }
+    } catch {}
+
+    const host = localStorage.getItem('ace2007_tcp_host') || '192.168.0.1';
+    const port = Number(localStorage.getItem('ace2007_tcp_port')) || 8080;
+    const tcp = Ace2007TcpService.getInstance();
+
+    const res = await tcp.connect(host, port);
+    setIsAutoConnecting(false);
+
+    if (res.success) {
+      setIsConnected(true);
+      const rawName = detectedSsid || (tcp.getCurrentHost() === '192.168.0.1' ? 'ACE2007-2' : tcp.getCurrentHost());
+      setModuleName(rawName);
+      setTcpHost(`${host}:${port}`);
+      localStorage.setItem('ace2007_module_name', rawName);
+
+      let formattedName = rawName;
+      if (/^ACE\s*2007[-_\s]*(\d+)/i.test(rawName)) {
+        const match = rawName.match(/^ACE\s*2007[-_\s]*(\d+)/i);
+        if (match) formattedName = `ACE 2007 - ${match[1]}`;
+      } else if (!formattedName.toLowerCase().startsWith('ace')) {
+        formattedName = `ACE 2007 - ${formattedName}`;
+      }
+
+      setDaqPopup({
+        type: 'connected',
+        title: 'Hardware Connection Status',
+        message: `The ${formattedName} DAQ is auto connected. Select Experiment from Experiment Menu or Proceed with Remote Lab Setting`,
+      });
+    } else {
+      setIsConnected(false);
+      setModuleName('');
+      setDaqPopup({
+        type: 'not-detected',
+        title: 'Hardware Connection Alert',
+        message: 'No ACE DAQ is detected. Please check the connection and Retry',
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    attemptAutoConnect();
+  }, [attemptAutoConnect]);
+
+  // Listen for Remote Lab session revocation
+  useEffect(() => {
+    const tcpService = Ace2007TcpService.getInstance();
+    tcpService.setOnRevoked(() => {
+      alert('⚠️ Your remote lab session has been revoked or ended by the Host teacher.');
+      setIsConnected(false);
+      setTcpHost('');
+    });
+  }, []);
+
+  const handleRemoteConnected = (portStr: string) => {
+    setTcpHost(portStr);
+    setIsConnected(true);
+    setIsConnNoticeOpen(true);
+  };
+
+  const fetchSsid = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tcp/wifi-ssid');
+      if (res.ok) {
+        const d = await res.json();
+        if (d.success && d.moduleName) {
+          setModuleName(d.moduleName);
+          localStorage.setItem('ace2007_module_name', d.moduleName);
+        } else if (d.ssid && /^ACE/i.test(d.ssid)) {
+          setModuleName(d.ssid);
+          localStorage.setItem('ace2007_module_name', d.ssid);
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchSsid();
+    const interval = setInterval(fetchSsid, 3000);
+    return () => clearInterval(interval);
+  }, [fetchSsid]);
 
   useEffect(() => {
     const tcp = Ace2007TcpService.getInstance();
@@ -62,6 +177,12 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
                 : prev.deviceId,
             action: s.action === 'Direct' || s.action === 'Reverse' ? s.action : prev.action,
           }));
+          if (s.calibration_ace106 && typeof s.calibration_ace106 === 'object') {
+            setCalibrationConfig((prev) => ({
+              ...prev,
+              ...s.calibration_ace106,
+            }));
+          }
         }
       })
       .catch((err) => {
@@ -118,6 +239,54 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
   // Log Table Entries matching Figure 2 (Time, Time s, SP %, PV %, OP %, PB %, IT s, DT s)
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
 
+  // Calibration Config & Real-time DAQ Raw ADC Inputs
+  const [calibrationConfig, setCalibrationConfig] = useState<CalibrationConfig>(() => {
+    try {
+      const stored = localStorage.getItem('ace_prosoft_calibration_ace106');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.transmitters && parsed.calibrations) {
+          return {
+            ...DEFAULT_CALIBRATION_CONFIG,
+            ...parsed,
+          };
+        }
+      }
+    } catch {}
+    return DEFAULT_CALIBRATION_CONFIG;
+  });
+
+  const calibrationConfigRef = useRef<CalibrationConfig>(calibrationConfig);
+  useEffect(() => {
+    calibrationConfigRef.current = calibrationConfig;
+  }, [calibrationConfig]);
+
+  const [rawInputs, setRawInputs] = useState<{
+    ip0?: number;
+    ip1?: number;
+    ip2?: number;
+    ip3?: number;
+  }>({});
+
+  const handleCalibrationSave = async (cfg: CalibrationConfig) => {
+    setCalibrationConfig(cfg);
+    try {
+      localStorage.setItem('ace_prosoft_calibration_ace106', JSON.stringify(cfg));
+    } catch (e) {
+      console.warn('localStorage calibration save warning:', e);
+    }
+
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ calibration_ace106: cfg }),
+      });
+    } catch (e) {
+      console.warn('Backend settings calibration save warning:', e);
+    }
+  };
+
   // State refs for simulation loop
   const stateRef = useRef(ctrlState);
   stateRef.current = ctrlState;
@@ -159,15 +328,44 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
 
   const normExp = (ctrlState.selectedExperiment || '').trim().toLowerCase();
   const isManualExp = normExp === 'open loop' || normExp === 'on / off control' || normExp === 'on/off control';
-  const isCommunicationDisabled = isConnected || Boolean(ctrlState.selectedExperiment);
 
   // Handle Live Modbus Polling (1 second sampling time from hardware)
   useEffect(() => {
     const tcpService = Ace2007TcpService.getInstance();
     const unsub = tcpService.onLivePoll((live: TcpLiveState) => {
       setIsConnected(live.connected);
-      // Modbus live updates are only accepted while experiment is running!
+      if (live.moduleName) {
+        setModuleName(live.moduleName);
+      }
+      if (live.raw) {
+        setRawInputs({
+          ip0: live.raw.raw0,
+          ip1: live.raw.raw1,
+          ip2: live.raw.raw2,
+          ip3: live.raw.raw3,
+        });
+      }
+      // Live updates are only accepted while experiment is running!
       if (!isRunningRef.current) return;
+
+      // Calibration & Channel Mapping:
+      // Front end reads PV0. PV0 maps to an IP channel (default IP0 or configured in calibration tab).
+      const calCfg = calibrationConfigRef.current;
+      const mappedChannel = getChannelForPv(calCfg, 'PV0');
+      let rawAdc: number | undefined;
+      if (live.raw) {
+        const rawMap: Record<'ip0' | 'ip1' | 'ip2' | 'ip3', number | undefined> = {
+          ip0: live.raw.raw0,
+          ip1: live.raw.raw1,
+          ip2: live.raw.raw2,
+          ip3: live.raw.raw3,
+        };
+        rawAdc = rawMap[mappedChannel];
+      }
+
+      const pvLevel = rawAdc !== undefined
+        ? rawAdcToCalibrated(rawAdc, calCfg.transmitters[mappedChannel], calCfg.calibrations[mappedChannel])
+        : (typeof live[mappedChannel] === 'number' ? live[mappedChannel] : (typeof live.ip2 === 'number' ? live.ip2 : live.pv));
 
       const now = Date.now();
       const pending = pendingWritesRef.current;
@@ -205,7 +403,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
 
       // In Hardware mode while running:
       if (pollNormExp === 'on / off control' || pollNormExp === 'on/off control') {
-        const pv1 = live.pv;
+        const pv1 = pvLevel;
         const sp1 = effSp;
         const hys = stateRef.current.hysteresis;
         let out2 = lastOpRef.current;
@@ -234,7 +432,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
           tcpService.writeRegister('op', out2);
         }
       } else if (pollNormExp === 'p mode') {
-        const pv1 = live.pv;
+        const pv1 = pvLevel;
         const sp1 = effSp;
         const pb = Math.max(stateRef.current.pb, 0.001);
         const kp = 100 / pb;
@@ -251,7 +449,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
           tcpService.writeRegister('op', out2);
         }
       } else if (pollNormExp === 'closed loop') {
-        const pv1 = live.pv;
+        const pv1 = pvLevel;
         const sp1 = effSp;
         const pb = Math.max(stateRef.current.pb, 0.001);
         const kp = 100 / pb;
@@ -268,7 +466,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
           tcpService.writeRegister('op', out2);
         }
       } else if (pollNormExp === 'pi mode') {
-        const pv1 = live.pv;
+        const pv1 = pvLevel;
         const sp1 = effSp;
         const pb = Math.max(stateRef.current.pb, 0.001);
         const kp = 100 / pb;
@@ -290,9 +488,17 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
           }
         } else {
           effOp = stateRef.current.op;
+          if (Math.abs(effOp - lastOpRef.current) > 0.2) {
+            lastOpRef.current = effOp;
+            pendingWritesRef.current['op'] = {
+              value: effOp,
+              expiresAt: Date.now() + 3000,
+            };
+            tcpService.writeRegister('op', effOp);
+          }
         }
       } else if (pollNormExp === 'pd mode') {
-        const pv1 = live.pv;
+        const pv1 = pvLevel;
         const sp1 = effSp;
         const pb = Math.max(stateRef.current.pb, 0.001);
         const kp = 100 / pb;
@@ -314,9 +520,17 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
           }
         } else {
           effOp = stateRef.current.op;
+          if (Math.abs(effOp - lastOpRef.current) > 0.2) {
+            lastOpRef.current = effOp;
+            pendingWritesRef.current['op'] = {
+              value: effOp,
+              expiresAt: Date.now() + 3000,
+            };
+            tcpService.writeRegister('op', effOp);
+          }
         }
       } else if (pollNormExp === 'pid mode') {
-        const pv1 = live.pv;
+        const pv1 = pvLevel;
         const sp1 = effSp;
         const pb = Math.max(stateRef.current.pb, 0.001);
         const kp = 100 / pb;
@@ -341,6 +555,14 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
           }
         } else {
           effOp = stateRef.current.op;
+          if (Math.abs(effOp - lastOpRef.current) > 0.2) {
+            lastOpRef.current = effOp;
+            pendingWritesRef.current['op'] = {
+              value: effOp,
+              expiresAt: Date.now() + 3000,
+            };
+            tcpService.writeRegister('op', effOp);
+          }
         }
       } else if (pollNormExp === 'open loop' || !isAutoRef.current) {
         // Manual mode: output OP from user slider
@@ -360,7 +582,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       ) {
         // Real-Time Machine Learning Control Running on Main Screen
         const ml = activeMLModelRef.current;
-        const pv1 = live.pv;
+        const pv1 = pvLevel;
         const sp1 = effSp;
         const u1 = lastOpRef.current;
         let nextU = u1;
@@ -404,14 +626,14 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       // Synchronize controller state from hardware with anti-reversion protection
       setCtrlState((prev) => ({
         ...prev,
-        pv: live.pv,     // Divided by 10 from 1000H
-        sp: effSp,       // Divided by 10 from 1001H
-        op: effOp,       // Controller output from 1012H
-        pb: effPb,       // Divided by 10 from 1009H
-        it: effIt,       // Ti from 100AH
-        dt: effDt,       // Td from 100BH
-        bias: effBias,   // Bias from 100CH
-        action: effAction, // Action from 1006H
+        pv: pvLevel,     // Channel 3 (IP2) Level PV
+        sp: effSp,
+        op: effOp,
+        pb: effPb,
+        it: effIt,
+        dt: effDt,
+        bias: effBias,
+        action: effAction,
       }));
 
       const effAutoMan = getEffective('autoMan', live.autoMan);
@@ -426,19 +648,19 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
         const newPoint = {
           time: curTime,
           sp: effSp,
-          pv: live.pv,
+          pv: pvLevel,
           op: effOp,
         };
         setTrendData((prev) => {
           if (prev.length === 0) {
             return [
-              { time: 0, sp: effSp, pv: live.pv, op: effOp },
+              { time: 0, sp: effSp, pv: pvLevel, op: effOp },
               newPoint,
             ];
           }
           return [...prev.slice(-9999), newPoint];
         });
-        mlHistoryRef.current.push({ pv: live.pv, op: effOp });
+        mlHistoryRef.current.push({ pv: pvLevel, op: effOp });
         if (mlHistoryRef.current.length > 300) mlHistoryRef.current.shift();
 
         if (isLoggingRef.current) {
@@ -450,7 +672,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
               timeStr,
               timeSec: curTime,
               sp: effSp,
-              pv: live.pv,
+              pv: pvLevel,
               op: effOp,
               pb: effPb,
               it: effIt,
@@ -483,6 +705,9 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       let calcOp = s.op;
 
       if (normExp === 'open loop') {
+        calcOp = s.op;
+      } else if (!isAutoRef.current) {
+        // In Manual mode across P, PI, PD, PID, Closed loop: use user-commanded Controller Output (%)
         calcOp = s.op;
       } else if (normExp === 'on / off control' || normExp === 'on/off control') {
         const pv1 = s.pv;
@@ -1180,87 +1405,20 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
 
   return (
     <div className="trainer-ace101-page">
-      {/* ── Top-Level Menu Bar (Communication | Remote Lab | Experiment) ── */}
+      {/* ── Top-Level Menu Bar (Remote Lab | Experiment) ── */}
       <nav className="trainer-menubar" onClick={(e) => e.stopPropagation()}>
-        {/* Communication Menu: TCP Connection for ACE 2007 DAQ Module */}
-        <div className="trainer-menu-group">
-          <button
-            type="button"
-            className={`trainer-menu-trigger ${openTopMenu === 'com' ? 'active' : ''} ${isCommunicationDisabled ? 'disabled' : ''}`}
-            disabled={isCommunicationDisabled}
-            onClick={() => {
-              if (isCommunicationDisabled) return;
-              setOpenTopMenu(openTopMenu === 'com' ? null : 'com');
-            }}
-            title={
-              Boolean(ctrlState.selectedExperiment)
-                ? 'Communication is disabled while experiment is selected'
-                : isConnected
-                ? `Connected to ${tcpHost} (TCP)`
-                : 'Setup TCP Communication with ACE 2007 DAQ'
-            }
-          >
-            Communication {isConnected && tcpHost ? `(${tcpHost})` : ''}
-          </button>
-          {!isCommunicationDisabled && openTopMenu === 'com' && (
-            <div className="trainer-menu-dropdown">
-              <button
-                type="button"
-                className="dropdown-action-btn"
-                onClick={() => {
-                  setOpenTopMenu(null);
-                  setIsTcpModalOpen(true);
-                }}
-              >
-                ⚙ TCP Communication Setup...
-              </button>
-              {isConnected ? (
-                <button
-                  type="button"
-                  className="dropdown-action-btn"
-                  onClick={async () => {
-                    setOpenTopMenu(null);
-                    await Ace2007TcpService.getInstance().disconnect();
-                    setIsConnected(false);
-                  }}
-                >
-                  ✕ Disconnect TCP
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="dropdown-action-btn"
-                  onClick={async () => {
-                    setOpenTopMenu(null);
-                    const tcp = Ace2007TcpService.getInstance();
-                    const [h, p] = tcpHost.split(':');
-                    const res = await tcp.connect(h || '192.168.0.1', Number(p) || 8080);
-                    if (res.success) {
-                      handleTcpConnected(`${h || '192.168.0.1'}:${p || '8080'}`);
-                    } else {
-                      setIsTcpModalOpen(true);
-                    }
-                  }}
-                >
-                  ⚡ Connect (Default 192.168.0.1:8080)
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
         {/* Remote Lab Tab: Dedicated gateway for Local Network, Firebase, Internet Tunnel, MQTT */}
         <div className="trainer-menu-group">
           <button
             type="button"
-            className={`trainer-menu-trigger ${isCommunicationDisabled ? 'disabled' : ''}`}
-            disabled={isCommunicationDisabled}
+            className={`trainer-menu-trigger ${Boolean(ctrlState.selectedExperiment) ? 'disabled' : ''}`}
+            disabled={Boolean(ctrlState.selectedExperiment)}
             onClick={() => {
-              if (isCommunicationDisabled) return;
+              if (Boolean(ctrlState.selectedExperiment)) return;
               setOpenTopMenu(null);
-              setIsTcpModalOpen(true);
+              setIsRemoteLabModalOpen(true);
             }}
-            title={isCommunicationDisabled ? 'Remote Lab is disabled while experiment is selected' : 'Remote Lab Setup & Cloud Gateway'}
+            title={Boolean(ctrlState.selectedExperiment) ? 'Remote Lab is disabled while experiment is selected' : 'Remote Lab Setup & Cloud Gateway'}
           >
             Remote Lab
           </button>
@@ -1430,11 +1588,17 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       <div className="trainer-main-layout">
         {/* Left Column: Process Schematic / P&I Diagram */}
         <div className="layout-left-column">
-          <ProcessSchematic
+          <ProcessSchematic106
             pv={ctrlState.pv}
             sp={ctrlState.sp}
             op={ctrlState.op}
             isRunning={isRunning}
+            isAuto={isAuto}
+            isConnected={isConnected}
+            calibrationConfig={calibrationConfig}
+            onCalibrationChange={setCalibrationConfig}
+            onCalibrationSave={handleCalibrationSave}
+            rawInputs={rawInputs}
           />
         </div>
 
@@ -1448,6 +1612,8 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
               isConnected={isConnected}
               isAuto={isAuto}
               tcpHost={tcpHost}
+              moduleName={moduleName}
+              
               logEntries={logEntries}
               onOpenTcpModal={() => setIsTcpModalOpen(true)}
               onStateChange={setCtrlState}
@@ -1477,6 +1643,13 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
         isOpen={isTcpModalOpen}
         onClose={() => setIsTcpModalOpen(false)}
         onConnected={handleTcpConnected}
+      />
+
+      {/* ── Remote Lab Setup Modal (Local Network, Firebase, Internet Tunnel, MQTT) ── */}
+      <RemoteLabModal106
+        isOpen={isRemoteLabModalOpen}
+        onClose={() => setIsRemoteLabModalOpen(false)}
+        onConnected={handleRemoteConnected}
       />
 
       {/* ── Connection Established Notice Modal ───────────────── */}
@@ -1531,6 +1704,136 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
         }}
         onStartValidationOnMainScreen={handleStartMLValidationOnMainScreen}
       />
+
+      {/* ── Auto-Connecting Status Spinner Overlay ── */}
+      {isAutoConnecting && (
+        <div className="conn-modal-backdrop" style={{ zIndex: 10001 }}>
+          <div className="conn-modal-window" style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
+            <div style={{ fontSize: '36px', marginBottom: '12px' }}>📡</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+              Auto-Connecting to ACE 2007 DAQ...
+            </div>
+            <div style={{ fontSize: '12.5px', color: '#64748b' }}>
+              Detecting Wi-Fi DAQ Module on {tcpHost || '192.168.0.1:8080'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DAQ Auto-Connect Notice & Alert Modal ── */}
+      {daqPopup && (
+        <div className="conn-modal-backdrop" onClick={() => daqPopup.type === 'connected' && setDaqPopup(null)}>
+          <div className="conn-modal-window" onClick={(e) => e.stopPropagation()}>
+            <div className="conn-modal-titlebar">
+              <div className="conn-title-left">
+                <span className="conn-title-icon">{daqPopup.type === 'connected' ? '🔌' : '⚠️'}</span>
+                <span>{daqPopup.title}</span>
+              </div>
+              {daqPopup.type === 'connected' && (
+                <button
+                  type="button"
+                  className="conn-close-x"
+                  onClick={() => setDaqPopup(null)}
+                  title="Close"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="conn-modal-body">
+              <div className="conn-success-icon">
+                {daqPopup.type === 'connected' ? '✅' : '⚠️'}
+              </div>
+              <div className="conn-modal-text">
+                <div
+                  className="conn-highlight-name"
+                  style={{
+                    color: daqPopup.type === 'connected' ? '#166534' : '#991b1b',
+                    fontSize: '14px',
+                    lineHeight: '1.45',
+                    fontWeight: 700,
+                  }}
+                >
+                  {daqPopup.message}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="conn-modal-footer"
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '16px',
+                padding: '12px 16px',
+                background: '#f1f5f9',
+                borderTop: '1px solid #cbd5e1',
+              }}
+            >
+              {daqPopup.type === 'not-detected' ? (
+                <>
+                  <button
+                    type="button"
+                    className="conn-ok-btn"
+                    onClick={() => attemptAutoConnect()}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 22px',
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🔄 Retry
+                  </button>
+                  <button
+                    type="button"
+                    className="conn-ok-btn"
+                    onClick={onHome}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 22px',
+                      background: '#475569',
+                      color: '#ffffff',
+                      fontWeight: 700,
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🏠 Home
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="conn-ok-btn"
+                  onClick={() => setDaqPopup(null)}
+                  style={{
+                    padding: '8px 32px',
+                    background: '#16a34a',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Proceed
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
