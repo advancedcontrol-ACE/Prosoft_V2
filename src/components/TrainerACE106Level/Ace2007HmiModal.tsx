@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Ace2007HmiModal.css';
 
 interface Ace2007HmiModalProps {
@@ -10,12 +10,6 @@ interface Ace2007HmiModalProps {
   isRunning?: boolean;
   isAuto?: boolean;
   isConnected?: boolean;
-}
-
-interface TrendPoint {
-  pv: number;
-  sp: number;
-  op: number;
 }
 
 export const Ace2007HmiModal: React.FC<Ace2007HmiModalProps> = ({
@@ -32,6 +26,7 @@ export const Ace2007HmiModal: React.FC<Ace2007HmiModalProps> = ({
   const safePv = Math.max(0, Math.min(100, pv));
   const safeSp = Math.max(0, Math.min(100, sp));
   const safeOp = Math.max(0, Math.min(100, op));
+  const isPumping = isRunning || safeOp > 0;
 
   // ── Clock ────────────────────────────────────────────────────────────
   const [currentDate, setCurrentDate] = useState<string>('');
@@ -54,68 +49,12 @@ export const Ace2007HmiModal: React.FC<Ace2007HmiModalProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // ── Real-Time Trend Buffer ───────────────────────────────────────────
-  const [trendData, setTrendData] = useState<TrendPoint[]>(() => {
-    const initial: TrendPoint[] = [];
-    for (let i = 0; i < 25; i++) {
-      initial.push({ pv: safePv, sp: safeSp, op: safeOp });
-    }
-    return initial;
-  });
-
-  const latestValuesRef = useRef({ safePv, safeSp, safeOp });
-  latestValuesRef.current = { safePv, safeSp, safeOp };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTrendData((prev) => {
-        const next = [...prev, {
-          pv: latestValuesRef.current.safePv,
-          sp: latestValuesRef.current.safeSp,
-          op: latestValuesRef.current.safeOp,
-        }];
-        if (next.length > 25) {
-          next.shift();
-        }
-        return next;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Trend Paths
-  const trendPaths = useMemo(() => {
-    const count = trendData.length;
-    if (count < 2) return { pvPath: '', spPath: '', opPath: '' };
-
-    const gridX = 440;
-    const gridY = 125;
-    const gridW = 340;
-    const gridH = 320;
-
-    const getX = (idx: number) => gridX + (idx / Math.max(1, count - 1)) * gridW;
-    const getY = (val: number) => gridY + gridH - (Math.max(0, Math.min(100, val)) / 100) * gridH;
-
-    let pvD = `M ${getX(0)},${getY(trendData[0].pv)}`;
-    let spD = `M ${getX(0)},${getY(trendData[0].sp)}`;
-    let opD = `M ${getX(0)},${getY(trendData[0].op)}`;
-
-    for (let i = 1; i < count; i++) {
-      pvD += ` L ${getX(i)},${getY(trendData[i].pv)}`;
-      spD += ` L ${getX(i)},${getY(trendData[i].sp)}`;
-      opD += ` L ${getX(i)},${getY(trendData[i].op)}`;
-    }
-
-    return { pvPath: pvD, spPath: spD, opPath: opD };
-  }, [trendData]);
-
   if (!isOpen) return null;
 
-  const pvBarWidth = Math.max(0, Math.min(324, (safePv / 100) * 324));
-  const spBarWidth = Math.max(0, Math.min(324, (safeSp / 100) * 324));
-  const opBarWidth = Math.max(0, Math.min(324, (safeOp / 100) * 324));
-  const spNeedleX = 16 + spBarWidth;
+  // Bar gauge widths (out of 240px in each card)
+  const pvBarWidth = Math.max(0, Math.min(240, (safePv / 100) * 240));
+  const spBarWidth = Math.max(0, Math.min(240, (safeSp / 100) * 240));
+  const opBarWidth = Math.max(0, Math.min(240, (safeOp / 100) * 240));
 
   return (
     <div className="ace2007-modal-overlay" onClick={onClose}>
@@ -152,6 +91,21 @@ export const Ace2007HmiModal: React.FC<Ace2007HmiModalProps> = ({
                   <stop offset="100%" stopColor="#0369a1" />
                 </linearGradient>
 
+                <linearGradient id="mPvCardHeader" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#064e3b" />
+                  <stop offset="100%" stopColor="#022c22" />
+                </linearGradient>
+
+                <linearGradient id="mSpCardHeader" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#0c4a6e" />
+                  <stop offset="100%" stopColor="#042337" />
+                </linearGradient>
+
+                <linearGradient id="mOpCardHeader" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#78350f" />
+                  <stop offset="100%" stopColor="#3d1a03" />
+                </linearGradient>
+
                 <linearGradient id="mGuiPvGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#059669" />
                   <stop offset="100%" stopColor="#10b981" />
@@ -166,17 +120,12 @@ export const Ace2007HmiModal: React.FC<Ace2007HmiModalProps> = ({
                   <stop offset="0%" stopColor="#d97706" />
                   <stop offset="100%" stopColor="#f59e0b" />
                 </linearGradient>
-
-                <linearGradient id="mPanelHeaderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#082b4c" />
-                  <stop offset="100%" stopColor="#0c3a64" />
-                </linearGradient>
               </defs>
 
               {/* Background */}
               <rect width="812" height="588" fill="url(#mGuiBgGrad)" />
 
-              {/* Top Header Bar */}
+              {/* ── Top Header Bar ── */}
               <rect x="8" y="8" width="796" height="60" rx="6" fill="#03142c" stroke="#103e6b" strokeWidth="1.5" />
 
               {/* ACE Logo */}
@@ -203,198 +152,232 @@ export const Ace2007HmiModal: React.FC<Ace2007HmiModalProps> = ({
                 {currentDate || '25/10/2026'}
               </text>
               <text x="790" y="55" fontFamily="Consolas, monospace" fontSize="17" fontWeight="700" fill="#38bdf8" textAnchor="end">
-                {currentTime || '20:30:00'}
+                {currentTime || '23:30:00'}
               </text>
 
-              {/* ── Left Column: Process Channels ── */}
-              <rect x="8" y="74" width="384" height="438" rx="6" fill="#03152a" stroke="#0e3860" strokeWidth="1.5" />
-              <rect x="8" y="74" width="384" height="28" rx="6" fill="url(#mPanelHeaderGrad)" />
-              <text
-                x="200"
-                y="93"
-                fontFamily="Segoe UI, sans-serif"
-                fontSize="12.5"
-                fontWeight="700"
-                fill="#38bdf8"
-                textAnchor="middle"
-                letterSpacing="1"
-              >
-                PROCESS CHANNELS (LEVEL CONTROL)
-              </text>
+              {/* ══════════════════════════════════════════════════════════ */}
+              {/* ── CARD 1: PV (Process Variable - Level) ── */}
+              {/* ══════════════════════════════════════════════════════════ */}
+              <g transform="translate(8, 76)">
+                {/* Card Outer */}
+                <rect width="796" height="136" rx="8" fill="#021422" stroke="#10b981" strokeWidth="2" />
+                <rect width="796" height="26" rx="8" fill="url(#mPvCardHeader)" />
 
-              {/* PV (Process Variable) */}
-              <g transform="translate(18, 108)">
-                <rect width="364" height="118" rx="6" fill="#021824" stroke="#10b981" strokeWidth="1.8" />
-                <text x="14" y="24" fontFamily="Segoe UI, sans-serif" fontSize="15" fontWeight="800" fill="#34d399">PV</text>
-                <text x="44" y="24" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="600" fill="#6ee7b7">IP0 (Level PV)</text>
-                <text x="350" y="28" fontFamily="Segoe UI, sans-serif" fontSize="17" fontWeight="700" fill="#a7f3d0" textAnchor="end">%</text>
-                
-                <text x="250" y="76" fontFamily="Consolas, monospace" fontSize="48" fontWeight="900" fill="#10b981" textAnchor="end">
-                  {safePv.toFixed(1)}
-                </text>
-                
-                <rect x="14" y="90" width="336" height="15" rx="3" fill="#072a3a" />
-                <rect x="14" y="90" width={pvBarWidth} height="15" rx="3" fill="url(#mGuiPvGrad)" />
+                {/* Left Label & Tag */}
+                <g transform="translate(20, 42)">
+                  <rect width="64" height="32" rx="6" fill="#064e3b" stroke="#34d399" strokeWidth="1.5" />
+                  <text x="32" y="23" fontFamily="Segoe UI, sans-serif" fontSize="18" fontWeight="900" fill="#ffffff" textAnchor="middle">
+                    PV
+                  </text>
+                  <text x="78" y="20" fontFamily="Segoe UI, sans-serif" fontSize="19" fontWeight="800" fill="#34d399">
+                    PROCESS VARIABLE
+                  </text>
+                  <text x="78" y="42" fontFamily="Segoe UI, sans-serif" fontSize="13" fontWeight="600" fill="#a7f3d0">
+                    IP0 Channel • Level Transmitter
+                  </text>
+                </g>
+
+                {/* Center Recessed Digital Display */}
+                <g transform="translate(300, 36)">
+                  <rect width="230" height="88" rx="6" fill="#010c14" stroke="#065f46" strokeWidth="2" />
+                  <text
+                    x="172"
+                    y="66"
+                    fontFamily="Consolas, monospace"
+                    fontSize="60"
+                    fontWeight="900"
+                    fill="#10b981"
+                    textAnchor="end"
+                    style={{ filter: 'drop-shadow(0 0 10px rgba(16,185,129,0.8))' }}
+                  >
+                    {safePv.toFixed(1)}
+                  </text>
+                  <text x="216" y="60" fontFamily="Segoe UI, sans-serif" fontSize="24" fontWeight="800" fill="#34d399" textAnchor="end">
+                    %
+                  </text>
+                </g>
+
+                {/* Right Analog Bar Gauge */}
+                <g transform="translate(548, 38)">
+                  <text x="0" y="14" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="700" fill="#6ee7b7">
+                    ANALOG LEVEL GAUGE (0 - 100%)
+                  </text>
+                  <rect x="0" y="24" width="236" height="26" rx="5" fill="#042030" stroke="#064e3b" strokeWidth="1.5" />
+                  <rect x="0" y="24" width={pvBarWidth} height="26" rx="5" fill="url(#mGuiPvGrad)" />
+                  <g fontFamily="Consolas, monospace" fontSize="10.5" fill="#a7f3d0" textAnchor="middle">
+                    <text x="0" y="64">0%</text>
+                    <text x="59" y="64">25%</text>
+                    <text x="118" y="64">50%</text>
+                    <text x="177" y="64">75%</text>
+                    <text x="236" y="64">100%</text>
+                  </g>
+                  <text x="236" y="80" fontFamily="Segoe UI, sans-serif" fontSize="11.5" fontWeight="700" fill="#10b981" textAnchor="end">
+                    TANK LEVEL: {safePv.toFixed(1)} %
+                  </text>
+                </g>
               </g>
 
-              {/* SP (Target Set Point) */}
-              <g transform="translate(18, 234)">
-                <rect width="364" height="118" rx="6" fill="#02172a" stroke="#0ea5e9" strokeWidth="1.8" />
-                <text x="14" y="24" fontFamily="Segoe UI, sans-serif" fontSize="15" fontWeight="800" fill="#38bdf8">SP</text>
-                <text x="44" y="24" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="600" fill="#7dd3fc">Target Set Point</text>
-                <text x="350" y="28" fontFamily="Segoe UI, sans-serif" fontSize="17" fontWeight="700" fill="#bae6fd" textAnchor="end">%</text>
-                
-                <text x="250" y="76" fontFamily="Consolas, monospace" fontSize="48" fontWeight="900" fill="#38bdf8" textAnchor="end">
-                  {safeSp.toFixed(1)}
-                </text>
-                
-                <rect x="14" y="90" width="336" height="15" rx="3" fill="#06233d" />
-                <rect x="14" y="90" width={spBarWidth} height="15" rx="3" fill="url(#mGuiSpGrad)" />
-                <line x1={spNeedleX} y1="86" x2={spNeedleX} y2="108" stroke="#ffffff" strokeWidth="2.5" />
+              {/* ══════════════════════════════════════════════════════════ */}
+              {/* ── CARD 2: SP (Target Set Point) ── */}
+              {/* ══════════════════════════════════════════════════════════ */}
+              <g transform="translate(8, 222)">
+                <rect width="796" height="136" rx="8" fill="#021528" stroke="#0ea5e9" strokeWidth="2" />
+                <rect width="796" height="26" rx="8" fill="url(#mSpCardHeader)" />
+
+                <g transform="translate(20, 42)">
+                  <rect width="64" height="32" rx="6" fill="#0c4a6e" stroke="#38bdf8" strokeWidth="1.5" />
+                  <text x="32" y="23" fontFamily="Segoe UI, sans-serif" fontSize="18" fontWeight="900" fill="#ffffff" textAnchor="middle">
+                    SP
+                  </text>
+                  <text x="78" y="20" fontFamily="Segoe UI, sans-serif" fontSize="19" fontWeight="800" fill="#38bdf8">
+                    SET POINT
+                  </text>
+                  <text x="78" y="42" fontFamily="Segoe UI, sans-serif" fontSize="13" fontWeight="600" fill="#bae6fd">
+                    Target Level Command
+                  </text>
+                </g>
+
+                <g transform="translate(300, 36)">
+                  <rect width="230" height="88" rx="6" fill="#011020" stroke="#075985" strokeWidth="2" />
+                  <text
+                    x="172"
+                    y="66"
+                    fontFamily="Consolas, monospace"
+                    fontSize="60"
+                    fontWeight="900"
+                    fill="#38bdf8"
+                    textAnchor="end"
+                    style={{ filter: 'drop-shadow(0 0 10px rgba(56,189,248,0.8))' }}
+                  >
+                    {safeSp.toFixed(1)}
+                  </text>
+                  <text x="216" y="60" fontFamily="Segoe UI, sans-serif" fontSize="24" fontWeight="800" fill="#7dd3fc" textAnchor="end">
+                    %
+                  </text>
+                </g>
+
+                <g transform="translate(548, 38)">
+                  <text x="0" y="14" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="700" fill="#7dd3fc">
+                    TARGET SETTING GAUGE (0 - 100%)
+                  </text>
+                  <rect x="0" y="24" width="236" height="26" rx="5" fill="#052844" stroke="#0284c7" strokeWidth="1.5" />
+                  <rect x="0" y="24" width={spBarWidth} height="26" rx="5" fill="url(#mGuiSpGrad)" />
+                  <polygon
+                    points={`${spBarWidth - 6},20 ${spBarWidth + 6},20 ${spBarWidth},28`}
+                    fill="#ffffff"
+                    stroke="#0284c7"
+                    strokeWidth="1"
+                  />
+                  <g fontFamily="Consolas, monospace" fontSize="10.5" fill="#bae6fd" textAnchor="middle">
+                    <text x="0" y="64">0%</text>
+                    <text x="59" y="64">25%</text>
+                    <text x="118" y="64">50%</text>
+                    <text x="177" y="64">75%</text>
+                    <text x="236" y="64">100%</text>
+                  </g>
+                  <text x="236" y="80" fontFamily="Segoe UI, sans-serif" fontSize="11.5" fontWeight="700" fill="#38bdf8" textAnchor="end">
+                    SETPOINT: {safeSp.toFixed(1)} %
+                  </text>
+                </g>
               </g>
 
-              {/* OP (Controller Output) */}
-              <g transform="translate(18, 360)">
-                <rect width="364" height="118" rx="6" fill="#1c1602" stroke="#f59e0b" strokeWidth="1.8" />
-                <text x="14" y="24" fontFamily="Segoe UI, sans-serif" fontSize="15" fontWeight="800" fill="#fbbf24">OP</text>
-                <text x="44" y="24" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="600" fill="#fde68a">OP0 (Valve Output)</text>
-                <text x="350" y="28" fontFamily="Segoe UI, sans-serif" fontSize="17" fontWeight="700" fill="#fef3c7" textAnchor="end">%</text>
-                
-                <text x="250" y="76" fontFamily="Consolas, monospace" fontSize="48" fontWeight="900" fill="#f59e0b" textAnchor="end">
-                  {safeOp.toFixed(1)}
-                </text>
-                
-                <rect x="14" y="90" width="336" height="15" rx="3" fill="#2d1e02" />
-                <rect x="14" y="90" width={opBarWidth} height="15" rx="3" fill="url(#mGuiOpGrad)" />
-              </g>
+              {/* ══════════════════════════════════════════════════════════ */}
+              {/* ── CARD 3: OP (Controller Output - Valve) ── */}
+              {/* ══════════════════════════════════════════════════════════ */}
+              <g transform="translate(8, 368)">
+                <rect width="796" height="136" rx="8" fill="#1f1502" stroke="#f59e0b" strokeWidth="2" />
+                <rect width="796" height="26" rx="8" fill="url(#mOpCardHeader)" />
 
-              {/* ── Right Column: Real-Time Trend ── */}
-              <rect x="400" y="74" width="404" height="438" rx="6" fill="#03152a" stroke="#0e3860" strokeWidth="1.5" />
-              <rect x="400" y="74" width="404" height="28" rx="6" fill="url(#mPanelHeaderGrad)" />
-              <text
-                x="602"
-                y="93"
-                fontFamily="Segoe UI, sans-serif"
-                fontSize="12.5"
-                fontWeight="700"
-                fill="#38bdf8"
-                textAnchor="middle"
-                letterSpacing="1"
-              >
-                REALTIME TREND
-              </text>
+                <g transform="translate(20, 42)">
+                  <rect width="64" height="32" rx="6" fill="#78350f" stroke="#fbbf24" strokeWidth="1.5" />
+                  <text x="32" y="23" fontFamily="Segoe UI, sans-serif" fontSize="18" fontWeight="900" fill="#ffffff" textAnchor="middle">
+                    OP
+                  </text>
+                  <text x="78" y="20" fontFamily="Segoe UI, sans-serif" fontSize="19" fontWeight="800" fill="#fbbf24">
+                    CONTROLLER OUTPUT
+                  </text>
+                  <text x="78" y="42" fontFamily="Segoe UI, sans-serif" fontSize="13" fontWeight="600" fill="#fde68a">
+                    OP0 Channel • Control Valve
+                  </text>
+                </g>
 
-              {/* Trend Canvas Area */}
-              <rect x="440" y="115" width="340" height="330" fill="#020b16" stroke="#0a3055" strokeWidth="1" />
+                <g transform="translate(300, 36)">
+                  <rect width="230" height="88" rx="6" fill="#140d01" stroke="#b45309" strokeWidth="2" />
+                  <text
+                    x="172"
+                    y="66"
+                    fontFamily="Consolas, monospace"
+                    fontSize="60"
+                    fontWeight="900"
+                    fill="#f59e0b"
+                    textAnchor="end"
+                    style={{ filter: 'drop-shadow(0 0 10px rgba(245,158,11,0.8))' }}
+                  >
+                    {safeOp.toFixed(1)}
+                  </text>
+                  <text x="216" y="60" fontFamily="Segoe UI, sans-serif" fontSize="24" fontWeight="800" fill="#fbbf24" textAnchor="end">
+                    %
+                  </text>
+                </g>
 
-              {/* Grid Lines & Labels */}
-              <g fontFamily="Consolas, monospace" fontSize="11" fill="#64748b" textAnchor="end">
-                <line x1="440" y1="120" x2="780" y2="120" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="434" y="124">100</text>
-
-                <line x1="440" y1="184" x2="780" y2="184" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="434" y="188">80</text>
-
-                <line x1="440" y1="248" x2="780" y2="248" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="434" y="252">60</text>
-
-                <line x1="440" y1="312" x2="780" y2="312" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="434" y="316">40</text>
-
-                <line x1="440" y1="376" x2="780" y2="376" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="434" y="380">20</text>
-
-                <line x1="440" y1="440" x2="780" y2="440" stroke="#1e4060" />
-                <text x="434" y="443">0</text>
-              </g>
-
-              {/* Time X-Labels */}
-              <g fontFamily="Consolas, monospace" fontSize="10.5" fill="#64748b" textAnchor="middle">
-                <line x1="440" y1="115" x2="440" y2="440" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="440" y="456">0</text>
-
-                <line x1="508" y1="115" x2="508" y2="440" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="508" y="456">10</text>
-
-                <line x1="576" y1="115" x2="576" y2="440" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="576" y="456">20</text>
-
-                <line x1="644" y1="115" x2="644" y2="440" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="644" y="456">30</text>
-
-                <line x1="712" y1="115" x2="712" y2="440" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="712" y="456">40</text>
-
-                <line x1="780" y1="115" x2="780" y2="440" stroke="#0d3862" strokeDasharray="3,3" />
-                <text x="780" y="456">50</text>
-              </g>
-              <text x="610" y="471" fontFamily="Segoe UI, sans-serif" fontSize="11" fill="#94a3b8" textAnchor="middle">Time (s)</text>
-
-              {/* Curves */}
-              {trendPaths.spPath && (
-                <path d={trendPaths.spPath} fill="none" stroke="#38bdf8" strokeWidth="2.2" strokeDasharray="5,3" />
-              )}
-              {trendPaths.opPath && (
-                <path d={trendPaths.opPath} fill="none" stroke="#f59e0b" strokeWidth="2.2" />
-              )}
-              {trendPaths.pvPath && (
-                <path d={trendPaths.pvPath} fill="none" stroke="#10b981" strokeWidth="3" />
-              )}
-
-              {/* Legend */}
-              <g transform="translate(438, 485)">
-                <rect x="0" y="0" width="13" height="13" rx="2.5" fill="#10b981" />
-                <text x="18" y="11" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="700" fill="#e2e8f0">PV (Level)</text>
-
-                <rect x="110" y="0" width="13" height="13" rx="2.5" fill="#38bdf8" />
-                <text x="128" y="11" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="700" fill="#e2e8f0">SP</text>
-
-                <rect x="175" y="0" width="13" height="13" rx="2.5" fill="#f59e0b" />
-                <text x="193" y="11" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="700" fill="#e2e8f0">OP (Valve)</text>
+                <g transform="translate(548, 38)">
+                  <text x="0" y="14" fontFamily="Segoe UI, sans-serif" fontSize="12" fontWeight="700" fill="#fde68a">
+                    VALVE OPENING GAUGE (0 - 100%)
+                  </text>
+                  <rect x="0" y="24" width="236" height="26" rx="5" fill="#2d1c02" stroke="#b45309" strokeWidth="1.5" />
+                  <rect x="0" y="24" width={opBarWidth} height="26" rx="5" fill="url(#mGuiOpGrad)" />
+                  <g fontFamily="Consolas, monospace" fontSize="10.5" fill="#fde68a" textAnchor="middle">
+                    <text x="0" y="64">0%</text>
+                    <text x="59" y="64">25%</text>
+                    <text x="118" y="64">50%</text>
+                    <text x="177" y="64">75%</text>
+                    <text x="236" y="64">100%</text>
+                  </g>
+                  <text x="236" y="80" fontFamily="Segoe UI, sans-serif" fontSize="11.5" fontWeight="700" fill="#f59e0b" textAnchor="end">
+                    {safeOp > 0 ? (safeOp >= 100 ? 'VALVE: 100% FULL OPEN' : `VALVE: ${safeOp.toFixed(1)}% OPEN`) : 'VALVE: 0.0% CLOSED'}
+                  </text>
+                </g>
               </g>
 
               {/* ── Bottom Navigation & Status Bar ── */}
-              <g transform="translate(8, 518)">
-                <rect width="796" height="60" rx="6" fill="#03142c" stroke="#103e6b" strokeWidth="1.5" />
+              <g transform="translate(8, 516)">
+                <rect width="796" height="62" rx="6" fill="#03142c" stroke="#103e6b" strokeWidth="1.5" />
 
                 <g transform="translate(14, 9)">
-                  <rect width="170" height="42" rx="6" fill="#0284c7" stroke="#38bdf8" strokeWidth="1.5" />
-                  <text x="85" y="27" fontFamily="Segoe UI, sans-serif" fontSize="15" fontWeight="800" fill="#ffffff" textAnchor="middle">
+                  <rect width="170" height="44" rx="6" fill="#0284c7" stroke="#38bdf8" strokeWidth="1.5" />
+                  <text x="85" y="28" fontFamily="Segoe UI, sans-serif" fontSize="16" fontWeight="800" fill="#ffffff" textAnchor="middle">
                     ⌂  HOME
                   </text>
                 </g>
 
                 <g transform="translate(210, 9)">
-                  <rect width="170" height="42" rx="6" fill="#042036" stroke={isRunning ? '#10b981' : '#f59e0b'} strokeWidth="1.2" />
-                  <circle cx="30" cy="21" r="5" fill={isRunning ? '#10b981' : '#f59e0b'} />
-                  <text x="96" y="27" fontFamily="Segoe UI, sans-serif" fontSize="14" fontWeight="700" fill={isRunning ? '#10b981' : '#f59e0b'} textAnchor="middle">
-                    {isRunning ? 'RUNNING' : 'STOPPED'}
+                  <rect width="170" height="44" rx="6" fill="#042036" stroke={isPumping ? '#10b981' : '#f59e0b'} strokeWidth="1.2" />
+                  <circle cx="28" cy="22" r="5" fill={isPumping ? '#10b981' : '#f59e0b'} />
+                  <text x="96" y="28" fontFamily="Segoe UI, sans-serif" fontSize="14" fontWeight="700" fill={isPumping ? '#10b981' : '#f59e0b'} textAnchor="middle">
+                    {isPumping ? 'PUMP RUNNING' : 'PUMP STOPPED'}
                   </text>
                 </g>
 
                 <g transform="translate(405, 9)">
-                  <rect width="170" height="42" rx="6" fill="#042036" stroke="#38bdf8" strokeWidth="1.2" />
-                  <text x="85" y="27" fontFamily="Segoe UI, sans-serif" fontSize="14" fontWeight="700" fill="#38bdf8" textAnchor="middle">
+                  <rect width="170" height="44" rx="6" fill="#042036" stroke="#38bdf8" strokeWidth="1.2" />
+                  <text x="85" y="28" fontFamily="Segoe UI, sans-serif" fontSize="14" fontWeight="700" fill="#38bdf8" textAnchor="middle">
                     {isAuto ? 'AUTO MODE' : 'MANUAL MODE'}
                   </text>
                 </g>
 
                 <g transform="translate(600, 9)">
-                  <rect width="182" height="42" rx="6" fill="#042036" stroke={isConnected ? '#10b981' : '#94a3b8'} strokeWidth="1.2" />
-                  <circle cx="28" cy="21" r="5" fill={isConnected ? '#10b981' : '#64748b'} />
-                  <text x="98" y="26" fontFamily="Segoe UI, sans-serif" fontSize="13" fontWeight="700" fill={isConnected ? '#e2e8f0' : '#94a3b8'} textAnchor="middle">
-                    {isConnected ? 'WiFi DAQ ONLINE' : 'DAQ STANDBY'}
+                  <rect width="182" height="44" rx="6" fill="#042036" stroke={isConnected ? '#10b981' : '#94a3b8'} strokeWidth="1.2" />
+                  <circle cx="28" cy="22" r="5" fill={isConnected ? '#10b981' : '#64748b'} />
+                  <text x="98" y="27" fontFamily="Segoe UI, sans-serif" fontSize="13" fontWeight="700" fill={isConnected ? '#e2e8f0' : '#94a3b8'} textAnchor="middle">
+                    {isConnected ? 'ACE 2007 ONLINE' : 'DISCONNECTED'}
                   </text>
                 </g>
               </g>
             </svg>
+          </div>
 
-            {/* Bezel Overlay Image */}
-            <img
-              src="/images/ace2007_bezel_frame.png"
-              alt="ACE 2007 Touchscreen Bezel"
-              className="ace2007-hmi-bezel-img"
-            />
+          <div className="ace2007-bezel-layer">
+            <img src="/images/ace2007_bezel_frame.png" alt="ACE 2007 Bezel" className="ace2007-bezel-img" />
           </div>
         </div>
       </div>
