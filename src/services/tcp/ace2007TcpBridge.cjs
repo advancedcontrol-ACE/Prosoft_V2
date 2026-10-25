@@ -65,7 +65,8 @@ class Ace2007TcpBridge {
     };
 
     this.detectSsid();
-    setInterval(() => this.detectSsid(), 3000);
+    const ssidTimer = setInterval(() => this.detectSsid(), 3000);
+    if (ssidTimer.unref) ssidTimer.unref();
   }
 
   detectSsid() {
@@ -235,6 +236,7 @@ class Ace2007TcpBridge {
         this.sendOutput(this.op0, this.op1);
       }
     }, intervalMs);
+    if (this.pollTimer.unref) this.pollTimer.unref();
   }
 
   stopPolling() {

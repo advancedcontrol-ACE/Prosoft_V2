@@ -1,14 +1,15 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
 import { exec } from 'child_process'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { bridgeInstance } = require('./src/services/modbus/modbusServerBridge.cjs')
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { remoteLabManager } = require('./src/services/modbus/remoteLabManager.cjs')
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { tcpBridgeInstance } = require('./src/services/tcp/ace2007TcpBridge.cjs')
 
 function serialPortPlugin(): Plugin {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { bridgeInstance } = require('./src/services/modbus/modbusServerBridge.cjs')
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { remoteLabManager } = require('./src/services/modbus/remoteLabManager.cjs')
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { tcpBridgeInstance } = require('./src/services/tcp/ace2007TcpBridge.cjs')
+
   return {
     name: 'serial-port-api',
     configureServer(server) {
@@ -470,9 +471,12 @@ function serialPortPlugin(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), serialPortPlugin()],
+export default defineConfig(({ command }) => ({
+  plugins: [
+    react(),
+    ...(command === 'serve' ? [serialPortPlugin()] : []),
+  ],
   server: {
     host: '0.0.0.0', // Listen on all network interfaces
   },
-})
+}))
