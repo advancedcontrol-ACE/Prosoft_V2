@@ -35,6 +35,23 @@ const App: React.FC = () => {
   const currentPageRef = React.useRef(currentPage);
   currentPageRef.current = currentPage;
 
+  const lastToggleTimeRef = React.useRef<number>(0);
+  const handleSimulatorToggle = React.useCallback(() => {
+    const now = Date.now();
+    if (now - lastToggleTimeRef.current < 400) return; // Prevent double-trigger
+    lastToggleTimeRef.current = now;
+    const active = hardwareSimulator.toggle();
+    setToastMessage(active ? 'Hardware Simulator ON' : 'Hardware Simulator OFF');
+  }, []);
+
+  useEffect(() => {
+    const onCustomToggle = () => handleSimulatorToggle();
+    window.addEventListener('ace-toggle-hardware-simulator', onCustomToggle);
+    return () => {
+      window.removeEventListener('ace-toggle-hardware-simulator', onCustomToggle);
+    };
+  }, [handleSimulatorToggle]);
+
   useEffect(() => {
     if (!toastMessage) return;
     const timer = setTimeout(() => setToastMessage(null), 3000);
@@ -89,18 +106,15 @@ const App: React.FC = () => {
       const key = (e.key || '').toLowerCase();
 
       // 1. Explicitly ALLOW Ctrl + Shift + C for the Calibration tab toggle
-      if (isCtrl && isShift && key === 'c') {
+      if (isCtrl && isShift && (key === 'c' || e.code === 'KeyC')) {
         return;
       }
 
-      // Handle Ctrl + Shift + S for Hardware Simulator on landing page
-      if (isCtrl && isShift && key === 's') {
+      // Handle Ctrl + Shift + S for Hardware Simulator
+      if (isCtrl && isShift && (key === 's' || e.code === 'KeyS')) {
         e.preventDefault();
         e.stopPropagation();
-        if (currentPageRef.current === null) {
-          const active = hardwareSimulator.toggle();
-          setToastMessage(active ? 'Hardware Simulator ON' : 'Hardware Simulator OFF');
-        }
+        handleSimulatorToggle();
         return;
       }
 

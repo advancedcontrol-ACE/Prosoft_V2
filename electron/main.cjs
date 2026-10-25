@@ -68,8 +68,13 @@ async function createWindow(targetUrl) {
     const isAlt = Boolean(input.alt);
     const key = (input.key || '').toLowerCase();
 
-    // 1. Explicitly ALLOW Ctrl + Shift + C (Project Calibration Toggle)
-    if (isCtrlOrCmd && isShift && key === 'c') {
+    // 1. Explicitly ALLOW Ctrl + Shift + C (Project Calibration Toggle) and Ctrl + Shift + S (Hardware Simulator Toggle)
+    if (isCtrlOrCmd && isShift && (key === 'c' || key === 's' || input.code === 'KeyC' || input.code === 'KeyS')) {
+      if (input.type === 'keyDown' && (key === 's' || input.code === 'KeyS')) {
+        mainWindow.webContents.executeJavaScript(`
+          window.dispatchEvent(new CustomEvent('ace-toggle-hardware-simulator'));
+        `).catch(() => {});
+      }
       return;
     }
 
