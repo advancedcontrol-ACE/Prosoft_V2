@@ -29,8 +29,8 @@ if (targetModules) {
   console.log(`Licensed Modules (${targetModules.length}): ${targetModules.join(', ')}\n`);
 }
 
-// Obfuscation configuration for anti-reverse-engineering & anti-cracking
-const obfuscatorOptions = {
+// Obfuscation configuration for anti-reverse-engineering & anti-cracking (Backend)
+const backendObfuscatorOptions = {
   compact: true,
   controlFlowFlattening: true,
   controlFlowFlatteningThreshold: 0.75,
@@ -48,6 +48,19 @@ const obfuscatorOptions = {
   stringArrayRotate: true,
   stringArrayShuffle: true,
   stringArrayThreshold: 0.8,
+  transformObjectKeys: true,
+  renameGlobals: false,
+};
+
+// Obfuscation configuration for large compiled frontend bundles (Fast & Secure)
+const frontendObfuscatorOptions = {
+  compact: true,
+  identifierNamesGenerator: 'hexadecimal',
+  simplify: true,
+  stringArray: true,
+  stringArrayCallsTransform: true,
+  stringArrayEncoding: ['base64'],
+  stringArrayThreshold: 0.75,
   transformObjectKeys: true,
   renameGlobals: false,
 };
@@ -74,7 +87,7 @@ function backupAndProtect() {
       const originalCode = fs.readFileSync(filePath, 'utf8');
       backups.set(filePath, originalCode);
       console.log(`  -> Obfuscating: ${path.relative(rootDir, filePath)}`);
-      const obfuscated = JavaScriptObfuscator.obfuscate(originalCode, obfuscatorOptions).getObfuscatedCode();
+      const obfuscated = JavaScriptObfuscator.obfuscate(originalCode, backendObfuscatorOptions).getObfuscatedCode();
       fs.writeFileSync(filePath, obfuscated, 'utf8');
     }
   }
@@ -151,7 +164,7 @@ try {
         const fullPath = path.join(assetsDir, file);
         console.log(`  -> Obfuscating frontend asset: dist/assets/${file}`);
         const code = fs.readFileSync(fullPath, 'utf8');
-        const obfuscated = JavaScriptObfuscator.obfuscate(code, obfuscatorOptions).getObfuscatedCode();
+        const obfuscated = JavaScriptObfuscator.obfuscate(code, frontendObfuscatorOptions).getObfuscatedCode();
         fs.writeFileSync(fullPath, obfuscated, 'utf8');
       }
     }
