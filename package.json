@@ -45,6 +45,7 @@
       "dist/**/*",
       "electron/**/*",
       "src/services/modbus/**/*",
+      "src/services/tcp/**/*",
       "ace.ico",
       "package.json"
     ],
