@@ -17,7 +17,7 @@ export const TrainerHeader: React.FC = () => {
       </div>
 
       <div className="header-right">
-        <span className="header-trainer-category">Level Contol</span>
+        <span className="header-trainer-category">Level Control</span>
         <span className="header-trainer-model">Level Process Trainer (ACE 101)</span>
       </div>
     </header>

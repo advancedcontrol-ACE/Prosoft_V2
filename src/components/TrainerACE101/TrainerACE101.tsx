@@ -925,6 +925,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     // 1. Immediately halt Modbus hardware polling
     DeltaDTBService.getInstance().stopPolling();
     // 2. Halt running state and clear active ML controller
+    isRunningRef.current = false;
     setIsRunning(false);
     setActiveMLModel(null);
     activeMLModelRef.current = null;
@@ -932,11 +933,12 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     setTrendData([]);
     setLogEntries([]);
     simTimeRef.current = 0;
-    // 4. Reset Process Variable to 0.0 and clear selected experiment
+    // 4. Reset Process Variable to 0.0, OP to 0.0, and clear selected experiment
     setCtrlState((prev) => ({
       ...prev,
       selectedExperiment: '',
       pv: 0.0,
+      op: 0.0,
     }));
     // 5. Shift back to Auto mode and sync register 4101
     setIsAuto(true);
@@ -1100,6 +1102,11 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     setIsUserGuideOpen(true);
   }, []);
 
+  const handleHome = useCallback(() => {
+    if (isRunning) return;
+    onHome();
+  }, [isRunning, onHome]);
+
   return (
     <div className="trainer-ace101-page">
       {/* ── Top-Level Menu Bar (Communication | Remote Lab | Experiment) ── */}
@@ -1191,13 +1198,23 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           </button>
         </div>
 
-        {/* Experiment Menu: Enabled for testing */}
+        {/* Experiment Menu: Enabled ONLY after communication is established and disabled while running */}
         <div className="trainer-menu-group">
           <button
             type="button"
             className={`trainer-menu-trigger ${openTopMenu === 'exp' ? 'active' : ''}`}
-            onClick={() => setOpenTopMenu(openTopMenu === 'exp' ? null : 'exp')}
-            title="Select Experiment"
+            disabled={!isConnected || isRunning}
+            onClick={() => {
+              if (!isConnected || isRunning) return;
+              setOpenTopMenu(openTopMenu === 'exp' ? null : 'exp');
+            }}
+            title={
+              !isConnected
+                ? 'Communication must be established before selecting an experiment'
+                : isRunning
+                ? 'Stop the experiment first to select another experiment'
+                : 'Select Experiment'
+            }
           >
             Experiment
           </button>
@@ -1324,7 +1341,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         onToggleHold={() => setIsGraphHold(!isGraphHold)}
         onExportGraph={handleExportGraph}
         onUserGuide={handleUserGuide}
-        onHome={onHome}
+        onHome={handleHome}
       />
 
       {/* ── Real-Time ML Control Status Ribbon ──────────────── */}

@@ -50,18 +50,19 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 8px; /* Clean line gap between category and model name */
 }
 
 .header-trainer-category {
   font-size: 18px;
   font-weight: 800;
   color: #ea580c;
-  line-height: 1.15;
+  line-height: 1.25;
 }
 
 .header-trainer-model {
   font-size: 16.5px;
   font-weight: 800;
   color: #ea580c;
-  line-height: 1.2;
+  line-height: 1.25;
 }

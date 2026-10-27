@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { APP_VERSION } from '../../config/constants';
-import { entitlementService } from '../../services/entitlementService';
 import { hardwareSimulator } from '../../services/hardwareSimulator';
 import './HomePage.css';
 
@@ -23,7 +22,6 @@ const formatSystemClock = (d: Date = new Date()): string => {
 const HomePage: React.FC = () => {
   const [currentTime, setCurrentTime] = useState<string>(() => formatSystemClock());
   const [isSimActive, setIsSimActive] = useState<boolean>(() => hardwareSimulator.isActive);
-  const profile = entitlementService.getProfile();
 
   useEffect(() => {
     const updateTime = () => setCurrentTime(formatSystemClock());
@@ -60,11 +58,6 @@ const HomePage: React.FC = () => {
       <footer className="landing-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span className="version-label">{APP_VERSION}</span>
-          {profile?.collegeName && (
-            <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
-              • Licensed to: {profile.collegeName} ({profile.allowedModules.length} Modules)
-            </span>
-          )}
           {isSimActive && (
             <span className="landing-sim-pill-on">
               <span className="sim-pulse-dot-sm"></span>

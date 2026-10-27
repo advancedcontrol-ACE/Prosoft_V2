@@ -231,7 +231,8 @@ export const TrainerToolbar: React.FC<TrainerToolbarProps> = ({
         type="button"
         className="tb-btn home-btn"
         onClick={onHome}
-        title="Return to Main Menu"
+        disabled={isRunning}
+        title={isRunning ? 'Home is disabled while experiment is running. Click Stop first.' : 'Return to Main Menu'}
       >
         <span className="tb-icon home-icon">🏠</span>
         <span className="tb-label">Home</span>

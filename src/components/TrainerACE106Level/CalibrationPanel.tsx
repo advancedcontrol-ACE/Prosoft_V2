@@ -4,6 +4,7 @@ import {
   type CalibrationConfig,
   type TransmitterRange,
   type MappingRow,
+  type IpOption,
   calculateLinearRegression,
   createDefaultPoints,
   DEFAULT_CALIBRATION_CONFIG,
@@ -32,7 +33,7 @@ const CHANNEL_LABELS: Record<'ip0' | 'ip1' | 'ip2' | 'ip3', string> = {
 };
 
 const PV_OPTIONS: Array<'PV0' | 'PV1' | 'PV2' | 'PV3'> = ['PV0', 'PV1', 'PV2', 'PV3'];
-const IP_OPTIONS: Array<'IP0' | 'IP1' | 'IP2' | 'IP3'> = ['IP0', 'IP1', 'IP2', 'IP3'];
+const IP_OPTIONS: IpOption[] = ['IP0', 'IP1', 'IP2', 'IP3', 'Not Used'];
 const RANGE_OPTIONS: TransmitterRange[] = ['4-20mA', '4-12mA', '12-20mA'];
 
 export const CalibrationPanel: React.FC<CalibrationPanelProps> = ({
@@ -83,7 +84,7 @@ export const CalibrationPanel: React.FC<CalibrationPanelProps> = ({
     });
   };
 
-  const handleMappingIpChange = (index: number, newIp: 'IP0' | 'IP1' | 'IP2' | 'IP3') => {
+  const handleMappingIpChange = (index: number, newIp: IpOption) => {
     const currentRows: MappingRow[] = config.mappingRows && config.mappingRows.length === 4
       ? [...config.mappingRows]
       : [...DEFAULT_CALIBRATION_CONFIG.mappingRows];
@@ -94,7 +95,7 @@ export const CalibrationPanel: React.FC<CalibrationPanelProps> = ({
     const newMappings = { ...config.mappings };
     currentRows.forEach((r) => {
       const pvKey = r.pv.toLowerCase() as 'pv0' | 'pv1' | 'pv2' | 'pv3';
-      const ipKey = r.ip.toLowerCase() as 'ip0' | 'ip1' | 'ip2' | 'ip3';
+      const ipKey = r.ip === 'Not Used' ? 'not_used' : (r.ip.toLowerCase() as 'ip0' | 'ip1' | 'ip2' | 'ip3');
       newMappings[pvKey] = ipKey;
     });
 
@@ -285,7 +286,7 @@ export const CalibrationPanel: React.FC<CalibrationPanelProps> = ({
                         onChange={(e) =>
                           handleMappingIpChange(
                             idx,
-                            e.target.value as 'IP0' | 'IP1' | 'IP2' | 'IP3'
+                            e.target.value as IpOption
                           )
                         }
                       >

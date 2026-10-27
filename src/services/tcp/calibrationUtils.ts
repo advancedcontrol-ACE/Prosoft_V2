@@ -16,9 +16,11 @@ export interface ChannelCalibration {
   points: CalibrationPoint[];
 }
 
+export type IpOption = 'IP0' | 'IP1' | 'IP2' | 'IP3' | 'Not Used';
+
 export interface MappingRow {
   pv: 'PV0' | 'PV1' | 'PV2' | 'PV3';
-  ip: 'IP0' | 'IP1' | 'IP2' | 'IP3';
+  ip: IpOption;
 }
 
 export interface CalibrationConfig {
@@ -30,10 +32,10 @@ export interface CalibrationConfig {
   };
   mappingRows: MappingRow[];
   mappings: {
-    pv0: 'ip0' | 'ip1' | 'ip2' | 'ip3';
-    pv1: 'ip0' | 'ip1' | 'ip2' | 'ip3';
-    pv2: 'ip0' | 'ip1' | 'ip2' | 'ip3';
-    pv3: 'ip0' | 'ip1' | 'ip2' | 'ip3';
+    pv0: 'ip0' | 'ip1' | 'ip2' | 'ip3' | 'not_used';
+    pv1: 'ip0' | 'ip1' | 'ip2' | 'ip3' | 'not_used';
+    pv2: 'ip0' | 'ip1' | 'ip2' | 'ip3' | 'not_used';
+    pv3: 'ip0' | 'ip1' | 'ip2' | 'ip3' | 'not_used';
   };
   calibrations: {
     ip0: ChannelCalibration;
@@ -73,9 +75,9 @@ export function createDefaultChannelCalibration(chKey?: 'ip0' | 'ip1' | 'ip2' | 
 
 export const DEFAULT_MAPPING_ROWS: MappingRow[] = [
   { pv: 'PV0', ip: 'IP0' },
-  { pv: 'PV1', ip: 'IP1' },
-  { pv: 'PV2', ip: 'IP2' },
-  { pv: 'PV3', ip: 'IP3' },
+  { pv: 'PV1', ip: 'Not Used' },
+  { pv: 'PV2', ip: 'Not Used' },
+  { pv: 'PV3', ip: 'Not Used' },
 ];
 
 export const DEFAULT_CALIBRATION_CONFIG: CalibrationConfig = {
@@ -88,9 +90,9 @@ export const DEFAULT_CALIBRATION_CONFIG: CalibrationConfig = {
   mappingRows: DEFAULT_MAPPING_ROWS,
   mappings: {
     pv0: 'ip0',
-    pv1: 'ip1',
-    pv2: 'ip2',
-    pv3: 'ip3',
+    pv1: 'not_used',
+    pv2: 'not_used',
+    pv3: 'not_used',
   },
   calibrations: {
     ip0: createDefaultChannelCalibration('ip0'),
@@ -102,15 +104,64 @@ export const DEFAULT_CALIBRATION_CONFIG: CalibrationConfig = {
 
 /**
  * Helper to determine which IP channel is currently mapped to a given PV channel.
+ * Returns null if the channel is 'Not Used'.
  */
-export function getChannelForPv(config: CalibrationConfig, pv: string): 'ip0' | 'ip1' | 'ip2' | 'ip3' {
+export function getChannelForPv(
+  config: CalibrationConfig,
+  pv: string
+): 'ip0' | 'ip1' | 'ip2' | 'ip3' | null {
   const normPv = pv.toUpperCase();
   const row = config.mappingRows?.find((r) => r.pv.toUpperCase() === normPv);
   if (row) {
+    if (row.ip === 'Not Used') return null;
     return row.ip.toLowerCase() as 'ip0' | 'ip1' | 'ip2' | 'ip3';
   }
   const key = normPv.toLowerCase() as 'pv0' | 'pv1' | 'pv2' | 'pv3';
-  return config.mappings?.[key] || 'ip0';
+  const val = config.mappings?.[key];
+  if (!val || val === 'not_used') return null;
+  return val as 'ip0' | 'ip1' | 'ip2' | 'ip3';
+}
+
+/**
+ * Check if a physical terminal IP channel is mapped to any PV variable.
+ */
+export function isIpChannelUsed(
+  config: CalibrationConfig | undefined,
+  chKey: 'ip0' | 'ip1' | 'ip2' | 'ip3'
+): boolean {
+  if (!config) return chKey === 'ip0';
+  if (!config.mappingRows || config.mappingRows.length === 0) {
+    return chKey === 'ip0';
+  }
+  return config.mappingRows.some(
+    (r) => r.ip !== 'Not Used' && r.ip.toLowerCase() === chKey
+  );
+}
+
+/**
+ * Format live channel display data based on terminal usage and open circuit (9999).
+ */
+export function getChannelDisplayData(
+  chKey: 'ip0' | 'ip1' | 'ip2' | 'ip3',
+  config: CalibrationConfig | undefined,
+  rawAdc?: number,
+  fallbackVal?: number
+): { text: string; pct: number; isUnusedOrOpen: boolean } {
+  const isUsed = isIpChannelUsed(config, chKey);
+  // Open circuit hardware code 9999 or unmapped terminal
+  if (!isUsed || rawAdc === 9999) {
+    return { text: '---', pct: 0, isUnusedOrOpen: true };
+  }
+  if (rawAdc !== undefined && rawAdc !== null) {
+    const range = config?.transmitters?.[chKey] || '4-20mA';
+    const cal = config?.calibrations?.[chKey];
+    const val = rawAdcToCalibrated(rawAdc, range, cal);
+    return { text: val.toFixed(1), pct: val, isUnusedOrOpen: false };
+  }
+  if (fallbackVal !== undefined && fallbackVal !== null && fallbackVal >= 0) {
+    return { text: fallbackVal.toFixed(1), pct: fallbackVal, isUnusedOrOpen: false };
+  }
+  return { text: '---', pct: 0, isUnusedOrOpen: true };
 }
 
 /**

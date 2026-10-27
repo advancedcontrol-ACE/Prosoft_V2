@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../TrainerACE101/ProcessSchematic.css';
 import { ProcessSchematic106Svg } from './ProcessSchematic106Svg';
-import { Ace2007HmiModal } from './Ace2007HmiModal';
 import piDiagramImg from '../../assets/pi_diagram.png';
 import { CalibrationPanel } from './CalibrationPanel';
 import { type CalibrationConfig } from '../../services/tcp/calibrationUtils';
@@ -38,7 +37,6 @@ export const ProcessSchematic106: React.FC<ProcessSchematic106Props> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'schematic' | 'pid' | 'calibration'>('schematic');
   const [isCalibrationVisible, setIsCalibrationVisible] = useState<boolean>(false);
-  const [isHmiModalOpen, setIsHmiModalOpen] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<string>('');
 
   const formatSystemClock = (d: Date = new Date()): string => {
@@ -126,7 +124,6 @@ export const ProcessSchematic106: React.FC<ProcessSchematic106Props> = ({
               isRunning={isRunning}
               isAuto={isAuto}
               isConnected={isConnected}
-              onOpenHmiModal={() => setIsHmiModalOpen(true)}
             />
           </div>
         ) : activeTab === 'pid' ? (
@@ -148,18 +145,6 @@ export const ProcessSchematic106: React.FC<ProcessSchematic106Props> = ({
           </div>
         )}
       </div>
-
-      {/* Enlarged High-Definition ACE 2007 Touchscreen Modal */}
-      <Ace2007HmiModal
-        isOpen={isHmiModalOpen}
-        onClose={() => setIsHmiModalOpen(false)}
-        pv={pv}
-        sp={sp}
-        op={op}
-        isRunning={isRunning}
-        isAuto={isAuto}
-        isConnected={isConnected}
-      />
 
       {/* Bottom Status Bar: Live System Clock */}
       <div className="schematic-footer">

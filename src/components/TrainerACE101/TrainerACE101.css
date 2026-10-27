@@ -53,7 +53,8 @@
 
 .trainer-menu-trigger:disabled,
 .trainer-menu-trigger.disabled {
-  color: #000000;
+  color: #94a3b8 !important;
+  opacity: 0.5;
   cursor: not-allowed;
   background: transparent !important;
 }

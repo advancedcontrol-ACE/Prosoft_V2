@@ -189,7 +189,6 @@ const MenuBar: React.FC<MenuBarProps> = ({ onAction }) => {
     };
   }, [openMenu, close]);
 
-  const currentProfile = entitlementService.getProfile();
 
   return (
     <nav className="menu-bar" ref={barRef} role="menubar">
@@ -211,13 +210,6 @@ const MenuBar: React.FC<MenuBarProps> = ({ onAction }) => {
             <span>Hardware Simulator ON</span>
           </div>
         )}
-        <div
-          className="menu-bar-license-badge"
-          title={currentProfile?.collegeName ? `Licensed to ${currentProfile.collegeName}` : 'All Modules Unlocked'}
-        >
-          <span className="license-dot"></span>
-          <span>{currentProfile?.collegeName || 'ACE Prosoft V2 — Master Edition'}</span>
-        </div>
       </div>
     </nav>
   );
