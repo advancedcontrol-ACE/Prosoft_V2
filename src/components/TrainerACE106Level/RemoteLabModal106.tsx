@@ -794,13 +794,36 @@ export const RemoteLabModal106: React.FC<RemoteLabModal106Props> = ({
                       Remote Tunnel URL:
                       <span className="field-hint">(Provided by your instructor / host)</span>
                     </label>
-                    <input
-                      type="text"
-                      className="remote-input"
-                      value={tunnelStudentUrl}
-                      onChange={(e) => setTunnelStudentUrl(e.target.value)}
-                      placeholder="e.g. https://xxxx-xxxx.trycloudflare.com"
-                    />
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        className="remote-input"
+                        value={tunnelStudentUrl}
+                        onChange={(e) => setTunnelStudentUrl(e.target.value)}
+                        placeholder="e.g. https://xxxx-xxxx.trycloudflare.com"
+                        style={{ flex: 1 }}
+                      />
+                      {tunnelUrl && (
+                        <button
+                          type="button"
+                          className="btn-tunnel-copy"
+                          style={{
+                            whiteSpace: 'nowrap',
+                            padding: '0 12px',
+                            fontSize: '11.5px',
+                            height: '34px',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            setTunnelStudentUrl(tunnelUrl);
+                            if (!studentPasskey) setStudentPasskey(hostPasskey || 'ACE-106');
+                          }}
+                          title="Paste active tunnel URL and passkey for testing"
+                        >
+                          ↙️ Paste Active Tunnel
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="form-row-2">

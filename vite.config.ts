@@ -478,5 +478,6 @@ export default defineConfig(({ command }) => ({
   ],
   server: {
     host: '0.0.0.0', // Listen on all network interfaces
+    allowedHosts: true, // Allow Cloudflare tunnels and external hosts without 403 Forbidden
   },
 }))

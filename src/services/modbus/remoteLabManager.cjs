@@ -149,7 +149,13 @@ class RemoteLabManager {
       let resolved = false;
 
       try {
-        this.tunnelProcess = spawn(bin, ['tunnel', '--url', `http://127.0.0.1:${localPort}`]);
+        this.tunnelProcess = spawn(bin, [
+          'tunnel',
+          '--url',
+          `http://127.0.0.1:${localPort}`,
+          '--http-host-header',
+          `localhost:${localPort}`,
+        ]);
       } catch (err) {
         this.tunnelStatus = 'error';
         this.tunnelError = String(err);
