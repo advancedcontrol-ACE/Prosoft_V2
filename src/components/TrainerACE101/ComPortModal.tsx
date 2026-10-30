@@ -7,10 +7,11 @@ import {
 } from '../../services/remoteLab/remoteLabService';
 import './ComPortModal.css';
 
-interface ComPortModalProps {
+export interface ComPortModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConnected: (port: string, isRemote?: boolean) => void;
+  enableOnlyRemoteTunnel?: boolean;
 }
 
 export type RemoteLabTab = 'local_network' | 'firebase' | 'internet_tunnel' | 'mqtt';
@@ -19,9 +20,19 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
   isOpen,
   onClose,
   onConnected,
+  enableOnlyRemoteTunnel = false,
 }) => {
   // 4 Tabs: Local Network, Firebase, Internet Remote Tunnel, MQTT
-  const [activeTab, setActiveTab] = useState<RemoteLabTab>('local_network');
+  const [activeTab, setActiveTab] = useState<RemoteLabTab>(() =>
+    enableOnlyRemoteTunnel ? 'internet_tunnel' : 'local_network'
+  );
+
+  // Switch to internet_tunnel automatically if enableOnlyRemoteTunnel is set
+  useEffect(() => {
+    if (isOpen && enableOnlyRemoteTunnel) {
+      setActiveTab('internet_tunnel');
+    }
+  }, [isOpen, enableOnlyRemoteTunnel]);
 
   // Shared / General States
   const [isConnecting, setIsConnecting] = useState(false);
@@ -281,8 +292,11 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
         <div className="com-mode-nav">
           <button
             type="button"
-            className={`com-mode-tab ${activeTab === 'local_network' ? 'active' : ''}`}
+            className={`com-mode-tab ${activeTab === 'local_network' ? 'active' : ''} ${enableOnlyRemoteTunnel ? 'disabled-tab' : ''}`}
+            disabled={enableOnlyRemoteTunnel}
+            title={enableOnlyRemoteTunnel ? 'Disabled: Only Internet Remote Tunnel is available in Remote Mode' : 'Local Network'}
             onClick={() => {
+              if (enableOnlyRemoteTunnel) return;
               setActiveTab('local_network');
               setErrorMsg(null);
               setLogMessage(null);
@@ -292,8 +306,11 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
           </button>
           <button
             type="button"
-            className={`com-mode-tab ${activeTab === 'firebase' ? 'active' : ''}`}
+            className={`com-mode-tab ${activeTab === 'firebase' ? 'active' : ''} ${enableOnlyRemoteTunnel ? 'disabled-tab' : ''}`}
+            disabled={enableOnlyRemoteTunnel}
+            title={enableOnlyRemoteTunnel ? 'Disabled: Only Internet Remote Tunnel is available in Remote Mode' : 'Firebase'}
             onClick={() => {
+              if (enableOnlyRemoteTunnel) return;
               setActiveTab('firebase');
               setErrorMsg(null);
               setLogMessage(null);
@@ -314,8 +331,11 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
           </button>
           <button
             type="button"
-            className={`com-mode-tab ${activeTab === 'mqtt' ? 'active' : ''}`}
+            className={`com-mode-tab ${activeTab === 'mqtt' ? 'active' : ''} ${enableOnlyRemoteTunnel ? 'disabled-tab' : ''}`}
+            disabled={enableOnlyRemoteTunnel}
+            title={enableOnlyRemoteTunnel ? 'Disabled: Only Internet Remote Tunnel is available in Remote Mode' : 'MQTT'}
             onClick={() => {
+              if (enableOnlyRemoteTunnel) return;
               setActiveTab('mqtt');
               setErrorMsg(null);
               setLogMessage(null);
@@ -324,6 +344,26 @@ export const ComPortModal: React.FC<ComPortModalProps> = ({
             📡 MQTT
           </button>
         </div>
+
+        {/* Remote Mode Guidance Notice when physical hardware is not detected */}
+        {enableOnlyRemoteTunnel && (
+          <div
+            style={{
+              background: '#eff6ff',
+              borderBottom: '1px solid #bfdbfe',
+              padding: '7px 16px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#1d4ed8',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>ℹ️</span>
+            <span>Remote Lab Mode: Only <strong>Internet Remote Tunnel</strong> is available when no physical hardware is connected.</span>
+          </div>
+        )}
 
         {/* Modal Body */}
         <div className="com-modal-body">

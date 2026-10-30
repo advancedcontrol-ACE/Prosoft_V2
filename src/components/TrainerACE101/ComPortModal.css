@@ -101,6 +101,15 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.com-mode-tab:disabled,
+.com-mode-tab.disabled-tab {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  background: rgba(15, 23, 42, 0.7) !important;
+  color: #64748b !important;
+}
+
 .com-mode-tab.active {
   color: #ffffff;
   background: #2563eb;

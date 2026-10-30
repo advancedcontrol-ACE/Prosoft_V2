@@ -14,6 +14,7 @@ import { TrendGraph } from '../TrainerACE101/TrendGraph';
 import type { TrendDataPoint } from '../TrainerACE101/TrendGraph';
 import { TcpConnectModal } from './TcpConnectModal';
 import { RemoteLabModal106 } from './RemoteLabModal106';
+import { HardwareAlertModal } from '../common/HardwareAlertModal';
 import { StopConfirmModal } from '../TrainerACE101/StopConfirmModal';
 import { ExperimentNoticeModal } from '../TrainerACE101/ExperimentNoticeModal';
 import { ConnectionNoticeModal } from '../TrainerACE101/ConnectionNoticeModal';
@@ -1663,7 +1664,17 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       {/* ── Remote Lab Setup Modal (Local Network, Firebase, Internet Tunnel, MQTT) ── */}
       <RemoteLabModal106
         isOpen={isRemoteLabModalOpen}
-        onClose={() => setIsRemoteLabModalOpen(false)}
+        onClose={() => {
+          setIsRemoteLabModalOpen(false);
+          if (!isConnected) {
+            setDaqPopup({
+              type: 'not-detected',
+              title: 'Hardware Connection Alert',
+              message: 'No ACE DAQ is detected. Please check the connection and Retry',
+            });
+          }
+        }}
+        enableOnlyRemoteTunnel={!isConnected}
         onConnected={handleRemoteConnected}
       />
 
@@ -1736,86 +1747,17 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       )}
 
       {/* ── DAQ Disconnected / Not-Detected Alert Modal ── */}
-      {daqPopup && daqPopup.type === 'not-detected' && (
-        <div className="conn-modal-backdrop">
-          <div className="conn-modal-window" onClick={(e) => e.stopPropagation()}>
-            <div className="conn-modal-titlebar">
-              <div className="conn-title-left">
-                <span className="conn-title-icon">⚠️</span>
-                <span>{daqPopup.title}</span>
-              </div>
-            </div>
-
-            <div className="conn-modal-body">
-              <div className="conn-success-icon">⚠️</div>
-              <div className="conn-modal-text">
-                <div
-                  className="conn-highlight-name"
-                  style={{
-                    color: '#991b1b',
-                    fontSize: '14px',
-                    lineHeight: '1.45',
-                    fontWeight: 700,
-                  }}
-                >
-                  {daqPopup.message}
-                </div>
-              </div>
-            </div>
-
-            <div
-              className="conn-modal-footer"
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '16px',
-                padding: '12px 16px',
-                background: '#f1f5f9',
-                borderTop: '1px solid #cbd5e1',
-              }}
-            >
-              <button
-                type="button"
-                className="conn-ok-btn"
-                onClick={() => attemptAutoConnect()}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 22px',
-                  background: '#0284c7',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                }}
-              >
-                🔄 Retry
-              </button>
-              <button
-                type="button"
-                className="conn-ok-btn"
-                onClick={onHome}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 22px',
-                  background: '#475569',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                }}
-              >
-                🏠 Home
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <HardwareAlertModal
+        isOpen={Boolean(daqPopup && daqPopup.type === 'not-detected')}
+        title={daqPopup?.title || 'Hardware Connection Alert'}
+        message={daqPopup?.message || 'No ACE DAQ is detected. Please check the connection and Retry'}
+        onRetry={() => attemptAutoConnect()}
+        onRemoteLab={() => {
+          setDaqPopup(null);
+          setIsRemoteLabModalOpen(true);
+        }}
+        onHome={onHome}
+      />
     </div>
   );
 };

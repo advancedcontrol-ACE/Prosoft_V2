@@ -8,6 +8,7 @@ import { TrendGraph } from './TrendGraph';
 import type { TrendDataPoint } from './TrendGraph';
 import { ComPortModal } from './ComPortModal';
 import { StopConfirmModal } from './StopConfirmModal';
+import { HardwareAlertModal } from '../common/HardwareAlertModal';
 import { ExperimentNoticeModal } from './ExperimentNoticeModal';
 import { ConnectionNoticeModal } from './ConnectionNoticeModal';
 import { UserGuideModal } from './UserGuideModal';
@@ -46,6 +47,12 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
 
   // Top Menu States in this Trainer Screen (Figure 1: COM Port | Experiment)
   const [openTopMenu, setOpenTopMenu] = useState<'com' | 'exp' | null>(null);
+  const [hardwareAlert, setHardwareAlert] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  } | null>(null);
+  const [isAutoConnecting, setIsAutoConnecting] = useState<boolean>(false);
 
   useEffect(() => {
     fetchAvailablePorts().then(setAvailablePorts);
@@ -549,7 +556,57 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     setLogEntries([]);
     simTimeRef.current = 0;
     setIsConnNoticeOpen(true); // Popup: Connection Established!
+    setHardwareAlert(null);
   };
+
+  const attemptAutoConnect101 = useCallback(async () => {
+    setIsAutoConnecting(true);
+    if (hardwareSimulator.isActive) {
+      const modbusService = DeltaDTBService.getInstance();
+      const res = await modbusService.connect('COM1 (Simulator)', ctrlState.deviceId, ctrlState.action);
+      setIsAutoConnecting(false);
+      if (res.success) {
+        handlePortConnected('COM1 (Simulator)', false);
+        setHardwareAlert(null);
+        return;
+      }
+    }
+
+    try {
+      const ports = await fetchAvailablePorts();
+      setAvailablePorts(ports);
+      const physicalPorts = ports.filter((p) => !p.includes('Simulator'));
+      const savedPort = localStorage.getItem('ace101_last_port');
+      const targetPort = savedPort && physicalPorts.includes(savedPort) ? savedPort : physicalPorts[0];
+
+      if (targetPort) {
+        const modbusService = DeltaDTBService.getInstance();
+        const res = await modbusService.connect(targetPort, ctrlState.deviceId, ctrlState.action);
+        if (res.success) {
+          setIsAutoConnecting(false);
+          handlePortConnected(targetPort, false);
+          setHardwareAlert(null);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Physical port detection error in ACE 101:', err);
+    }
+
+    setIsAutoConnecting(false);
+    setIsConnected(false);
+    setComPort('');
+    setHardwareAlert({
+      isOpen: true,
+      title: 'Hardware Connection Alert',
+      message: 'No ACE DAQ is detected. Please check the connection and Retry',
+    });
+  }, [ctrlState.deviceId, ctrlState.action]);
+
+  useEffect(() => {
+    attemptAutoConnect101();
+  }, [attemptAutoConnect101]);
+
 
   // Auto-connect to Virtual Delta DTB9696 if Hardware Simulator is active
   useEffect(() => {
@@ -1417,8 +1474,49 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
       {/* ── COM Port Connection Setup Modal ───────────────────── */}
       <ComPortModal
         isOpen={isComModalOpen}
-        onClose={() => setIsComModalOpen(false)}
-        onConnected={handlePortConnected}
+        onClose={() => {
+          setIsComModalOpen(false);
+          if (!isConnected) {
+            setHardwareAlert({
+              isOpen: true,
+              title: 'Hardware Connection Alert',
+              message: 'No ACE DAQ is detected. Please check the connection and Retry',
+            });
+          }
+        }}
+        onConnected={(port, isRemote) => {
+          handlePortConnected(port, isRemote);
+          setHardwareAlert(null);
+        }}
+        enableOnlyRemoteTunnel={!isConnected}
+      />
+
+      {/* ── Auto-Connecting Overlay ────────────────────────────── */}
+      {isAutoConnecting && (
+        <div className="conn-modal-backdrop" style={{ zIndex: 10001 }}>
+          <div className="conn-modal-window" style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
+            <div style={{ fontSize: '36px', marginBottom: '12px' }}>📡</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+              Detecting ACE DAQ Hardware...
+            </div>
+            <div style={{ fontSize: '12.5px', color: '#64748b' }}>
+              Scanning serial ports and Modbus RTU interface
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Hardware Connection Alert Modal ────────────────────── */}
+      <HardwareAlertModal
+        isOpen={Boolean(hardwareAlert?.isOpen)}
+        title={hardwareAlert?.title || 'Hardware Connection Alert'}
+        message={hardwareAlert?.message || 'No ACE DAQ is detected. Please check the connection and Retry'}
+        onRetry={attemptAutoConnect101}
+        onRemoteLab={() => {
+          setHardwareAlert(null);
+          setIsComModalOpen(true);
+        }}
+        onHome={onHome}
       />
 
       {/* ── Connection Established Notice Modal ───────────────── */}
