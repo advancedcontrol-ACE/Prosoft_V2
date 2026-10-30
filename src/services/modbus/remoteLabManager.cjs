@@ -29,6 +29,7 @@ class RemoteLabManager {
     this.passkey = 'ACE-101';
     this.allowRemote = true;
     this.sessions = new Map();
+    this.authorizedStudents = new Map(); // id -> { id, name, passkey, createdAt }
     this.tunnelProcess = null;
     this.tunnelUrl = null;
     this.tunnelStatus = 'stopped'; // 'stopped' | 'starting' | 'running' | 'error'
@@ -46,12 +47,47 @@ class RemoteLabManager {
     return this.passkey;
   }
 
+  getAuthorizedStudents() {
+    return Array.from(this.authorizedStudents.values()).sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  generateStudentAccess(studentName, studentPasskey) {
+    const key = (studentPasskey || 'ACE-' + Math.floor(1000 + Math.random() * 9000)).trim();
+    const name = (studentName || 'Student_' + (this.authorizedStudents.size + 1)).trim();
+    const record = {
+      id: 'stud_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6),
+      name,
+      passkey: key,
+      createdAt: Date.now(),
+    };
+    this.authorizedStudents.set(record.id, record);
+    return record;
+  }
+
+  deleteStudentAccess(id) {
+    return this.authorizedStudents.delete(id);
+  }
+
   authenticate(candidatePasskey, studentName = 'Anonymous Student', clientIp = '127.0.0.1') {
     if (!this.allowRemote) {
       return { success: false, error: 'Remote Lab access is currently disabled by the Host.' };
     }
 
-    if (!candidatePasskey || candidatePasskey.trim() !== this.passkey) {
+    const trimmedKey = (candidatePasskey || '').trim();
+    const isMasterPasskey = trimmedKey === this.passkey;
+
+    // Check if matched student-specific passkey
+    let isStudentPasskey = false;
+    for (const st of this.authorizedStudents.values()) {
+      if (st.passkey === trimmedKey) {
+        if (!st.name || st.name.toLowerCase() === studentName.toLowerCase() || studentName === 'Anonymous Student') {
+          isStudentPasskey = true;
+          break;
+        }
+      }
+    }
+
+    if (!isMasterPasskey && !isStudentPasskey) {
       return { success: false, error: 'Invalid Lab Access Passkey.' };
     }
 

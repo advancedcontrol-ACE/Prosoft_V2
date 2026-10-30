@@ -188,6 +188,61 @@ export class RemoteLabClient {
   }
 
   /**
+   * Host queries authorized students list
+   */
+  public async getAuthorizedStudents(
+    hostUrl?: string
+  ): Promise<Array<{ id: string; name: string; passkey: string; createdAt: number }>> {
+    try {
+      const base = this.normalizeUrl(hostUrl || this.currentHostUrl);
+      const res = await fetch(`${base}/api/remote/students`);
+      if (res.ok) {
+        const data = await res.json();
+        return data.students || [];
+      }
+    } catch {}
+    return [];
+  }
+
+  /**
+   * Host generates credentials for a student
+   */
+  public async generateStudentAccess(
+    name: string,
+    passkey?: string,
+    hostUrl?: string
+  ): Promise<{ id: string; name: string; passkey: string; createdAt: number }> {
+    const base = this.normalizeUrl(hostUrl || this.currentHostUrl);
+    const res = await fetch(`${base}/api/remote/students/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, passkey }),
+    });
+    if (!res.ok) throw new Error('Failed to generate student credentials');
+    const data = await res.json();
+    return data.student;
+  }
+
+  /**
+   * Host deletes an authorized student
+   */
+  public async deleteStudentAccess(id: string, hostUrl?: string): Promise<boolean> {
+    try {
+      const base = this.normalizeUrl(hostUrl || this.currentHostUrl);
+      const res = await fetch(`${base}/api/remote/students/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return Boolean(data.success);
+      }
+    } catch {}
+    return false;
+  }
+
+  /**
    * Host gets status of the Cloudflare tunnel
    */
   public async getTunnelStatus(hostUrl?: string): Promise<TunnelStatusResponse> {

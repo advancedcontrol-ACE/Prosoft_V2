@@ -36,6 +36,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
   // Connection and Port State
   const [comPort, setComPort] = useState<string>('');
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isRemoteMode, setIsRemoteMode] = useState<boolean>(false);
   const [isComModalOpen, setIsComModalOpen] = useState<boolean>(false);
   const [isStopModalOpen, setIsStopModalOpen] = useState<boolean>(false);
   const [isConnNoticeOpen, setIsConnNoticeOpen] = useState<boolean>(false);
@@ -540,7 +541,8 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
     [ctrlState.deviceId]
   );
 
-  const handlePortConnected = (port: string, _isRemote?: boolean) => {
+  const handlePortConnected = (port: string, isRemote?: boolean) => {
+    setIsRemoteMode(Boolean(isRemote));
     DeltaDTBService.getInstance().stopPolling(); // Idle until Run
     setComPort(port);
     setIsConnected(true);
@@ -584,6 +586,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         const res = await modbusService.connect(targetPort, ctrlState.deviceId, ctrlState.action);
         if (res.success) {
           setIsAutoConnecting(false);
+          setIsRemoteMode(false);
           handlePortConnected(targetPort, false);
           setHardwareAlert(null);
           return;
@@ -1489,6 +1492,7 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
           setHardwareAlert(null);
         }}
         enableOnlyRemoteTunnel={!isConnected}
+        isHardwareConnected={isConnected && !isRemoteMode}
       />
 
       {/* ── Auto-Connecting Overlay ────────────────────────────── */}

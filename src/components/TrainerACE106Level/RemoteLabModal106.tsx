@@ -4,6 +4,7 @@ import {
   RemoteLabClient,
   type RemoteSession,
   type TunnelTestResponse,
+  type RemoteStatusResponse,
 } from '../../services/remoteLab/remoteLabService';
 import '../TrainerACE101/ComPortModal.css';
 
@@ -12,6 +13,7 @@ export interface RemoteLabModal106Props {
   onClose: () => void;
   onConnected: (port: string, isRemote?: boolean) => void;
   enableOnlyRemoteTunnel?: boolean;
+  isHardwareConnected?: boolean;
 }
 
 export type RemoteLabTab = 'local_network' | 'firebase' | 'internet_tunnel' | 'mqtt';
@@ -21,8 +23,96 @@ export const RemoteLabModal106: React.FC<RemoteLabModal106Props> = ({
   onClose,
   onConnected,
   enableOnlyRemoteTunnel = false,
+  isHardwareConnected = false,
 }) => {
   // 4 Tabs: Local Network, Firebase, Internet Remote Tunnel, MQTT
+  // Effective Hardware Connection state (combines prop + backend status)
+  const [effectiveHardwareConnected, setEffectiveHardwareConnected] = useState<boolean>(isHardwareConnected);
+
+  useEffect(() => {
+    setEffectiveHardwareConnected(isHardwareConnected);
+  }, [isHardwareConnected]);
+
+  useEffect(() => {
+    if (isOpen) {
+      RemoteLabClient.getInstance().checkStatus().then((status: RemoteStatusResponse) => {
+        if (typeof status.hardwareConnected === 'boolean') {
+          setEffectiveHardwareConnected(isHardwareConnected || status.hardwareConnected);
+        }
+      }).catch(() => {});
+    }
+  }, [isOpen, isHardwareConnected]);
+
+  // Student Access & Passkey Generator States
+  const [authorizedStudents, setAuthorizedStudents] = useState<
+    Array<{ id: string; name: string; passkey: string; createdAt: number }>
+  >([]);
+  const [genStudentName, setGenStudentName] = useState<string>('Roll 101 - Student');
+  const [genStudentPasskey, setGenStudentPasskey] = useState<string>('ACE-106');
+  const [genNotice, setGenNotice] = useState<string | null>(null);
+
+  const refreshAuthorizedStudents = React.useCallback(async () => {
+    try {
+      const list = await RemoteLabClient.getInstance().getAuthorizedStudents();
+      setAuthorizedStudents(list);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && effectiveHardwareConnected) {
+      refreshAuthorizedStudents();
+    }
+  }, [isOpen, effectiveHardwareConnected, refreshAuthorizedStudents]);
+
+  const handleGenerateRandomPasskey = async () => {
+    const randomKey = 'ACE-' + Math.floor(1000 + Math.random() * 9000);
+    setGenStudentPasskey(randomKey);
+    try {
+      await RemoteLabClient.getInstance().setPasskey(randomKey);
+      setHostPasskey(randomKey);
+      setGenNotice(`✅ Updated Host Passkey to ${randomKey}`);
+      setTimeout(() => setGenNotice(null), 4000);
+    } catch (e) {
+      console.warn('Failed to update passkey:', e);
+    }
+  };
+
+  const handleGenerateAndCopyStudentAccess = async () => {
+    const studentName = genStudentName.trim() || 'Student_01';
+    const passkey = genStudentPasskey.trim() || hostPasskey || 'ACE-106';
+    try {
+      const newStudent = await RemoteLabClient.getInstance().generateStudentAccess(studentName, passkey);
+      setAuthorizedStudents((prev) => [newStudent, ...prev.filter((s) => s.id !== newStudent.id)]);
+
+      const activeUrl = tunnelUrl || hostInfo?.localUrl || 'https://your-tunnel-url.trycloudflare.com';
+      const inviteText = `🎓 ACE Remote Lab Login Credentials:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🌐 Remote Tunnel URL: ${activeUrl}\n👤 Student Name / Roll No: ${studentName}\n🔑 Access Passkey: ${passkey}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOpen Prosoft V2 -> Remote Lab -> Paste credentials to connect!`;
+
+      await navigator.clipboard.writeText(inviteText);
+      setGenNotice(`✅ Generated & Copied access credentials for "${studentName}" to clipboard!`);
+      setTimeout(() => setGenNotice(null), 5000);
+    } catch (err) {
+      console.error(err);
+      setGenNotice(`⚠️ Failed to generate student access: ${String(err)}`);
+    }
+  };
+
+  const copyStudentCredentials = async (st: { name: string; passkey: string }) => {
+    const activeUrl = tunnelUrl || hostInfo?.localUrl || 'https://your-tunnel-url.trycloudflare.com';
+    const inviteText = `🎓 ACE Remote Lab Login Credentials:\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🌐 Remote Tunnel URL: ${activeUrl}\n👤 Student Name / Roll No: ${st.name}\n🔑 Access Passkey: ${st.passkey}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOpen Prosoft V2 -> Remote Lab -> Paste credentials to connect!`;
+    await navigator.clipboard.writeText(inviteText);
+    setGenNotice(`✅ Copied credentials for "${st.name}" to clipboard!`);
+    setTimeout(() => setGenNotice(null), 4000);
+  };
+
+  const handleDeleteStudent = async (id: string) => {
+    try {
+      await RemoteLabClient.getInstance().deleteStudentAccess(id);
+      setAuthorizedStudents((prev) => prev.filter((s) => s.id !== id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState<RemoteLabTab>(() =>
     enableOnlyRemoteTunnel ? 'internet_tunnel' : 'local_network'
   );
@@ -679,13 +769,58 @@ export const RemoteLabModal106: React.FC<RemoteLabModal106Props> = ({
           {activeTab === 'internet_tunnel' && (
             <div className="tab-pane-content">
               {/* Cloudflare Tunnel Host Section */}
-              <div className={`host-tunnel-box ${tunnelStatus === 'running' ? 'active' : ''}`}>
+              <div
+                className={`host-tunnel-box ${tunnelStatus === 'running' ? 'active' : ''} ${
+                  !effectiveHardwareConnected ? 'host-tunnel-disabled' : ''
+                }`}
+                style={
+                  !effectiveHardwareConnected
+                    ? {
+                        opacity: 0.62,
+                        background: '#f8fafc',
+                        border: '1.5px dashed #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '14px',
+                      }
+                    : undefined
+                }
+              >
+                {!effectiveHardwareConnected && (
+                  <div
+                    style={{
+                      background: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      borderRadius: '4px',
+                      padding: '8px 12px',
+                      marginBottom: '12px',
+                      color: '#991b1b',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <span>🔒</span>
+                    <span>
+                      Host Mode Disabled: No physical ACE DAQ hardware is connected. Only a host computer with physical hardware connected can host and start a Cloudflare tunnel.
+                    </span>
+                  </div>
+                )}
+
                 <div className="tunnel-header-row">
                   <div className="tunnel-title">
                     <span className="tunnel-icon">🌐</span>
                     <strong>Internet Remote Lab Tunnel (Worldwide Access):</strong>
                   </div>
-                  {tunnelStatus === 'running' ? (
+                  {!effectiveHardwareConnected ? (
+                    <span
+                      className="tunnel-status-pill stopped"
+                      style={{ background: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1' }}
+                    >
+                      🔒 Disabled (No Hardware)
+                    </span>
+                  ) : tunnelStatus === 'running' ? (
                     <span className="tunnel-status-pill running">🟢 Live Online</span>
                   ) : tunnelStatus === 'starting' || isStartingTunnel ? (
                     <span className="tunnel-status-pill starting">⏳ Initializing...</span>
@@ -774,11 +909,243 @@ export const RemoteLabModal106: React.FC<RemoteLabModal106Props> = ({
                         type="button"
                         className="btn-start-tunnel"
                         onClick={handleStartTunnel}
-                        disabled={isStartingTunnel}
+                        disabled={!effectiveHardwareConnected || isStartingTunnel}
+                        title={
+                          !effectiveHardwareConnected
+                            ? 'Connect physical hardware to host remote lab'
+                            : 'Start Cloudflare Tunnel'
+                        }
+                        style={
+                          !effectiveHardwareConnected
+                            ? { cursor: 'not-allowed', opacity: 0.5, pointerEvents: 'none' }
+                            : undefined
+                        }
                       >
                         {isStartingTunnel ? '⏳ Creating Tunnel Link (5-10s)...' : '🚀 Start Cloudflare Tunnel URL'}
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* Provision to generate student Name / Roll No and Passkey in this frame */}
+                {effectiveHardwareConnected && (
+                  <div
+                    style={{
+                      marginTop: '14px',
+                      padding: '12px 14px',
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#0f172a',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <span>👥</span>
+                        <span>Student Access & Passkey Generator (Give Access to Students)</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-tunnel-copy"
+                        style={{ fontSize: '11px', padding: '3px 8px', height: '26px' }}
+                        onClick={handleGenerateRandomPasskey}
+                        title="Generate a new random secure passkey for the lab"
+                      >
+                        🎲 New Passkey
+                      </button>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1.2fr 1fr auto',
+                        gap: '10px',
+                        alignItems: 'flex-end',
+                      }}
+                    >
+                      <div className="form-field" style={{ marginBottom: 0 }}>
+                        <label className="config-label" style={{ fontSize: '11.5px', marginBottom: '3px' }}>
+                          Student Name / Roll Number:
+                        </label>
+                        <input
+                          type="text"
+                          className="remote-input"
+                          style={{ height: '32px', fontSize: '12px' }}
+                          value={genStudentName}
+                          onChange={(e) => setGenStudentName(e.target.value)}
+                          placeholder="e.g. Roll 101 - Rahul"
+                        />
+                      </div>
+
+                      <div className="form-field" style={{ marginBottom: 0 }}>
+                        <label className="config-label" style={{ fontSize: '11.5px', marginBottom: '3px' }}>
+                          Access Passkey:
+                        </label>
+                        <input
+                          type="text"
+                          className="remote-input"
+                          style={{
+                            height: '32px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            letterSpacing: '0.5px',
+                          }}
+                          value={genStudentPasskey}
+                          onChange={(e) => setGenStudentPasskey(e.target.value)}
+                          placeholder="e.g. ACE-106"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn-tunnel-copy"
+                        style={{
+                          height: '32px',
+                          background: '#0284c7',
+                          color: '#ffffff',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          padding: '0 14px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          cursor: 'pointer',
+                          border: 'none',
+                        }}
+                        onClick={handleGenerateAndCopyStudentAccess}
+                      >
+                        ➕ Generate & Copy Access
+                      </button>
+                    </div>
+
+                    {genNotice && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          fontSize: '11.5px',
+                          color: '#059669',
+                          fontWeight: 600,
+                          background: '#ecfdf5',
+                          border: '1px solid #a7f3d0',
+                          padding: '5px 10px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        {genNotice}
+                      </div>
+                    )}
+
+                    {authorizedStudents.length > 0 && (
+                      <div style={{ marginTop: '10px' }}>
+                        <div
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: '#64748b',
+                            marginBottom: '4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Authorized Students ({authorizedStudents.length}):
+                        </div>
+                        <div
+                          style={{
+                            maxHeight: '110px',
+                            overflowY: 'auto',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '4px',
+                            background: '#ffffff',
+                          }}
+                        >
+                          <table
+                            style={{
+                              width: '100%',
+                              fontSize: '11.5px',
+                              borderCollapse: 'collapse',
+                            }}
+                          >
+                            <thead>
+                              <tr
+                                style={{
+                                  background: '#f1f5f9',
+                                  borderBottom: '1px solid #cbd5e1',
+                                  textAlign: 'left',
+                                  color: '#475569',
+                                }}
+                              >
+                                <th style={{ padding: '4px 8px' }}>Student / Roll</th>
+                                <th style={{ padding: '4px 8px' }}>Passkey</th>
+                                <th style={{ padding: '4px 8px' }}>Status</th>
+                                <th style={{ padding: '4px 8px', textAlign: 'right' }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {authorizedStudents.map((st) => (
+                                <tr key={st.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  <td style={{ padding: '4px 8px', fontWeight: 600 }}>{st.name}</td>
+                                  <td style={{ padding: '4px 8px' }}>
+                                    <code>{st.passkey}</code>
+                                  </td>
+                                  <td style={{ padding: '4px 8px' }}>
+                                    <span style={{ color: '#059669', fontWeight: 600 }}>Authorized</span>
+                                  </td>
+                                  <td style={{ padding: '4px 8px', textAlign: 'right' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => copyStudentCredentials(st)}
+                                      style={{
+                                        fontSize: '10.5px',
+                                        padding: '2px 6px',
+                                        marginRight: '4px',
+                                        cursor: 'pointer',
+                                        background: '#e0f2fe',
+                                        color: '#0369a1',
+                                        border: 'none',
+                                        borderRadius: '3px',
+                                      }}
+                                      title="Copy student invitation link and passkey"
+                                    >
+                                      📋 Copy
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteStudent(st.id)}
+                                      style={{
+                                        fontSize: '10.5px',
+                                        padding: '2px 6px',
+                                        cursor: 'pointer',
+                                        background: '#fee2e2',
+                                        color: '#b91c1c',
+                                        border: 'none',
+                                        borderRadius: '3px',
+                                      }}
+                                      title="Revoke access"
+                                    >
+                                      ✕
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

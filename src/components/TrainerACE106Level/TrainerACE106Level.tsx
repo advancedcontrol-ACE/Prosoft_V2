@@ -42,6 +42,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
   const comPort = tcpHost;
   const [moduleName, setModuleName] = useState<string>('');
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isRemoteMode, setIsRemoteMode] = useState<boolean>(false);
   const [isTcpModalOpen, setIsTcpModalOpen] = useState<boolean>(false);
   const [isRemoteLabModalOpen, setIsRemoteLabModalOpen] = useState<boolean>(false);
   const [isStopModalOpen, setIsStopModalOpen] = useState<boolean>(false);
@@ -88,6 +89,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
 
     if (res.success) {
       setIsConnected(true);
+      setIsRemoteMode(false);
       const rawName = detectedSsid || (tcp.getCurrentHost() === '192.168.0.1' ? 'ACE2007-2' : tcp.getCurrentHost());
       let formattedName = rawName;
       if (/^ACE\s*2007[-_\s]*(\d+)/i.test(rawName)) {
@@ -132,6 +134,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
   const handleRemoteConnected = (portStr: string) => {
     setTcpHost(portStr);
     setIsConnected(true);
+    setIsRemoteMode(true);
     setIsConnNoticeOpen(true);
   };
 
@@ -866,6 +869,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
     Ace2007TcpService.getInstance().stopPolling(); // Idle until Run
     setTcpHost(hostStr);
     setIsConnected(true);
+    setIsRemoteMode(false);
     setCtrlState((prev) => ({
       ...prev,
       sp: 50.0,
@@ -1675,6 +1679,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
           }
         }}
         enableOnlyRemoteTunnel={!isConnected}
+        isHardwareConnected={isConnected && !isRemoteMode}
         onConnected={handleRemoteConnected}
       />
 

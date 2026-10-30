@@ -141,6 +141,33 @@ function serialPortPlugin(): Plugin {
           return
         }
 
+        if (pathname === '/api/remote/students' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(
+            JSON.stringify({
+              success: true,
+              students: remoteLabManager.getAuthorizedStudents(),
+            })
+          )
+          return
+        }
+
+        if (pathname === '/api/remote/students/generate' && req.method === 'POST') {
+          const body = await parseJsonBody()
+          const record = remoteLabManager.generateStudentAccess(body.name, body.passkey)
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ success: true, student: record }))
+          return
+        }
+
+        if (pathname === '/api/remote/students/delete' && req.method === 'POST') {
+          const body = await parseJsonBody()
+          const ok = remoteLabManager.deleteStudentAccess(body.id)
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ success: ok }))
+          return
+        }
+
         if (pathname === '/api/remote/tunnel/start' && req.method === 'POST') {
           try {
             const result = await remoteLabManager.startTunnel(5173)
