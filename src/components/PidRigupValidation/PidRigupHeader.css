@@ -1,0 +1,194 @@
+/* ============================================================
+   P&ID Rigup Header & Toolbar Styling (Figure 2 Style Match)
+   ============================================================ */
+
+.pid-header-container {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  flex-shrink: 0;
+  user-select: none;
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+/* ── Top Header Row (Exact Figure 2: 60px Height) ── */
+.pid-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 6px 16px;
+  height: 60px;
+  border-bottom: 2px solid #0047ba;
+  box-sizing: border-box;
+}
+
+/* Left Brand & Logo */
+.pid-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pid-header-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+.pid-header-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pid-brand-title {
+  font-size: 23px;
+  font-weight: 800;
+  color: #0b4ea2;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+}
+
+.pid-brand-subtitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0b4ea2;
+  margin-top: 1px;
+}
+
+/* Right Model & Category */
+.pid-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.pid-header-category {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ea580c;
+  line-height: 1.2;
+}
+
+.pid-header-model {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #ea580c;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ── Second Row: Action Toolbar (Figure 2 Toolbar: 38px Height) ── */
+.pid-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  height: 38px;
+  padding: 0 16px;
+  border-bottom: 1.5px solid #cbd5e1;
+  box-sizing: border-box;
+}
+
+.pid-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* View Mode Switcher Toggle */
+.view-mode-toggle-group {
+  display: flex;
+  background: #e2e8f0;
+  padding: 2px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  gap: 2px;
+}
+
+.view-mode-btn {
+  background: transparent;
+  border: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.view-mode-btn:hover {
+  color: #0f172a;
+}
+
+.view-mode-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.4);
+}
+
+/* Standard Toolbar Buttons */
+.pid-tb-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.pid-tb-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.pid-tb-btn.panel-active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #0284c7;
+}
+
+.tb-btn-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Validate Action Button */
+.pid-btn-validate {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+.pid-btn-validate:hover {
+  background: #10b981;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+/* Clear Action Button */
+.pid-btn-clear:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+/* Home Button */
+.pid-btn-home:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e40af;
+}

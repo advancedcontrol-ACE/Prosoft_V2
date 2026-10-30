@@ -1,0 +1,555 @@
+/* ============================================================
+   P&ID Canvas Workspace Styling (Center Area)
+   Symbol Factory / SCADA Rigup Canvas
+   ============================================================ */
+
+.pid-canvas-workspace {
+  flex: 1 1 auto;
+  position: relative;
+  background: #f8fafc;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+  height: 100%;
+}
+
+/* Subtle Technical Grid Background */
+.canvas-grid-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-size: 20px 20px;
+  background-image:
+    linear-gradient(to right, rgba(203, 213, 225, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(203, 213, 225, 0.45) 1px, transparent 1px);
+}
+
+/* ── Top Canvas Floating Toolbar ── */
+.canvas-floating-toolbar {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toolbar-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #cbd5e1;
+}
+
+/* Wire Color Swatches */
+.wire-color-swatches {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.color-swatch-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1.5px solid #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  padding: 0;
+  background: #f1f5f9;
+  transition: all 0.12s ease;
+}
+
+.color-swatch-btn:hover {
+  transform: scale(1.15);
+  border-color: #0f172a;
+}
+
+.color-swatch-btn.active {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.4);
+  transform: scale(1.1);
+}
+
+/* Zoom Tools */
+.zoom-tool-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.zoom-tool-btn:hover {
+  background: #e2e8f0;
+  border-color: #0284c7;
+}
+
+.zoom-value-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  min-width: 34px;
+  text-align: center;
+}
+
+.zoom-reset-btn {
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.zoom-reset-btn:hover {
+  background: #cbd5e1;
+}
+
+/* ── SVG Layer for Wires & Pipes ── */
+.canvas-wires-svg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: stroke;
+  z-index: 10;
+}
+
+.placed-wire-group {
+  cursor: pointer;
+}
+
+.wire-selected-halo {
+  pointer-events: none;
+}
+
+.wire-delete-badge {
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.wire-delete-badge:hover circle {
+  fill: #dc2626;
+}
+
+/* ── Placed Components Layer ── */
+.canvas-components-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.canvas-placed-component {
+  position: absolute;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.canvas-placed-component:hover {
+  border-color: #0284c7;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.22);
+}
+
+.canvas-placed-component.is-selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3), 0 8px 20px rgba(0, 0, 0, 0.15);
+  z-index: 45;
+}
+
+.canvas-placed-component.is-dragging {
+  cursor: grabbing;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  border-color: #2563eb;
+  z-index: 50;
+}
+
+/* ── 8-Point Freeform Resize Handles (Request 4: No aspect ratio lock) ── */
+.resize-handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #2563eb;
+  border: 1.5px solid #ffffff;
+  border-radius: 2px;
+  z-index: 55;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  touch-action: none;
+}
+
+.resize-handle:hover {
+  background: #0284c7;
+  transform: scale(1.2);
+}
+
+/* Corner Handles */
+.handle-se {
+  right: -5px;
+  bottom: -5px;
+  cursor: nwse-resize;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2563eb;
+}
+
+.resize-grip-icon {
+  font-size: 8px;
+  color: #ffffff;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.handle-sw {
+  left: -5px;
+  bottom: -5px;
+  cursor: nesw-resize;
+}
+
+.handle-ne {
+  right: -5px;
+  top: -5px;
+  cursor: nesw-resize;
+}
+
+.handle-nw {
+  left: -5px;
+  top: -5px;
+  cursor: nwse-resize;
+}
+
+/* Edge Handles (Stretch Width only or Height only without locking aspect ratio) */
+.handle-e {
+  right: -5px;
+  top: calc(50% - 5px);
+  cursor: ew-resize;
+}
+
+.handle-w {
+  left: -5px;
+  top: calc(50% - 5px);
+  cursor: ew-resize;
+}
+
+.handle-s {
+  bottom: -5px;
+  left: calc(50% - 5px);
+  cursor: ns-resize;
+}
+
+.handle-n {
+  top: -5px;
+  left: calc(50% - 5px);
+  cursor: ns-resize;
+}
+
+/* Movable Pipeline Waypoint Grip (Rerouting) */
+.wire-waypoint-grip {
+  pointer-events: all;
+  touch-action: none;
+}
+
+.wire-waypoint-grip:hover circle {
+  fill: #0284c7;
+  stroke: #38bdf8;
+  stroke-width: 2.5px;
+}
+
+/* Floating Wire Rerouting Action Toolbar (Flicker-Free: No CSS scale/transform) */
+.wire-action-toolbar {
+  pointer-events: all;
+  user-select: none;
+}
+
+.wire-tool-btn {
+  cursor: pointer;
+  user-select: none;
+}
+
+.wire-tool-btn:hover circle {
+  fill: #0284c7;
+}
+
+.wire-tool-btn:hover text {
+  fill: #ffffff;
+}
+
+/* Titlebar */
+.component-titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1px 5px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  height: 18px;
+}
+
+.component-tag {
+  font-size: 9px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.3px;
+}
+
+.component-delete-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.component-delete-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.component-figure-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ── Colored Connection Port Nodes ── */
+.component-port-node {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+  pointer-events: auto;
+}
+
+.component-port-node:hover {
+  transform: translate(-50%, -50%) scale(1.4);
+  z-index: 40;
+}
+
+.port-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Fluid Ports: Vibrant Process Blue */
+.component-port-node.port-fluid .port-dot {
+  background: #0284c7;
+  border-color: #ffffff;
+  box-shadow: 0 0 6px rgba(2, 132, 199, 0.8), 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Pneumatic Ports: Crisp White with Dark Border */
+.component-port-node.port-pneumatic .port-dot {
+  background: #ffffff;
+  border-color: #0f172a;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Electrical Ports: Bright Industrial Orange */
+.component-port-node.port-electrical .port-dot {
+  background: #f97316;
+  border-color: #ffffff;
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.8), 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Hover & Dragging Highlight */
+.component-port-node.hovered {
+  transform: translate(-50%, -50%) scale(1.55);
+}
+
+.component-port-node.dragging {
+  transform: translate(-50%, -50%) scale(1.55);
+}
+
+/* Port Tooltip */
+.port-tooltip {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.tooltip-sub {
+  font-size: 8px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.component-port-node:hover .port-tooltip {
+  opacity: 1;
+}
+
+/* ── Workspace Empty Watermark ── */
+.workspace-empty-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0.85;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.watermark-icon {
+  font-size: 46px;
+}
+
+.watermark-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.3px;
+}
+
+/* ── Marquee Box Drag Selection ── */
+.canvas-selection-box {
+  position: absolute;
+  border: 1.5px dashed #2563eb;
+  background: rgba(37, 99, 235, 0.12);
+  pointer-events: none;
+  z-index: 60;
+  border-radius: 2px;
+}
+
+/* ── Top-Right Technical Line Legend (Request 1) ── */
+.canvas-top-right-legend {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 85;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.legend-header {
+  font-size: 10px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 3px;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-sample {
+  flex-shrink: 0;
+}
+
+.legend-text {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.watermark-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+  max-width: 500px;
+}

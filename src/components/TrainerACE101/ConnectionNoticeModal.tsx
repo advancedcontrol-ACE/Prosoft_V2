@@ -4,12 +4,16 @@ import './ConnectionNoticeModal.css';
 interface ConnectionNoticeModalProps {
   isOpen: boolean;
   portName?: string;
+  title?: string;
+  message?: React.ReactNode;
   onClose: () => void;
 }
 
 export const ConnectionNoticeModal: React.FC<ConnectionNoticeModalProps> = ({
   isOpen,
   portName,
+  title,
+  message,
   onClose,
 }) => {
   const okBtnRef = useRef<HTMLButtonElement>(null);
@@ -39,7 +43,7 @@ export const ConnectionNoticeModal: React.FC<ConnectionNoticeModalProps> = ({
         <div className="conn-modal-titlebar">
           <div className="conn-title-left">
             <span className="conn-title-icon">🔌</span>
-            <span>Hardware Connection Status</span>
+            <span>{title || 'Hardware Connection Status'}</span>
           </div>
           <button
             type="button"
@@ -57,10 +61,14 @@ export const ConnectionNoticeModal: React.FC<ConnectionNoticeModalProps> = ({
           <div className="conn-success-icon">✅</div>
           <div className="conn-modal-text">
             <div className="conn-highlight-name">
-              Connection Established {portName ? `(${portName})` : ''}
+              Communication Established {portName ? `(${portName})` : ''}
             </div>
             <div className="conn-modal-message">
-              Connection Established. Please select the Experiment from the <strong>Experiment Menu</strong>.
+              {message || (
+                <>
+                  Communication Established. Please set <strong>Remote Lab</strong> or Select Experiment from the <strong>Experiment Menu</strong>.
+                </>
+              )}
             </div>
           </div>
         </div>

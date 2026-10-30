@@ -1185,14 +1185,14 @@ export const TrainerACE101: React.FC<TrainerACE101Props> = ({ onHome }) => {
         <div className="trainer-menu-group">
           <button
             type="button"
-            className={`trainer-menu-trigger ${isCommunicationDisabled ? 'disabled' : ''}`}
-            disabled={isCommunicationDisabled}
+            className={`trainer-menu-trigger ${isRunning ? 'disabled' : ''}`}
+            disabled={isRunning}
             onClick={() => {
-              if (isCommunicationDisabled) return;
+              if (isRunning) return;
               setOpenTopMenu(null);
               setIsComModalOpen(true);
             }}
-            title={isCommunicationDisabled ? 'Remote Lab is disabled while experiment is selected' : 'Remote Lab Setup & Cloud Gateway'}
+            title={isRunning ? 'Remote Lab is disabled while experiment is running' : 'Remote Lab Setup & Cloud Gateway'}
           >
             Remote Lab
           </button>

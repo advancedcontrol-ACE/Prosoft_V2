@@ -113,7 +113,7 @@ class Ace2007TcpBridge {
         this.latestData.connected = true;
         this.latestData.host = this.host;
         this.latestData.port = this.port;
-        this.startPolling(250);
+        this.startPolling(1000);
 
         // Send initial frame immediately
         this.sendOutput(this.op0, this.op1);
@@ -229,7 +229,7 @@ class Ace2007TcpBridge {
     } catch (_) {}
   }
 
-  startPolling(intervalMs = 250) {
+  startPolling(intervalMs = 1000) {
     this.stopPolling();
     this.pollTimer = setInterval(() => {
       if (this.isConnected && this.socket) {

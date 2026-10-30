@@ -88,10 +88,6 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
     if (res.success) {
       setIsConnected(true);
       const rawName = detectedSsid || (tcp.getCurrentHost() === '192.168.0.1' ? 'ACE2007-2' : tcp.getCurrentHost());
-      setModuleName(rawName);
-      setTcpHost(`${host}:${port}`);
-      localStorage.setItem('ace2007_module_name', rawName);
-
       let formattedName = rawName;
       if (/^ACE\s*2007[-_\s]*(\d+)/i.test(rawName)) {
         const match = rawName.match(/^ACE\s*2007[-_\s]*(\d+)/i);
@@ -99,12 +95,14 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       } else if (!formattedName.toLowerCase().startsWith('ace')) {
         formattedName = `ACE 2007 - ${formattedName}`;
       }
+      const displayName = formattedName.endsWith('DAQ') ? formattedName : `${formattedName} DAQ`;
 
-      setDaqPopup({
-        type: 'connected',
-        title: 'Hardware Connection Status',
-        message: `The ${formattedName} DAQ is auto connected. Select Experiment from Experiment Menu or Proceed with Remote Lab Setting`,
-      });
+      setModuleName(displayName);
+      setTcpHost(`${host}:${port}`);
+      localStorage.setItem('ace2007_module_name', displayName);
+
+      setDaqPopup(null);
+      setIsConnNoticeOpen(true);
     } else {
       setIsConnected(false);
       setModuleName('');
@@ -1418,14 +1416,14 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
         <div className="trainer-menu-group">
           <button
             type="button"
-            className={`trainer-menu-trigger ${Boolean(ctrlState.selectedExperiment) ? 'disabled' : ''}`}
-            disabled={Boolean(ctrlState.selectedExperiment)}
+            className={`trainer-menu-trigger ${isRunning ? 'disabled' : ''}`}
+            disabled={isRunning}
             onClick={() => {
-              if (Boolean(ctrlState.selectedExperiment)) return;
+              if (isRunning) return;
               setOpenTopMenu(null);
               setIsRemoteLabModalOpen(true);
             }}
-            title={Boolean(ctrlState.selectedExperiment) ? 'Remote Lab is disabled while experiment is selected' : 'Remote Lab Setup & Cloud Gateway'}
+            title={isRunning ? 'Remote Lab is disabled while experiment is running' : 'Remote Lab Setup & Cloud Gateway'}
           >
             Remote Lab
           </button>
@@ -1672,7 +1670,7 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
       {/* ── Connection Established Notice Modal ───────────────── */}
       <ConnectionNoticeModal
         isOpen={isConnNoticeOpen}
-        portName={comPort}
+        portName={moduleName || comPort}
         onClose={() => setIsConnNoticeOpen(false)}
       />
 
@@ -1737,36 +1735,24 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
         </div>
       )}
 
-      {/* ── DAQ Auto-Connect Notice & Alert Modal ── */}
-      {daqPopup && (
-        <div className="conn-modal-backdrop" onClick={() => daqPopup.type === 'connected' && setDaqPopup(null)}>
+      {/* ── DAQ Disconnected / Not-Detected Alert Modal ── */}
+      {daqPopup && daqPopup.type === 'not-detected' && (
+        <div className="conn-modal-backdrop">
           <div className="conn-modal-window" onClick={(e) => e.stopPropagation()}>
             <div className="conn-modal-titlebar">
               <div className="conn-title-left">
-                <span className="conn-title-icon">{daqPopup.type === 'connected' ? '🔌' : '⚠️'}</span>
+                <span className="conn-title-icon">⚠️</span>
                 <span>{daqPopup.title}</span>
               </div>
-              {daqPopup.type === 'connected' && (
-                <button
-                  type="button"
-                  className="conn-close-x"
-                  onClick={() => setDaqPopup(null)}
-                  title="Close"
-                >
-                  ✕
-                </button>
-              )}
             </div>
 
             <div className="conn-modal-body">
-              <div className="conn-success-icon">
-                {daqPopup.type === 'connected' ? '✅' : '⚠️'}
-              </div>
+              <div className="conn-success-icon">⚠️</div>
               <div className="conn-modal-text">
                 <div
                   className="conn-highlight-name"
                   style={{
-                    color: daqPopup.type === 'connected' ? '#166534' : '#991b1b',
+                    color: '#991b1b',
                     fontSize: '14px',
                     lineHeight: '1.45',
                     fontWeight: 700,
@@ -1788,65 +1774,44 @@ export const TrainerACE106Level: React.FC<TrainerACE106LevelProps> = ({ onHome }
                 borderTop: '1px solid #cbd5e1',
               }}
             >
-              {daqPopup.type === 'not-detected' ? (
-                <>
-                  <button
-                    type="button"
-                    className="conn-ok-btn"
-                    onClick={() => attemptAutoConnect()}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px 22px',
-                      background: '#0284c7',
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🔄 Retry
-                  </button>
-                  <button
-                    type="button"
-                    className="conn-ok-btn"
-                    onClick={onHome}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px 22px',
-                      background: '#475569',
-                      color: '#ffffff',
-                      fontWeight: 700,
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    🏠 Home
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="conn-ok-btn"
-                  onClick={() => setDaqPopup(null)}
-                  style={{
-                    padding: '8px 32px',
-                    background: '#16a34a',
-                    color: '#ffffff',
-                    fontWeight: 700,
-                    borderRadius: '4px',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Proceed
-                </button>
-              )}
+              <button
+                type="button"
+                className="conn-ok-btn"
+                onClick={() => attemptAutoConnect()}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 22px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                🔄 Retry
+              </button>
+              <button
+                type="button"
+                className="conn-ok-btn"
+                onClick={onHome}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 22px',
+                  background: '#475569',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                🏠 Home
+              </button>
             </div>
           </div>
         </div>

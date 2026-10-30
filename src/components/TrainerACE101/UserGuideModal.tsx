@@ -114,13 +114,19 @@ const NAV_CHAPTERS: NavChapter[] = [
 interface UserGuideModalProps {
   isOpen: boolean;
   onClose: () => void;
+  title?: string;
+  pdfUrl?: string;
 }
 
-export const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
+export const UserGuideModal: React.FC<UserGuideModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  pdfUrl,
+}) => {
   // Current active page state
   const [currentPageId, setCurrentPageId] = useState<string>('sec-overview');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isFullScreen, setIsFullScreen] = useState<boolean>(true);
   const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({
     intro: true,
     ch1: true,
@@ -228,18 +234,17 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose 
 
   return (
     <div
-      className={`userguide-modal-backdrop ${isFullScreen ? 'is-fullscreen' : ''}`}
-      onClick={isFullScreen ? undefined : onClose}
+      className="userguide-modal-backdrop is-fullscreen"
     >
       <div
-        className={`userguide-modal-window ${isFullScreen ? 'is-fullscreen' : ''}`}
+        className="userguide-modal-window is-fullscreen"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Title Bar ────────────────────────────────────────── */}
         <div className="userguide-modal-titlebar">
           <div className="titlebar-left">
             <img src="/images/user_guide_icon.png" alt="User Guide" className="titlebar-icon-img" />
-            <span className="titlebar-title">ACE 101 Level Process Trainer — Technical Manual</span>
+            <span className="titlebar-title">{title || 'ACE 101 Level Process Trainer — Technical Manual'}</span>
             <span className="titlebar-badge">
               {isQuickRef ? '⚡ Quick Reference' : `Page ${currentPage.pageNumber} of ${GUIDE_PAGES.length}`}
             </span>
@@ -287,23 +292,13 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose 
 
             {/* Download PDF Button */}
             <a
-              href="/docs/ACE101.pdf"
-              download="ACE101_User_Guide.pdf"
+              href={pdfUrl || "/docs/ACE101.pdf"}
+              download="Technical_Manual.pdf"
               className="action-btn download-btn"
-              title="Download original offline PDF (64 pages)"
+              title="Download original offline PDF"
             >
               📥 PDF
             </a>
-
-            {/* Full Frame / Windowed Toggle Button */}
-            <button
-              type="button"
-              className="titlebar-window-btn"
-              onClick={() => setIsFullScreen((prev) => !prev)}
-              title={isFullScreen ? 'Restore Window Size' : 'Fit to Entire Frame'}
-            >
-              {isFullScreen ? '🗗' : '🗖'}
-            </button>
 
             {/* Close Button */}
             <button

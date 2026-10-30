@@ -54,7 +54,7 @@ export const RemoteLabModal106: React.FC<RemoteLabModal106Props> = ({
   });
   const [firebaseProjectId, setFirebaseProjectId] = useState<string>('ace106-trainer-lab');
   const [firebasePath, setFirebasePath] = useState<string>('/trainers/ace106/live');
-  const [firebaseSyncInterval, setFirebaseSyncInterval] = useState<number>(500);
+  const [firebaseSyncInterval, setFirebaseSyncInterval] = useState<number>(1000);
   const [isFirebaseSyncing, setIsFirebaseSyncing] = useState<boolean>(true);
   const [firebaseStatusMsg, setFirebaseStatusMsg] = useState<string | null>(null);
 
@@ -583,8 +583,8 @@ export const RemoteLabModal106: React.FC<RemoteLabModal106Props> = ({
                         onChange={(e) => setFirebaseSyncInterval(Number(e.target.value))}
                       >
                         <option value={250}>250 ms (Fast Real-time)</option>
-                        <option value={500}>500 ms (Standard Default)</option>
-                        <option value={1000}>1000 ms (1 second)</option>
+                        <option value={500}>500 ms (High Speed)</option>
+                        <option value={1000}>1000 ms (1 second - Default)</option>
                         <option value={2000}>2000 ms (Energy Saver)</option>
                       </select>
                     </div>

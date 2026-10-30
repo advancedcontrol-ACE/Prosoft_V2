@@ -120,7 +120,7 @@ const nonLinearProcessTrainers: MenuItem[] = [
 ];
 
 const commonExperiments: MenuItem[] = [
-  { id: 'exp-placeholder', label: 'Common Experiments', enabled: false, action: 'common-exp' },
+  { id: 'pid-rigup', label: 'P&ID Rigup and Validation', enabled: true, action: 'pid-rigup' },
 ];
 
 const processTrainers: TopLevelMenu = {
@@ -133,7 +133,7 @@ const processTrainers: TopLevelMenu = {
     sep('pt-s2'),
     { id: 'nonlinear',  label: 'Non-Linear Process Trainers', enabled: false, children: nonLinearProcessTrainers },
     sep('pt-s3'),
-    { id: 'common-exp', label: 'Common Experiments',          enabled: false, children: commonExperiments },
+    { id: 'common-exp', label: 'Common Experiments',          enabled: true,  children: commonExperiments },
   ],
 };
 

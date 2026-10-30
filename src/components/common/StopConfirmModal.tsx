@@ -7,6 +7,8 @@ export interface StopConfirmModalProps {
   onCancel: () => void;
   title?: string;
   message?: string;
+  confirmText?: string;
+  cancelText?: string;
 }
 
 export const StopConfirmModal: React.FC<StopConfirmModalProps> = ({
@@ -15,6 +17,8 @@ export const StopConfirmModal: React.FC<StopConfirmModalProps> = ({
   onCancel,
   title = 'Stop Experiment',
   message = 'All data and graphs will be cleared. Do you want to continue?',
+  confirmText = 'Yes',
+  cancelText = 'Cancel',
 }) => {
   if (!isOpen) return null;
 
@@ -96,7 +100,7 @@ export const StopConfirmModal: React.FC<StopConfirmModalProps> = ({
             className="stop-modal-btn stop-btn-cancel"
             onClick={onCancel}
           >
-            Cancel
+            {cancelText}
           </button>
           <button
             type="button"
@@ -104,7 +108,7 @@ export const StopConfirmModal: React.FC<StopConfirmModalProps> = ({
             onClick={onConfirm}
             autoFocus
           >
-            Yes
+            {confirmText}
           </button>
         </div>
       </div>

@@ -1,0 +1,364 @@
+/* ============================================================
+   SYMBOL FACTORY / COMPONENT PALETTE (Figure 2 Style)
+   ============================================================ */
+
+.pid-library-panel {
+  width: 290px;
+  min-width: 260px;
+  max-width: 320px;
+  background: #ffffff;
+  border-right: 2px solid #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.06);
+  user-select: none;
+  height: 100%;
+}
+
+/* ── Header ── */
+.library-header {
+  padding: 10px 14px 8px 14px;
+  background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+  border-bottom: 1px solid #cbd5e1;
+  flex-shrink: 0;
+}
+
+.library-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.library-logo-icon {
+  font-size: 20px;
+  background: #e0f2fe;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid #bae6fd;
+}
+
+.library-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.library-subtitle {
+  font-size: 10.5px;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Search Box */
+.library-search-box {
+  position: relative;
+  width: 100%;
+}
+
+.library-search-input {
+  width: 100%;
+  padding: 6px 28px 6px 10px;
+  font-size: 11.5px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.library-search-input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.search-clear-btn:hover {
+  color: #ef4444;
+}
+
+/* ── Category Bar / Accordion ── */
+.library-category-bar {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-accordion-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.category-accordion-toggle:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.accordion-arrow {
+  font-size: 9px;
+  color: #64748b;
+}
+
+.category-folders-list {
+  overflow-y: auto;
+  max-height: 140px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.category-folders-list::-webkit-scrollbar {
+  width: 4px;
+}
+.category-folders-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.category-folder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s;
+  width: 100%;
+}
+
+.category-folder-item:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.category-folder-item.active {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+  font-weight: 700;
+}
+
+.folder-icon {
+  font-size: 13px;
+}
+
+.folder-name {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-count {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  background: #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+}
+
+.category-folder-item.active .folder-count {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+/* ── Symbol Grid Container ── */
+.library-symbols-grid-container {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 8px 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.library-symbols-grid-container::-webkit-scrollbar {
+  width: 6px;
+}
+.library-symbols-grid-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.symbols-section-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1.5px solid #e2e8f0;
+}
+
+.banner-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.banner-count {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Compact Uniform Grid of Standard Sized Icons (Figure 3 Style) */
+.library-symbols-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.symbol-factory-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 2px;
+  height: 74px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: all 0.15s ease;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.symbol-factory-card:hover {
+  border-color: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.22);
+  background: #f0f9ff;
+}
+
+.symbol-factory-card:active {
+  cursor: grabbing;
+}
+
+/* Standard Sized Vector Icon Preview (42x42) */
+.symbol-thumb-container {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+  pointer-events: none;
+}
+
+/* 2-line Description / Name Label (Figure 3: Red Box) */
+.symbol-card-name {
+  font-size: 9px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1.15;
+  max-height: 22px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  max-width: 95%;
+  pointer-events: none;
+}
+
+/* Empty Search */
+.library-empty-search {
+  padding: 30px 10px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-icon {
+  font-size: 24px;
+}
+
+/* ── Footer Legend ── */
+.library-footer-legend {
+  display: flex;
+  justify-content: space-around;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  font-size: 10px;
+  color: #475569;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.dot-fluid {
+  background: #0284c7;
+  box-shadow: 0 0 4px #0284c7;
+}
+
+.legend-dot.dot-pneumatic {
+  background: #ffffff;
+  border: 1px solid #0f172a;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+
+.legend-dot.dot-electrical {
+  background: #f97316;
+  box-shadow: 0 0 4px #f97316;
+}

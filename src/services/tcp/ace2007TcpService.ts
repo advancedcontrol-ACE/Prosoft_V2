@@ -125,7 +125,7 @@ export class Ace2007TcpService {
       this.port = port;
       this.currentPort = `SIM:${host}:${port}`;
       const result = hardwareSimulator.simulateTcpConnect();
-      this.startPolling(250);
+      this.startPolling(1000);
       return {
         success: true,
         host,
@@ -146,7 +146,7 @@ export class Ace2007TcpService {
         this.isConnected = true;
         this.host = host;
         this.port = port;
-        this.startPolling(250);
+        this.startPolling(1000);
 
         return {
           success: true,
@@ -208,7 +208,7 @@ export class Ace2007TcpService {
         this.triggerRevoked();
       });
 
-      this.startPolling(250);
+      this.startPolling(1000);
 
       return {
         success: true,
@@ -240,7 +240,7 @@ export class Ace2007TcpService {
     }
   }
 
-  public startPolling(intervalMs = 250) {
+  public startPolling(intervalMs = 1000) {
     this.stopPolling();
 
     // ── Hardware Simulator polling path ────────────────────────────────────

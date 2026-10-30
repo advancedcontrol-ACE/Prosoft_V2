@@ -4,6 +4,7 @@ import HomePage from './components/HomePage/HomePage';
 import PlaceholderPage from './components/PlaceholderPage/PlaceholderPage';
 import { TrainerACE101 } from './components/TrainerACE101/TrainerACE101';
 import { TrainerACE106Level } from './components/TrainerACE106Level/TrainerACE106Level';
+import { PidRigupValidation } from './components/PidRigupValidation/PidRigupValidation';
 import { SimulatorACE401 } from './components/SimulatorACE401/SimulatorACE401';
 import { SimulatorACE402 } from './components/SimulatorACE402/SimulatorACE402';
 import { SimulatorACE403 } from './components/SimulatorACE403/SimulatorACE403';
@@ -218,6 +219,7 @@ const App: React.FC = () => {
 
   const isTrainerScreen = currentPage?.action === 'ace101-dtb9696';
   const isTrainer106Level = currentPage?.action === 'ace106-ace2007-level-ctrl';
+  const isPidRigup = currentPage?.action === 'pid-rigup';
   const isSimACE401 = currentPage?.action === 'sim-ace401' || currentPage?.action === 'sim-two-pos';
   const isSimACE402 = currentPage?.action === 'sim-ace402';
   const isSimACE403 = currentPage?.action === 'sim-ace403';
@@ -246,6 +248,7 @@ const App: React.FC = () => {
   const isFullScreenApp =
     isTrainerScreen ||
     isTrainer106Level ||
+    isPidRigup ||
     isSimACE401 ||
     isSimACE402 ||
     isSimACE403 ||
@@ -265,7 +268,7 @@ const App: React.FC = () => {
     <div className="app-container">
       <div
         className="app-shell"
-        style={!isElectronEnv && browserScale !== 1 ? { zoom: browserScale } : undefined}
+        style={!isElectronEnv && browserScale !== 1 && !isPidRigup ? { zoom: browserScale } : undefined}
       >
         {/* When in the Level Trainer screen or Simulator screen, menu bar is hidden */}
         {!isFullScreenApp && <MenuBar onAction={handleAction} />}
@@ -277,6 +280,8 @@ const App: React.FC = () => {
           <TrainerACE101 onHome={() => setCurrentPage(null)} />
         ) : isTrainer106Level ? (
           <TrainerACE106Level onHome={() => setCurrentPage(null)} />
+        ) : isPidRigup ? (
+          <PidRigupValidation onHome={() => setCurrentPage(null)} />
         ) : isSimACE401 ? (
           <SimulatorACE401 onHome={() => setCurrentPage(null)} />
         ) : isSimACE402 ? (

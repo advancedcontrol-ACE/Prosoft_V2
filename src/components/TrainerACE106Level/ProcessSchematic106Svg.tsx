@@ -95,6 +95,79 @@ export const ProcessSchematic106Svg: React.FC<ProcessSchematic106SvgProps> = ({
         preserveAspectRatio="xMidYMid meet"
       />
 
+      {/* ── Pneumatic Signal Line (I/P Converter to Control Valve, 3–15 psi) ── */}
+      <g className="pneumatic-signal-line-group">
+        {/* Subtle drop shadow */}
+        <path
+          d="M 684,92 L 866,92 Q 881,92 881,107 L 881,295"
+          fill="none"
+          stroke="#001a33"
+          strokeWidth="6"
+          strokeOpacity="0.35"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Dark outer outline */}
+        <path
+          d="M 684,91 L 866,91 Q 881,91 881,106 L 881,294"
+          fill="none"
+          stroke="#004b87"
+          strokeWidth="5.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Main blue tube body */}
+        <path
+          d="M 684,91 L 866,91 Q 881,91 881,106 L 881,294"
+          fill="none"
+          stroke="#0284c7"
+          strokeWidth="4.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Bright cyan core */}
+        <path
+          d="M 684,91 L 866,91 Q 881,91 881,106 L 881,294"
+          fill="none"
+          stroke="#38bdf8"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Specular highlight along upper/inner tube wall */}
+        <path
+          d="M 684,90.2 L 865,90.2 Q 879.8,90.2 879.8,105 L 879.8,294"
+          fill="none"
+          stroke="#f0f9ff"
+          strokeWidth="1"
+          strokeOpacity="0.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Fitting Nut at I/P converter port (silver) */}
+        <rect
+          x="682"
+          y="87.5"
+          width="4"
+          height="7"
+          rx="1"
+          fill="#cbd5e1"
+          stroke="#475569"
+          strokeWidth="0.8"
+        />
+        {/* Brass Fitting Compression Nut at Control Valve top (gold/brass) */}
+        <rect
+          x="877"
+          y="292"
+          width="8"
+          height="4.5"
+          rx="1"
+          fill="#f59e0b"
+          stroke="#b45309"
+          strokeWidth="0.8"
+        />
+      </g>
+
       {/* ── 1. Level Tank: 25% Transparent Blue Rectangular Bar (Linked with PV, exact match to ACE 101) ── */}
       {safePv > 0 && (
         <g className="level-tank-water-group">

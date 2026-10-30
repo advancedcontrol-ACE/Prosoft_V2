@@ -98,7 +98,7 @@ export class HardwareSimulatorService {
     }
   }
 
-  // ── Internal process simulation loop (250ms sampling) ─────────────
+  // ── Internal process simulation loop (1000ms / 1 second sampling default) ──
   private _startSimulation(): void {
     if (this._intervalId !== null) return;
     // Reset PV each time simulator is activated
@@ -110,7 +110,7 @@ export class HardwareSimulatorService {
 
     this._intervalId = setInterval(() => {
       this._step();
-    }, 250);
+    }, 1000);
   }
 
   private _stopSimulation(): void {
@@ -128,7 +128,7 @@ export class HardwareSimulatorService {
 
   // ── Compute one simulation step (PID + level process dynamics) ────
   private _step(): void {
-    const dt = 0.25; // seconds per step
+    const dt = 1.0; // 1 second per step (default hardware execution rate)
 
     // If no external OP has been commanded by the host software in the last 2 seconds
     // and controller is in Auto, simulate Delta DTB's internal PID loop:
